@@ -1,0 +1,31 @@
+{
+  "name": "jacobpevans-plugins",
+  "owner": {
+    "name": "JacobPEvans",
+    "email": "20714140+JacobPEvans@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "Custom Claude Code plugins and hooks marketplace",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "webfetch-guard",
+      "source": "./webfetch-guard",
+      "description": "Intercepts WebFetch calls to block 2024 references and warn about date awareness",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "markdown-validator",
+      "source": "./markdown-validator",
+      "description": "PostToolUse hook that validates markdown files with markdownlint-cli2 and cspell",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    }
+  ]
+}

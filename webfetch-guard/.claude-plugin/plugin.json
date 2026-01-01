@@ -1,0 +1,11 @@
+{
+  "name": "webfetch-guard",
+  "version": "1.0.0",
+  "description": "Intercepts WebFetch calls to block 2024 references and warn about date awareness",
+  "author": {
+    "name": "JacobPEvans",
+    "email": "20714140+JacobPEvans@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "keywords": ["webfetch", "validation", "date-awareness", "hooks"]
+}

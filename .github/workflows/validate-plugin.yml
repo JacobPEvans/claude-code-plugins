@@ -1,0 +1,71 @@
+name: Validate Claude Code Plugin
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install cclint
+        run: npm install -g @dotcommander/cclint
+
+      - name: Validate plugin structure
+        run: |
+          echo "Validating webfetch-guard plugin..."
+          cclint webfetch-guard
+
+      - name: Validate marketplace.json
+        run: |
+          echo "Validating marketplace configuration..."
+          if [ -f ".claude-plugin/marketplace.json" ]; then
+            npx ajv-cli validate \
+              -s https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/marketplace.schema.json \
+              -d .claude-plugin/marketplace.json || true
+          fi
+
+      - name: Validate hook scripts
+        run: |
+          echo "Checking hook scripts..."
+          find . -name "*.py" -path "*/hooks/*" -o -path "*/scripts/*" | while read -r script; do
+            if [ -f "$script" ]; then
+              echo "Validating Python syntax: $script"
+              python3 -m py_compile "$script"
+
+              echo "Checking executable permission: $script"
+              if [ ! -x "$script" ]; then
+                echo "ERROR: $script is not executable"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON syntax..."
+          find . -name "*.json" ! -path "*/node_modules/*" | while read -r json_file; do
+            echo "Checking $json_file"
+            jq empty "$json_file"
+          done
+
+      - name: Run hook tests
+        run: |
+          echo "Running hook tests..."
+          find . -name "test_*.py" -o -name "*_test.py" | while read -r test; do
+            if [ -f "$test" ]; then
+              echo "Running: $test"
+              python3 "$test"
+            fi
+          done

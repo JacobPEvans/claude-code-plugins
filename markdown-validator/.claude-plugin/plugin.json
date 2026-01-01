@@ -1,0 +1,11 @@
+{
+  "name": "markdown-validator",
+  "version": "1.0.0",
+  "description": "PostToolUse hook that validates markdown files with markdownlint-cli2 and cspell after Write/Edit operations",
+  "author": {
+    "name": "JacobPEvans",
+    "email": "20714140+JacobPEvans@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "keywords": ["markdown", "validation", "hooks", "markdownlint", "cspell", "post-tool-use"]
+}
