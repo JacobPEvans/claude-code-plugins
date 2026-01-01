@@ -14,35 +14,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          node-version: '20'
+          go-version: '1.21'
 
       - name: Install cclint
-        run: npm install -g @dotcommander/cclint
+        run: |
+          go install github.com/dotcommander/cclint@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Validate plugin structure
         run: |
           echo "Validating webfetch-guard plugin..."
-          cclint webfetch-guard
+          $HOME/go/bin/cclint webfetch-guard
+          echo "Validating markdown-validator plugin..."
+          $HOME/go/bin/cclint markdown-validator
 
       - name: Validate marketplace.json
         run: |
           echo "Validating marketplace configuration..."
           if [ -f ".claude-plugin/marketplace.json" ]; then
-            npx ajv-cli validate \
-              -s https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/marketplace.schema.json \
-              -d .claude-plugin/marketplace.json || true
+            # JSON validation with jq
+            jq empty .claude-plugin/marketplace.json
           fi
 
       - name: Validate hook scripts
         run: |
           echo "Checking hook scripts..."
-          find . -name "*.py" -path "*/hooks/*" -o -path "*/scripts/*" | while read -r script; do
+          find . -name "*.py" -path "*/scripts/*" | while read -r script; do
             if [ -f "$script" ]; then
               echo "Validating Python syntax: $script"
               python3 -m py_compile "$script"
+
+              echo "Checking executable permission: $script"
+              if [ ! -x "$script" ]; then
+                echo "ERROR: $script is not executable"
+                exit 1
+              fi
+            fi
+          done
+          
+          find . -name "*.sh" -path "*/scripts/*" | while read -r script; do
+            if [ -f "$script" ]; then
+              echo "Validating Bash syntax: $script"
+              bash -n "$script"
 
               echo "Checking executable permission: $script"
               if [ ! -x "$script" ]; then
