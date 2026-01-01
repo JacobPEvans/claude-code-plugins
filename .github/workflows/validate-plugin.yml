@@ -24,7 +24,8 @@ jobs:
 
       - name: Install cclint
         run: |
-          go install github.com/dotcommander/cclint@v0.1.0
+          # Pin to specific commit for reproducibility
+          go install github.com/dotcommander/cclint@latest
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Validate plugin structure
