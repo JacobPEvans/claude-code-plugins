@@ -24,7 +24,7 @@ jobs:
 
       - name: Install cclint
         run: |
-          go install github.com/dotcommander/cclint@latest
+          go install github.com/dotcommander/cclint@v0.1.0
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
       - name: Validate plugin structure
@@ -38,7 +38,6 @@ jobs:
         run: |
           echo "Validating marketplace configuration..."
           if [ -f ".claude-plugin/marketplace.json" ]; then
-            # JSON validation with jq
             jq empty .claude-plugin/marketplace.json
           fi
 

@@ -6,16 +6,18 @@ A Claude Code plugin that intercepts WebFetch and WebSearch calls to enforce dat
 
 | Condition | Action |
 |-----------|--------|
-| URL/query contains "2024" | **BLOCK** - Denies the request with current date info |
-| URL/query contains "2025" | **WARN** - Allows but reminds Claude to check the date |
+| URL/query contains previous year | **BLOCK** - Denies the request with current date info |
+| URL/query contains current year | **WARN** - Allows but reminds Claude to check the date |
 | No year reference | **PASS** - Silent allow |
+
+**Dynamic Years**: The hook automatically determines outdated (previous year) and current years based on the system date.
 
 ## Installation
 
 ### Option 1: Add the marketplace (recommended)
 
 ```bash
-/plugin marketplace add ~/git/claude-plugins
+/plugin marketplace add <path-to-claude-code-plugins-repo>
 ```
 
 Then install the plugin:
@@ -27,13 +29,13 @@ Then install the plugin:
 ### Option 2: Test locally during development
 
 ```bash
-claude --plugin-dir ~/git/claude-plugins/webfetch-guard
+claude --plugin-dir <path-to-claude-code-plugins-repo>/webfetch-guard
 ```
 
 ## Testing
 
 ```bash
-python3 ~/git/claude-plugins/webfetch-guard/scripts/test_hook.py
+python3 <path-to-claude-code-plugins-repo>/webfetch-guard/scripts/test_hook.py
 ```
 
 ## Structure
@@ -55,17 +57,18 @@ webfetch-guard/
 The hook intercepts `PreToolUse` events for `WebFetch` and `WebSearch` tools:
 
 1. Reads the tool input (URL, prompt, or query)
-2. Checks for year references ("2024" or "2025")
-3. Returns a hook decision:
-   - `deny` with reason for 2024 references
-   - `allow` with warning for 2025 references
+2. Dynamically determines current year and previous year
+3. Checks for year references in the input
+4. Returns a hook decision:
+   - `deny` with reason for previous year references
+   - `allow` with warning for current year references
    - Silent exit (code 0) for no year references
 
 ## Customization
 
 Edit `scripts/webfetch-guard.py` to:
 
-- Add more blocked years
+- Adjust which years to block/warn (currently previous/current)
 - Change warning messages
 - Add domain-based rules
 - Modify the check logic

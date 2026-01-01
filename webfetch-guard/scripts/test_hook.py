@@ -4,15 +4,18 @@
 import json
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 HOOK = Path(__file__).parent / "webfetch-guard.py"
+CURRENT_YEAR = datetime.now().year
+OUTDATED_YEAR = CURRENT_YEAR - 1
 
 TESTS = [
-    ("BLOCK 2024", "WebFetch", {"url": "https://example.com/2024/api"}, "deny"),
-    ("WARN 2025", "WebSearch", {"query": "Python best practices 2025"}, "allow"),
+    ("BLOCK outdated year", "WebFetch", {"url": f"https://example.com/{OUTDATED_YEAR}/api"}, "deny"),
+    ("WARN current year", "WebSearch", {"query": f"Python best practices {CURRENT_YEAR}"}, "allow"),
     ("PASS silent", "WebFetch", {"url": "https://example.com/latest"}, None),
-    ("IGNORE other", "Read", {"file_path": "/file/2024.txt"}, None),
+    ("IGNORE other", "Read", {"file_path": f"/file/{OUTDATED_YEAR}.txt"}, None),
 ]
 
 

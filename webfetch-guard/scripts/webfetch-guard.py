@@ -3,8 +3,8 @@
 WebFetch Guard Hook
 
 Intercepts WebFetch and WebSearch tool calls to:
-1. BLOCK calls containing "2024" in URL or query
-2. WARN (but allow) calls containing "2025" with a date reminder
+1. BLOCK calls containing outdated year (previous year) in URL or query
+2. WARN (but allow) calls containing current year with a date reminder
 
 This helps ensure Claude uses current, up-to-date information.
 """
@@ -24,17 +24,22 @@ def get_current_date_info() -> dict:
     }
 
 
-def check_for_year_references(text: str) -> dict:
+def check_for_year_references(text: str, outdated_year: str, warn_year: str) -> dict:
     """
     Check text for year references.
 
+    Args:
+        text: The text to search
+        outdated_year: Year to block (typically previous year)
+        warn_year: Year to warn about (typically current year)
+
     Returns:
-        dict with 'has_2024' and 'has_2025' boolean flags
+        dict with 'has_outdated' and 'has_warn' boolean flags
     """
     text_lower = text.lower()
     return {
-        "has_2024": "2024" in text_lower,
-        "has_2025": "2025" in text_lower,
+        "has_outdated": outdated_year in text_lower,
+        "has_warn": warn_year in text_lower,
     }
 
 
@@ -87,18 +92,24 @@ def main():
         query = tool_input.get("query", "")
         texts_to_check = [query]
 
+    # Get current date info and determine years dynamically
+    date_info = get_current_date_info()
+    current_year = date_info["year"]
+    outdated_year = current_year - 1
+
     # Combine all texts for checking
     combined_text = " ".join(texts_to_check)
-    year_refs = check_for_year_references(combined_text)
-    date_info = get_current_date_info()
+    year_refs = check_for_year_references(
+        combined_text, str(outdated_year), str(current_year)
+    )
 
-    # BLOCK: If 2024 is referenced
-    if year_refs["has_2024"]:
+    # BLOCK: If outdated year is referenced
+    if year_refs["has_outdated"]:
         deny_reason = (
-            f"BLOCKED: Your request contains '2024' which is an outdated year reference.\n\n"
+            f"BLOCKED: Your request contains '{outdated_year}' which is an outdated year reference.\n\n"
             f"CURRENT DATE: {date_info['formatted']}\n"
-            f"CURRENT YEAR: {date_info['year']}\n\n"
-            f"Please reformulate your request using the current year ({date_info['year']}) "
+            f"CURRENT YEAR: {current_year}\n\n"
+            f"Please reformulate your request using the current year ({current_year}) "
             f"or remove the year reference entirely to get current information.\n\n"
             f"Tool: {tool_name}\n"
             f"Input: {combined_text[:200]}..."
@@ -107,16 +118,16 @@ def main():
         print(json.dumps(output))
         sys.exit(0)
 
-    # WARN: If 2025 is referenced (allow but warn)
-    if year_refs["has_2025"]:
+    # WARN: If current year is referenced (allow but warn)
+    if year_refs["has_warn"]:
         warn_reason = (
             f"WARNING: Date-specific search detected.\n\n"
             f"====================================\n"
             f"CURRENT DATE: {date_info['formatted']}\n"
-            f"CURRENT YEAR: {date_info['year']}\n"
+            f"CURRENT YEAR: {current_year}\n"
             f"====================================\n\n"
             f"IMPORTANT: Always verify the current date before running web searches. "
-            f"Your request contains '2025' which is correct for today, but remember:\n"
+            f"Your request contains '{current_year}', but remember:\n"
             f"- Check the current date at the start of each session\n"
             f"- Do not assume the year from previous searches\n"
             f"- When searching for 'latest' or 'recent' content, include the current year\n\n"

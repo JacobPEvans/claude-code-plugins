@@ -20,7 +20,7 @@ A Claude Code plugin that automatically validates markdown files after Write or 
 
 ```bash
 # Add marketplace
-/plugin marketplace add ~/git/claude-code-plugins
+/plugin marketplace add <path-to-claude-code-plugins-repo>
 
 # Install the plugin
 /plugin install markdown-validator@jacobpevans-plugins
