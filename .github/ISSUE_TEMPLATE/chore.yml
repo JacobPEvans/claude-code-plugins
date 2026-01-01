@@ -1,0 +1,60 @@
+name: Chore / Maintenance
+description: Maintenance tasks, dependencies, tooling, or infrastructure
+labels: ["type:chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Maintenance and housekeeping tasks.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: What maintenance work needs to be done?
+      placeholder: Update dependencies, refactor build scripts, clean up...
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why is this needed?
+      description: What's the motivation for this maintenance work?
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context or details.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this task?
+      options:
+        - "priority:low - Address when time permits"
+        - "priority:medium - Normal workflow"
+        - "priority:high - Should be addressed soon"
+        - "priority:critical - Requires immediate attention"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated Size
+      description: How much effort do you think this will take?
+      options:
+        - "size:xs - Trivial change, <1 hour"
+        - "size:s - Simple change, 1-4 hours"
+        - "size:m - Moderate effort, 1-2 days"
+        - "size:l - Significant work, 3-5 days"
+        - "size:xl - Major effort, 1+ weeks"
+    validations:
+      required: true

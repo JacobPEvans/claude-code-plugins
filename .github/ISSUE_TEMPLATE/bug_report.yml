@@ -1,0 +1,64 @@
+name: Bug Report
+description: Report something that isn't working correctly
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: What happened? What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or logs.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this issue?
+      options:
+        - "priority:low - Address when time permits"
+        - "priority:medium - Normal workflow"
+        - "priority:high - Should be addressed soon"
+        - "priority:critical - Requires immediate attention"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated Size
+      description: How much effort do you think this will take?
+      options:
+        - "size:xs - Trivial change, <1 hour"
+        - "size:s - Simple change, 1-4 hours"
+        - "size:m - Moderate effort, 1-2 days"
+        - "size:l - Significant work, 3-5 days"
+        - "size:xl - Major effort, 1+ weeks"
+    validations:
+      required: true

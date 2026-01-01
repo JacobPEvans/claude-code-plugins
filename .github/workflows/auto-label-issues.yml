@@ -1,0 +1,48 @@
+name: Auto-label from issue form
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Apply labels from form dropdowns
+        uses: actions/github-script@v8
+        with:
+          # SECURITY NOTE: This is safe because we use actions/github-script
+          # which processes data in JavaScript, not shell commands.
+          # The issue body is accessed via context.payload (not shell interpolation)
+          # and we only extract specific regex matches for known label values.
+          script: |
+            const body = context.payload.issue.body || '';
+            const labels = [];
+
+            // Extract priority from dropdown selection
+            // Format: "priority:medium - Normal workflow"
+            const priorityMatch = body.match(/priority:(critical|high|medium|low)/i);
+            if (priorityMatch) {
+              labels.push(`priority:${priorityMatch[1].toLowerCase()}`);
+            }
+
+            // Extract size from dropdown selection
+            // Format: "size:m - Moderate effort, 1-2 days"
+            const sizeMatch = body.match(/size:(xs|s|m|l|xl)\b/i);
+            if (sizeMatch) {
+              labels.push(`size:${sizeMatch[1].toLowerCase()}`);
+            }
+
+            if (labels.length > 0) {
+              console.log(`Applying labels: ${labels.join(', ')}`);
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            } else {
+              console.log('No priority/size labels found in issue body');
+            }

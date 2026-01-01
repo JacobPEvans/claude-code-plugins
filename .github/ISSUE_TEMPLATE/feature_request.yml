@@ -1,0 +1,69 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What's the motivation?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see.
+      placeholder: It would be great if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or features you've considered?
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, mockups, or examples.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this feature?
+      options:
+        - "priority:low - Address when time permits"
+        - "priority:medium - Normal workflow"
+        - "priority:high - Should be addressed soon"
+        - "priority:critical - Requires immediate attention"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated Size
+      description: How much effort do you think this will take?
+      options:
+        - "size:xs - Trivial change, <1 hour"
+        - "size:s - Simple change, 1-4 hours"
+        - "size:m - Moderate effort, 1-2 days"
+        - "size:l - Significant work, 3-5 days"
+        - "size:xl - Major effort, 1+ weeks"
+    validations:
+      required: true
