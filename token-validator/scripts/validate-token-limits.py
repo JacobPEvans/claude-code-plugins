@@ -52,7 +52,7 @@ def load_config() -> tuple[dict[str, int], int]:
 
 def get_file_limit(file_path: str, limits: dict[str, int], default_limit: int) -> int:
     """Find applicable token limit for file"""
-    for pattern, limit in limits.items():
+    for pattern, limit in reversed(list(limits.items())):
         if fnmatch.fnmatch(file_path, pattern):
             return limit
     return default_limit
