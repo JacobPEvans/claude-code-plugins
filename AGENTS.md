@@ -8,24 +8,35 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 
 ## Available Plugins
 
-| Plugin | Type | Tools | Purpose |
-|--------|------|-------|---------|
-| **webfetch-guard** | PreToolUse | WebFetch, WebSearch | Blocks outdated year references in web queries |
+| Plugin | Type | Tools/Commands | Purpose |
+|--------|------|--------|---------|
+| **git-rebase-workflow** | Command/Skill | `/rebase-pr` | Local rebase-merge workflow for linear git history |
+| **issue-limiter** | PreToolUse | Bash (gh) | Prevents GitHub issue backlog overflow |
 | **markdown-validator** | PostToolUse | Write, Edit | Validates markdown with markdownlint and cspell |
 | **token-validator** | PreToolUse | Write, Edit | Enforces configurable file token limits |
-| **issue-limiter** | PreToolUse | Bash (gh) | Prevents GitHub issue backlog overflow |
+| **webfetch-guard** | PreToolUse | WebFetch, WebSearch | Blocks outdated year references in web queries |
 
 ## Plugin Development
 
 ### Structure Requirements
 
-All plugins must follow this structure:
+Most hook-based plugins follow this structure:
 
 ```
 plugin-name/
 ├── .claude-plugin/plugin.json  # Metadata (required)
 ├── hooks/hooks.json            # Hook config (required)
 ├── scripts/                    # Implementation (required)
+└── README.md                   # Documentation (required)
+```
+
+Command/skill-based plugins use this structure:
+
+```
+plugin-name/
+├── .claude-plugin/plugin.json  # Metadata (required)
+├── commands/                   # Command definitions
+├── skills/                     # Skill definitions
 └── README.md                   # Documentation (required)
 ```
 

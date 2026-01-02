@@ -10,9 +10,18 @@
   },
   "plugins": [
     {
-      "name": "webfetch-guard",
-      "source": "./webfetch-guard",
-      "description": "Intercepts WebFetch calls to block outdated year references and warn about date awareness",
+      "name": "git-rebase-workflow",
+      "source": "./git-rebase-workflow",
+      "description": "Local rebase-merge workflow for linear git history and signed commits",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "issue-limiter",
+      "source": "./issue-limiter",
+      "description": "PreToolUse hook that enforces GitHub issue creation limits to prevent backlog overflow",
       "version": "1.0.0",
       "author": {
         "name": "JacobPEvans"
@@ -37,9 +46,9 @@
       }
     },
     {
-      "name": "issue-limiter",
-      "source": "./issue-limiter",
-      "description": "PreToolUse hook that enforces GitHub issue creation limits to prevent backlog overflow",
+      "name": "webfetch-guard",
+      "source": "./webfetch-guard",
+      "description": "Intercepts WebFetch calls to block outdated year references and warn about date awareness",
       "version": "1.0.0",
       "author": {
         "name": "JacobPEvans"

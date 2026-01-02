@@ -4,6 +4,14 @@ A collection of Claude Code plugins for enhanced development workflows with AI a
 
 ## Available Plugins
 
+### git-rebase-workflow
+
+Local rebase-merge workflow for maintaining linear git history with signed commits.
+
+- **Type**: Command/Skill-based plugin
+- **Command**: `/rebase-pr`
+- **Purpose**: Merge PRs using a local rebase workflow that preserves commit signatures
+
 ### webfetch-guard
 
 Intercepts WebFetch and WebSearch tool calls to enforce date awareness and block outdated year references.
@@ -48,10 +56,11 @@ claude plugins add jacobpevans-cc-plugins/<plugin-name>
 ```
 
 **Available plugins**:
-- `jacobpevans-cc-plugins/webfetch-guard`
+- `jacobpevans-cc-plugins/git-rebase-workflow`
+- `jacobpevans-cc-plugins/issue-limiter`
 - `jacobpevans-cc-plugins/markdown-validator`
 - `jacobpevans-cc-plugins/token-validator`
-- `jacobpevans-cc-plugins/issue-limiter`
+- `jacobpevans-cc-plugins/webfetch-guard`
 
 ### Local Development
 
@@ -60,15 +69,16 @@ Clone this repository and link plugins:
 ```bash
 git clone https://github.com/JacobPEvans/claude-code-plugins.git
 cd claude-code-plugins
-claude plugins link ./webfetch-guard
+claude plugins link ./git-rebase-workflow
+claude plugins link ./issue-limiter
 claude plugins link ./markdown-validator
 claude plugins link ./token-validator
-claude plugins link ./issue-limiter
+claude plugins link ./webfetch-guard
 ```
 
 ## Plugin Structure
 
-Each plugin follows Claude Code official best practices:
+Each plugin follows Claude Code official best practices. Most plugins use hook-based structure:
 
 ```
 plugin-name/
@@ -78,6 +88,20 @@ plugin-name/
 │   └── hooks.json        # Hook configuration
 ├── scripts/
 │   └── hook-script.py    # Implementation
+└── README.md             # Plugin documentation
+```
+
+Command/skill-based plugins use a different structure:
+
+```
+plugin-name/
+├── .claude-plugin/
+│   └── plugin.json       # Plugin metadata
+├── commands/
+│   └── command.md        # Command definition
+├── skills/
+│   └── skill-name/
+│       └── SKILL.md      # Skill documentation
 └── README.md             # Plugin documentation
 ```
 
