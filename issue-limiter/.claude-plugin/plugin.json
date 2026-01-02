@@ -1,0 +1,18 @@
+{
+  "name": "issue-limiter",
+  "version": "1.0.0",
+  "description": "PreToolUse hook that enforces GitHub issue creation limits to prevent backlog overflow",
+  "author": {
+    "name": "JacobPEvans",
+    "email": "20714140+JacobPEvans@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "hooks",
+    "pre-tool-use",
+    "github",
+    "issues",
+    "limits",
+    "backlog-management"
+  ]
+}

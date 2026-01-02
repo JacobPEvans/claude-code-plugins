@@ -1,18 +1,27 @@
 {
-  "name": "jacobpevans-plugins",
+  "name": "jacobpevans-cc-plugins",
   "owner": {
     "name": "JacobPEvans",
     "email": "20714140+JacobPEvans@users.noreply.github.com"
   },
   "metadata": {
-    "description": "Custom Claude Code plugins and hooks marketplace",
+    "description": "Claude Code plugins and hooks by JacobPEvans",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "webfetch-guard",
-      "source": "./webfetch-guard",
-      "description": "Intercepts WebFetch calls to block 2024 references and warn about date awareness",
+      "name": "git-rebase-workflow",
+      "source": "./git-rebase-workflow",
+      "description": "Local rebase-merge workflow for linear git history and signed commits",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "issue-limiter",
+      "source": "./issue-limiter",
+      "description": "PreToolUse hook that enforces GitHub issue creation limits to prevent backlog overflow",
       "version": "1.0.0",
       "author": {
         "name": "JacobPEvans"
@@ -22,6 +31,24 @@
       "name": "markdown-validator",
       "source": "./markdown-validator",
       "description": "PostToolUse hook that validates markdown files with markdownlint-cli2 and cspell",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "token-validator",
+      "source": "./token-validator",
+      "description": "PreToolUse hook that validates file token limits on Write and Edit operations",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "webfetch-guard",
+      "source": "./webfetch-guard",
+      "description": "Intercepts WebFetch calls to block outdated year references and warn about date awareness",
       "version": "1.0.0",
       "author": {
         "name": "JacobPEvans"
