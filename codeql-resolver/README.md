@@ -131,10 +131,6 @@ codeql-resolver/
 │   └── github-workflow-security-patterns.md
 ├── commands/
 │   └── resolve-codeql.md
-├── scripts/
-│   ├── codeql-resolver.py        # Plugin orchestration
-│   ├── analyze-alerts.py         # Alert discovery/classification
-│   └── test_codeql_plugin.py     # Tests
 └── README.md
 ```
 
