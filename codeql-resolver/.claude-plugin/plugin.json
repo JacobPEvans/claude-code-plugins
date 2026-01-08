@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Systematic CodeQL alert analysis and resolution for GitHub Actions workflows",
   "author": "Jacob Evans",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": [

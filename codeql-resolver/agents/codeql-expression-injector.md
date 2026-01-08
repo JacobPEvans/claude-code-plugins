@@ -111,7 +111,7 @@ Test with malicious inputs mentally:
 ```yaml
 - name: Process PR
   # SECURITY: PR body is untrusted user input. Wrap in env var to prevent
-  # expression injection. See: https://github.blog/security/vulnerability-research/
+  # expression injection. See: https://github.blog/security/vulnerability-research/how-to-catch-github-actions-workflow-injections-before-attackers-do/
   env:
     PR_BODY: ${{ github.event.pull_request.body }}
   run: curl https://api.example.com -d "$PR_BODY"
