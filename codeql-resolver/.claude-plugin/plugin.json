@@ -1,0 +1,47 @@
+{
+  "name": "codeql-resolver",
+  "version": "1.0.0",
+  "description": "Systematic CodeQL alert analysis and resolution for GitHub Actions workflows",
+  "author": "Jacob Evans",
+  "license": "MIT",
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
+  "keywords": [
+    "codeql",
+    "security",
+    "github-actions",
+    "workflow",
+    "permissions"
+  ],
+  "commands": [
+    {
+      "name": "resolve-codeql",
+      "description": "Analyze and resolve CodeQL alerts systematically",
+      "category": "security"
+    }
+  ],
+  "agents": [
+    {
+      "name": "codeql-permissions-auditor",
+      "description": "Fix workflow permission issues"
+    },
+    {
+      "name": "codeql-expression-injector",
+      "description": "Mitigate expression injection vulnerabilities"
+    },
+    {
+      "name": "codeql-generic-resolver",
+      "description": "Handle non-standard CodeQL alerts"
+    }
+  ],
+  "skills": [
+    {
+      "name": "codeql-permission-classification",
+      "description": "Permission requirements for GitHub Actions"
+    },
+    {
+      "name": "github-workflow-security-patterns",
+      "description": "Canonical security patterns for GitHub workflows"
+    }
+  ]
+}
