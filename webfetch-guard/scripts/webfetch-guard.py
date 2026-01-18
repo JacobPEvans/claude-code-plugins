@@ -17,6 +17,7 @@ This helps ensure Claude uses current, up-to-date information.
 """
 
 import json
+import re
 import sys
 from datetime import datetime
 
@@ -35,13 +36,17 @@ def build_response(decision: str, reason: str) -> dict:
 def find_blocked_year(text: str, blocked_years: list[int]) -> int | None:
     """Find first blocked year in text, or None."""
     text_lower = text.lower()
-    for year in blocked_years:
-        if str(year) in text_lower:
+    # Check for more recent years first (optimization)
+    for year in sorted(blocked_years, reverse=True):
+        if re.search(rf"\b{year}\b", text_lower):
             return year
     return None
 
 
 def main():
+    # Define year block range constant
+    YEAR_BLOCK_RANGE = 10
+
     try:
         input_data = json.load(sys.stdin)
     except json.JSONDecodeError as e:
@@ -70,9 +75,9 @@ def main():
     in_grace_period = current_month <= 3
 
     if in_grace_period:
-        blocked_years = list(range(current_year - 10, current_year - 1))
+        blocked_years = list(range(current_year - YEAR_BLOCK_RANGE, current_year - 1))
     else:
-        blocked_years = list(range(current_year - 10, current_year))
+        blocked_years = list(range(current_year - YEAR_BLOCK_RANGE, current_year))
 
     # Check for year references
     blocked_year = find_blocked_year(combined_text, blocked_years)
@@ -88,8 +93,8 @@ def main():
         )
         reason = (
             f"BLOCKED: Your request contains '{blocked_year}' which is an outdated year reference.\n\n"
-            f"Hey, you searched an old year. The current time and date are: "
-            f"{now.strftime('%Y-%m-%d %H:%M:%S')}. Try again.\n\n"
+            f"Your search included an outdated year. The current time is "
+            f"{now.strftime('%Y-%m-%d %H:%M:%S')}.\n\n"
             f"CURRENT DATE: {formatted_date}\n"
             f"CURRENT YEAR: {current_year}\n\n"
             f"Please reformulate your request using the current year ({current_year}) "
