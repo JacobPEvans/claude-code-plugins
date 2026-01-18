@@ -9,33 +9,31 @@ from pathlib import Path
 
 HOOK = Path(__file__).parent / "webfetch-guard.py"
 now = datetime.now()
-CURRENT_YEAR = now.year
-CURRENT_MONTH = now.month
-PREVIOUS_YEAR = CURRENT_YEAR - 1
-TWO_YEARS_AGO = CURRENT_YEAR - 2
-IN_GRACE_PERIOD = CURRENT_MONTH <= 3
+Y0 = now.year
+M = now.month
+Y1 = Y0 - 1
+Y2 = Y0 - 2
+GRACE = M <= 3
 
-# Build tests based on current date
 TESTS = [
-    ("BLOCK 2+ years ago", "WebFetch", {"url": f"https://example.com/{TWO_YEARS_AGO}/api"}, "deny"),
+    ("Block 2+ years ago", "WebFetch", {"url": f"https://example.com/{Y2}/api"}, "deny"),
     (
-        "ALLOW previous year (grace period)" if IN_GRACE_PERIOD else "BLOCK previous year",
+        f"{'Allow' if GRACE else 'Block'} previous year",
         "WebSearch",
-        {"query": f"Python docs {PREVIOUS_YEAR}"},
-        None if IN_GRACE_PERIOD else "deny",
+        {"query": f"Python docs {Y1}"},
+        None if GRACE else "deny",
     ),
-    ("WARN current year", "WebSearch", {"query": f"Python best practices {CURRENT_YEAR}"}, "allow"),
-    ("PASS silent", "WebFetch", {"url": "https://example.com/latest"}, None),
-    ("IGNORE other tools", "Read", {"file_path": f"/file/{TWO_YEARS_AGO}.txt"}, None),
+    ("Warn current year", "WebSearch", {"query": f"Python {Y0}"}, "allow"),
+    ("Pass silent", "WebFetch", {"url": "https://example.com/latest"}, None),
+    ("Ignore other tools", "Read", {"file_path": f"/file/{Y2}.txt"}, None),
 ]
 
 
 def run_hook(tool_name: str, tool_input: dict) -> dict | None:
     """Run hook and return parsed output, or None if no output."""
-    payload = {"tool_name": tool_name, "tool_input": tool_input}
     result = subprocess.run(
         [sys.executable, str(HOOK)],
-        input=json.dumps(payload),
+        input=json.dumps({"tool_name": tool_name, "tool_input": tool_input}),
         capture_output=True,
         text=True,
     )
