@@ -33,19 +33,40 @@ def build_response(decision: str, reason: str) -> dict:
     }
 
 
+def _is_year_reference(text_lower: str, year: int) -> bool:
+    """
+    Heuristically determine whether a numeric occurrence of `year` in the
+    given lowercased text is likely to be a calendar year, rather than
+    part of another identifier (for example "RFC 2024" or "ISO 2022").
+    """
+    year_str = str(year)
+
+    # Ignore some known identifier-style prefixes where the number is not a date.
+    # Example false positives the rule warns about:
+    # - "RFC 2024" (RFC number)
+    # - "ISO 2022" (standard identifier)
+    if re.search(rf"\b(?:rfc|iso)\s+{year_str}\b", text_lower):
+        return False
+
+    # Fallback: treat a standalone numeric token as a year reference.
+    # This is similar to the old \b{year}\b check but routed through this helper
+    # so that we can centralize exclusions above.
+    return re.search(rf"\b{year_str}\b", text_lower) is not None
+
+
 def find_blocked_year(text: str, blocked_years: list[int]) -> int | None:
     """Find first blocked year in text, or None."""
     text_lower = text.lower()
     # Check for more recent years first (optimization)
     for year in sorted(blocked_years, reverse=True):
-        if re.search(rf"\b{year}\b", text_lower):
+        if _is_year_reference(text_lower, year):
             return year
     return None
 
 
 def main():
-    # Define year block range constant
-    YEAR_BLOCK_RANGE = 10
+    # Define year block range constant (years to block: current - 2)
+    YEAR_BLOCK_RANGE = 2
 
     try:
         input_data = json.load(sys.stdin)
@@ -93,8 +114,7 @@ def main():
         )
         reason = (
             f"BLOCKED: Your request contains '{blocked_year}' which is an outdated year reference.\n\n"
-            f"Your search included an outdated year. The current time is "
-            f"{now.strftime('%Y-%m-%d %H:%M:%S')}.\n\n"
+            f"Your search included an outdated year. The current date is {formatted_date}.\n\n"
             f"CURRENT DATE: {formatted_date}\n"
             f"CURRENT YEAR: {current_year}\n\n"
             f"Please reformulate your request using the current year ({current_year}) "
