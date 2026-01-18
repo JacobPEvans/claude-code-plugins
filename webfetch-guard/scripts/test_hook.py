@@ -8,14 +8,25 @@ from datetime import datetime
 from pathlib import Path
 
 HOOK = Path(__file__).parent / "webfetch-guard.py"
-CURRENT_YEAR = datetime.now().year
-OUTDATED_YEAR = CURRENT_YEAR - 1
+now = datetime.now()
+CURRENT_YEAR = now.year
+CURRENT_MONTH = now.month
+PREVIOUS_YEAR = CURRENT_YEAR - 1
+TWO_YEARS_AGO = CURRENT_YEAR - 2
+IN_GRACE_PERIOD = CURRENT_MONTH <= 3
 
+# Build tests based on current date
 TESTS = [
-    ("BLOCK outdated year", "WebFetch", {"url": f"https://example.com/{OUTDATED_YEAR}/api"}, "deny"),
+    ("BLOCK 2+ years ago", "WebFetch", {"url": f"https://example.com/{TWO_YEARS_AGO}/api"}, "deny"),
+    (
+        "ALLOW previous year (grace period)" if IN_GRACE_PERIOD else "BLOCK previous year",
+        "WebSearch",
+        {"query": f"Python docs {PREVIOUS_YEAR}"},
+        None if IN_GRACE_PERIOD else "deny",
+    ),
     ("WARN current year", "WebSearch", {"query": f"Python best practices {CURRENT_YEAR}"}, "allow"),
     ("PASS silent", "WebFetch", {"url": "https://example.com/latest"}, None),
-    ("IGNORE other", "Read", {"file_path": f"/file/{OUTDATED_YEAR}.txt"}, None),
+    ("IGNORE other tools", "Read", {"file_path": f"/file/{TWO_YEARS_AGO}.txt"}, None),
 ]
 
 

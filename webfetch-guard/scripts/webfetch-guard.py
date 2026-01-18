@@ -3,8 +3,15 @@
 WebFetch Guard Hook
 
 Intercepts WebFetch and WebSearch tool calls to:
-1. BLOCK calls containing outdated year (previous year) in URL or query
+1. BLOCK calls containing outdated years in URL or query
 2. WARN (but allow) calls containing current year with a date reminder
+
+Grace period logic (Jan-Mar):
+- Previous year is ALLOWED (still relevant at year start)
+- 2+ years ago is BLOCKED
+
+After grace period (Apr-Dec):
+- Previous year and older are BLOCKED
 
 This helps ensure Claude uses current, up-to-date information.
 """
@@ -14,59 +21,27 @@ import sys
 from datetime import datetime
 
 
-def get_current_date_info() -> dict:
-    """Get current date information for warnings."""
-    now = datetime.now()
+def build_response(decision: str, reason: str) -> dict:
+    """Build a hook response."""
     return {
-        "date": now.strftime("%Y-%m-%d"),
-        "year": now.year,
-        "formatted": now.strftime("%A, %B %d, %Y"),
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": decision,
+            "permissionDecisionReason": reason,
+        }
     }
 
 
-def check_for_year_references(text: str, outdated_year: str, warn_year: str) -> dict:
-    """
-    Check text for year references.
-
-    Args:
-        text: The text to search
-        outdated_year: Year to block (typically previous year)
-        warn_year: Year to warn about (typically current year)
-
-    Returns:
-        dict with 'has_outdated' and 'has_warn' boolean flags
-    """
+def find_blocked_year(text: str, blocked_years: list[int]) -> int | None:
+    """Find first blocked year in text, or None."""
     text_lower = text.lower()
-    return {
-        "has_outdated": outdated_year in text_lower,
-        "has_warn": warn_year in text_lower,
-    }
-
-
-def build_deny_response(reason: str) -> dict:
-    """Build a deny response for the hook."""
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        }
-    }
-
-
-def build_allow_response(reason: str) -> dict:
-    """Build an allow response for the hook."""
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "allow",
-            "permissionDecisionReason": reason,
-        }
-    }
+    for year in blocked_years:
+        if str(year) in text_lower:
+            return year
+    return None
 
 
 def main():
-    # Read hook input from stdin
     try:
         input_data = json.load(sys.stdin)
     except json.JSONDecodeError as e:
@@ -74,56 +49,63 @@ def main():
         sys.exit(1)
 
     tool_name = input_data.get("tool_name", "")
-    tool_input = input_data.get("tool_input", {})
-
-    # Only process WebFetch and WebSearch
     if tool_name not in ("WebFetch", "WebSearch"):
         sys.exit(0)
 
-    # Extract the relevant text to check
-    # WebFetch uses 'url' and 'prompt', WebSearch uses 'query'
-    texts_to_check = []
+    tool_input = input_data.get("tool_input", {})
 
+    # Extract text to check based on tool type
     if tool_name == "WebFetch":
-        url = tool_input.get("url", "")
-        prompt = tool_input.get("prompt", "")
-        texts_to_check = [url, prompt]
-    elif tool_name == "WebSearch":
-        query = tool_input.get("query", "")
-        texts_to_check = [query]
+        combined_text = f"{tool_input.get('url', '')} {tool_input.get('prompt', '')}"
+    else:  # WebSearch
+        combined_text = tool_input.get("query", "")
 
-    # Get current date info and determine years dynamically
-    date_info = get_current_date_info()
-    current_year = date_info["year"]
-    outdated_year = current_year - 1
+    # Get current date/time info
+    now = datetime.now()
+    current_year = now.year
+    current_month = now.month
+    formatted_date = now.strftime("%A, %B %d, %Y")
 
-    # Combine all texts for checking
-    combined_text = " ".join(texts_to_check)
-    year_refs = check_for_year_references(
-        combined_text, str(outdated_year), str(current_year)
-    )
+    # Grace period: Jan-Mar allows previous year, blocks 2+ years ago
+    in_grace_period = current_month <= 3
 
-    # BLOCK: If outdated year is referenced
-    if year_refs["has_outdated"]:
-        deny_reason = (
-            f"BLOCKED: Your request contains '{outdated_year}' which is an outdated year reference.\n\n"
-            f"CURRENT DATE: {date_info['formatted']}\n"
+    if in_grace_period:
+        blocked_years = list(range(current_year - 10, current_year - 1))
+    else:
+        blocked_years = list(range(current_year - 10, current_year))
+
+    # Check for year references
+    blocked_year = find_blocked_year(combined_text, blocked_years)
+    has_current_year = str(current_year) in combined_text.lower()
+
+    # BLOCK if outdated year found
+    if blocked_year is not None:
+        print(
+            f"\n⚠️  BLOCKED: You searched an old year ({blocked_year}).\n"
+            f"   Current date: {formatted_date}\n"
+            f"   Please search using the current year ({current_year}) instead.\n",
+            file=sys.stderr,
+        )
+        reason = (
+            f"BLOCKED: Your request contains '{blocked_year}' which is an outdated year reference.\n\n"
+            f"Hey, you searched an old year. The current time and date are: "
+            f"{now.strftime('%Y-%m-%d %H:%M:%S')}. Try again.\n\n"
+            f"CURRENT DATE: {formatted_date}\n"
             f"CURRENT YEAR: {current_year}\n\n"
             f"Please reformulate your request using the current year ({current_year}) "
             f"or remove the year reference entirely to get current information.\n\n"
             f"Tool: {tool_name}\n"
             f"Input: {combined_text[:200]}..."
         )
-        output = build_deny_response(deny_reason)
-        print(json.dumps(output))
+        print(json.dumps(build_response("deny", reason)))
         sys.exit(0)
 
-    # WARN: If current year is referenced (allow but warn)
-    if year_refs["has_warn"]:
-        warn_reason = (
+    # WARN if current year is referenced
+    if has_current_year:
+        reason = (
             f"WARNING: Date-specific search detected.\n\n"
             f"====================================\n"
-            f"CURRENT DATE: {date_info['formatted']}\n"
+            f"CURRENT DATE: {formatted_date}\n"
             f"CURRENT YEAR: {current_year}\n"
             f"====================================\n\n"
             f"IMPORTANT: Always verify the current date before running web searches. "
@@ -133,12 +115,8 @@ def main():
             f"- When searching for 'latest' or 'recent' content, include the current year\n\n"
             f"Proceeding with {tool_name}..."
         )
-        output = build_allow_response(warn_reason)
-        print(json.dumps(output))
+        print(json.dumps(build_response("allow", reason)))
         sys.exit(0)
-
-    # No year references - allow without special handling
-    sys.exit(0)
 
 
 if __name__ == "__main__":
