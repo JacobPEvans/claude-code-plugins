@@ -42,8 +42,9 @@ npm install -g cspell
 
 ### Global Markdownlint Configuration
 
-This plugin requires a global markdownlint configuration file at `~/.markdownlint-cli2.yaml`. The configuration
-defines the validation rules used by this plugin.
+This plugin uses a global markdownlint configuration file at `~/.markdownlint-cli2.yaml`. The configuration
+defines the validation rules used by this plugin. If this file is missing, the validation hook will fail with
+a clear error message prompting you to create it.
 
 **Recommended configuration** (`~/.markdownlint-cli2.yaml`):
 
@@ -58,6 +59,10 @@ config:
   MD060: false
 fix: true
 ```
+
+> **Note:** The YAML format shown above uses markdownlint-cli2's structure with a `config:` wrapper for rules
+> and a top-level `fix:` option. If using JSON format (`.markdownlint.json`), use a flat structure without
+> the `config` wrapper and omit the `fix` property, as shown in this repository's `.markdownlint.json`.
 
 **Key settings:**
 

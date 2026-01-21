@@ -33,7 +33,11 @@ errors=()
 
 # Run markdownlint-cli2
 if command -v markdownlint-cli2 &>/dev/null; then
-  if ! markdownlint_output=$(markdownlint-cli2 --config ~/.markdownlint-cli2.yaml "$file_path" 2>&1); then
+  config_file="$HOME/.markdownlint-cli2.yaml"
+  if [[ ! -f "$config_file" ]]; then
+    errors+=("markdownlint-cli2 config not found: $config_file")
+    errors+=("Please create this file as documented in the plugin README.")
+  elif ! markdownlint_output=$(markdownlint-cli2 --config "$config_file" "$file_path" 2>&1); then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
   fi
