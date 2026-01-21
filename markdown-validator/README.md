@@ -40,6 +40,39 @@ npm install -g cspell
 
 ## Configuration
 
+### Global Markdownlint Configuration
+
+This plugin requires a global markdownlint configuration file at `~/.markdownlint-cli2.yaml`. The configuration
+defines the validation rules used by this plugin.
+
+**Recommended configuration** (`~/.markdownlint-cli2.yaml`):
+
+```yaml
+config:
+  default: true
+  MD013:
+    line_length: 160
+    heading_line_length: 120
+    code_block_line_length: 160
+    tables: false
+  MD060: false
+fix: true
+```
+
+**Key settings:**
+
+- **MD013**: Line length limits configured for readability
+  - `line_length: 160`: Regular text lines (default 80 breaks sentences mid-sentence)
+  - `heading_line_length: 120`: Heading lines
+  - `code_block_line_length: 160`: Code block lines
+  - `tables: false`: Disable table line length checks
+- **MD060**: Disabled due to version mismatch between GitHub Actions and nixpkgs
+- **fix: true**: Auto-fix issues where possible during validation
+
+If you don't have this file, create it with the above configuration.
+
+### Hook Configuration
+
 The hook is configured in `hooks/hooks.json`:
 
 ```json
@@ -73,6 +106,7 @@ The hook is configured in `hooks/hooks.json`:
 ## Customization
 
 Edit `scripts/validate-markdown.sh` to:
+
 - Add more validation tools
 - Change validation rules
 - Skip certain file patterns

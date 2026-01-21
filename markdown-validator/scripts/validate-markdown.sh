@@ -33,7 +33,7 @@ errors=()
 
 # Run markdownlint-cli2
 if command -v markdownlint-cli2 &>/dev/null; then
-  if ! markdownlint_output=$(markdownlint-cli2 "$file_path" 2>&1); then
+  if ! markdownlint_output=$(markdownlint-cli2 --config ~/.markdownlint-cli2.yaml "$file_path" 2>&1); then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
   fi
