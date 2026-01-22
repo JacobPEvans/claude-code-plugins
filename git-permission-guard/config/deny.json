@@ -1,0 +1,52 @@
+{
+  "description": "Commands that are NEVER allowed - these bypass safety mechanisms",
+  "patterns": [
+    {
+      "match": "commit\\s+.*(-n|--no-verify)",
+      "reason": "bypasses pre-commit hooks that enforce code quality and security",
+      "alternative": "Fix the issues that pre-commit hooks identify, or run: pre-commit run --all-files"
+    },
+    {
+      "match": "merge\\s+.*--no-verify",
+      "reason": "bypasses merge hooks that enforce code standards",
+      "alternative": "Fix the issues that merge hooks identify"
+    },
+    {
+      "match": "cherry-pick\\s+.*--no-verify",
+      "reason": "bypasses commit hooks during cherry-pick",
+      "alternative": "Fix the issues that hooks identify"
+    },
+    {
+      "match": "rebase\\s+.*--no-verify",
+      "reason": "bypasses commit hooks during rebase",
+      "alternative": "Fix the issues that hooks identify"
+    },
+    {
+      "match": "config\\s+.*core\\.hooksPath",
+      "reason": "changes the hook directory, bypassing configured hooks",
+      "alternative": "Use the configured hooks directory"
+    },
+    {
+      "match": "-c\\s+core\\.hooksPath",
+      "reason": "temporarily bypasses configured hooks",
+      "alternative": "Use the configured hooks directory"
+    }
+  ],
+  "commands": [
+    {
+      "match": "pre-commit\\s+uninstall",
+      "reason": "removes pre-commit hooks entirely",
+      "alternative": "Keep pre-commit hooks installed for code quality"
+    },
+    {
+      "match": "rm\\s+(-rf?\\s+)?\\.git/hooks",
+      "reason": "deletes git hooks directory",
+      "alternative": "Do not remove hooks - they enforce code standards"
+    },
+    {
+      "match": "chmod\\s+.*-x\\s+\\.git/hooks",
+      "reason": "makes hooks non-executable, effectively disabling them",
+      "alternative": "Keep hooks executable for code quality enforcement"
+    }
+  ]
+}
