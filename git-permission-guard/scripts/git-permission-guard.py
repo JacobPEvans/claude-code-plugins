@@ -19,33 +19,35 @@ DENY_PATTERNS = [
     (r"config\s+.*core\.hooksPath", "changes hook directory"),
     (r"-c\s+core\.hooksPath", "bypasses configured hooks"),
     (r"pre-commit\s+uninstall", "removes pre-commit hooks"),
-    (r"rm\s+(-rf?\s+)?\.git/hooks", "deletes git hooks"),
+    (r"rm\s+.*\.git/hooks", "deletes git hooks"),
     (r"chmod\s+.*-x\s+\.git/hooks", "disables git hooks"),
 ]
 
 # Commands requiring explicit user confirmation
+# Ordered from most specific to least specific to avoid false matches
 ASK_GIT = [
+    ("commit --amend", "Rewrites the last commit"),
+    ("push --force-with-lease", "Overwrites remote history"),
+    ("push --force", "Overwrites remote history"),
+    ("push -f", "Overwrites remote history"),
+    ("worktree remove", "Removes worktree directory"),
+    ("cherry-pick", "Rewrites commit history"),
     ("merge", "Can create merge commits or conflicts"),
     ("reset", "Can lose uncommitted work permanently"),
     ("restore", "Can discard local changes"),
-    ("rm ", "Removes files from working tree and index"),
-    ("cherry-pick", "Rewrites commit history"),
-    ("worktree remove", "Removes worktree directory"),
-    ("gc", "May remove unreferenced objects"),
-    ("prune", "Removes unreferenced objects"),
     ("rebase", "Rewrites commit history"),
-    ("commit --amend", "Rewrites the last commit"),
-    ("push --force", "Overwrites remote history"),
-    ("push -f", "Overwrites remote history"),
     ("clean", "Removes untracked files permanently"),
+    ("prune", "Removes unreferenced objects"),
+    ("rm", "Removes files from working tree and index"),
+    ("gc", "May remove unreferenced objects"),
 ]
 
 ASK_GH = [
     ("repo delete", "PERMANENTLY deletes repository"),
+    ("release delete", "Deletes releases permanently"),
     ("issue close", "Closes issues - could be accidental"),
     ("pr close", "Closes pull requests - could be accidental"),
     ("pr merge", "Merges PR - ONLY do when user EXPLICITLY requests"),
-    ("release delete", "Deletes releases permanently"),
 ]
 
 
@@ -88,7 +90,12 @@ def main():
     if not command:
         sys.exit(0)
 
-    # EARLY EXIT: Most commands are not git/gh - check this FIRST
+    # Check DENY patterns first (includes non-git commands like rm .git/hooks)
+    for pattern, reason in DENY_PATTERNS:
+        if re.search(pattern, command, re.IGNORECASE):
+            deny(f"This command {reason}. Fix the underlying issue instead.")
+
+    # EARLY EXIT: Most commands are not git/gh
     is_git = command.startswith("git ") or command == "git"
     is_gh = command.startswith("gh ") or command == "gh"
     if not is_git and not is_gh:
@@ -114,22 +121,15 @@ def main():
     else:
         subcommand = command[3:] if command.startswith("gh ") else ""
 
-    # Check DENY patterns (always blocked)
-    for pattern, reason in DENY_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
-            deny(f"This command {reason}. Fix the underlying issue instead.")
-
-    # Check ASK patterns for git
-    if is_git:
-        for cmd, risk in ASK_GIT:
-            if subcommand.startswith(cmd) or f" {cmd}" in f" {subcommand}":
-                ask(command, risk)
-
-    # Check ASK patterns for gh
-    if is_gh:
-        for cmd, risk in ASK_GH:
-            if subcommand.startswith(cmd):
-                ask(command, risk)
+    # Check ASK patterns - use word boundaries to avoid false matches
+    # (e.g., "merge" shouldn't match "emergency")
+    patterns = ASK_GIT if is_git else ASK_GH
+    for cmd, risk in patterns:
+        # Match as exact token sequence at start of subcommand
+        cmd_tokens = cmd.split()
+        sub_tokens = subcommand.split()
+        if len(sub_tokens) >= len(cmd_tokens) and sub_tokens[:len(cmd_tokens)] == cmd_tokens:
+            ask(command, risk)
 
     # Allow by default (exit 0, no output)
     sys.exit(0)

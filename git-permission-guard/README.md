@@ -37,7 +37,7 @@ claude plugins add jacobpevans-cc-plugins/git-permission-guard
 - `rm` - Removes from tree and index
 - `cherry-pick`, `rebase` - Rewrites history
 - `commit --amend` - Rewrites last commit
-- `push --force` - Overwrites remote
+- `push --force`, `push --force-with-lease` - Overwrites remote
 - `clean` - Removes untracked files
 - `gc`, `prune` - May remove objects
 - `worktree remove` - Removes worktree
