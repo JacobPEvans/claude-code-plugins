@@ -37,23 +37,30 @@ def main():
             # No file path provided, allow (fail-open)
             sys.exit(0)
 
-        # Path check: resolve to absolute path
+        # Path check: use git to find worktree root
         try:
             abs_path = Path(file_path).resolve()
-            path_parts = abs_path.parts
 
-            # Check if '/main/' appears as a directory segment
-            if "main" in path_parts:
-                # Find the index to ensure it's a directory, not filename
-                main_index = path_parts.index("main")
-                # Ensure it's not the last component (the file itself)
-                if main_index < len(path_parts) - 1:
+            # Get the worktree root directory using git
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=abs_path.parent if abs_path.is_file() else abs_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+
+            if result.returncode == 0:
+                worktree_root = Path(result.stdout.strip())
+                # Check if the worktree root directory is named 'main'
+                if worktree_root.name == "main":
                     deny_operation(
                         f"File '{file_path}' is in the main worktree. "
                         "Editing files on the main branch is not allowed."
                     )
         except Exception:
-            # Path resolution failed, continue to branch check
+            # Git command failed, continue to branch check
             pass
 
         # Branch check (fallback): check current git branch
