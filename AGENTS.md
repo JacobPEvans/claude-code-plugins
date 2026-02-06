@@ -10,8 +10,10 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 
 | Plugin | Type | Tools/Commands | Purpose |
 |--------|------|--------|---------|
+| **git-permission-guard** | PreToolUse | Bash | Blocks dangerous git/gh commands |
 | **git-rebase-workflow** | Command/Skill | `/rebase-pr` | Local rebase-merge workflow for linear git history |
 | **issue-limiter** | PreToolUse | Bash (gh) | Prevents GitHub issue backlog overflow |
+| **main-branch-guard** | PreToolUse | Edit, Write, NotebookEdit | Blocks file edits on main branch |
 | **markdown-validator** | PostToolUse | Write, Edit | Validates markdown with markdownlint and cspell |
 | **token-validator** | PreToolUse | Write, Edit | Enforces configurable file token limits |
 | **webfetch-guard** | PreToolUse | WebFetch, WebSearch | Blocks outdated year references in web queries |
@@ -22,7 +24,7 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 
 Most hook-based plugins follow this structure:
 
-```
+```text
 plugin-name/
 ├── .claude-plugin/plugin.json  # Metadata (required)
 ├── hooks/hooks.json            # Hook config (required)
@@ -32,7 +34,7 @@ plugin-name/
 
 Command/skill-based plugins use this structure:
 
-```
+```text
 plugin-name/
 ├── .claude-plugin/plugin.json  # Metadata (required)
 ├── commands/                   # Command definitions

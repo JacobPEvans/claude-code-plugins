@@ -30,6 +30,8 @@ jobs:
 
       - name: Validate plugin structure
         run: |
+          echo "Validating main-branch-guard plugin..."
+          $HOME/go/bin/cclint main-branch-guard
           echo "Validating webfetch-guard plugin..."
           $HOME/go/bin/cclint webfetch-guard
           echo "Validating markdown-validator plugin..."

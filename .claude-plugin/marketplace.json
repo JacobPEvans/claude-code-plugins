@@ -28,6 +28,15 @@
       }
     },
     {
+      "name": "main-branch-guard",
+      "source": "./main-branch-guard",
+      "description": "PreToolUse hook that blocks Edit/Write/NotebookEdit operations on main branch or worktree",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
       "name": "markdown-validator",
       "source": "./markdown-validator",
       "description": "PostToolUse hook that validates markdown files with markdownlint-cli2 and cspell",

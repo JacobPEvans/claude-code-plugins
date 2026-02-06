@@ -1,0 +1,9 @@
+{
+  "name": "main-branch-guard",
+  "version": "1.0.0",
+  "description": "PreToolUse hook that blocks Edit/Write/NotebookEdit operations on main branch or worktree",
+  "author": "JacobPEvans",
+  "homepage": "https://github.com/JacobPEvans/claude-code-plugins",
+  "keywords": ["main-branch", "worktree", "permissions", "safety", "hooks"],
+  "license": "MIT"
+}
