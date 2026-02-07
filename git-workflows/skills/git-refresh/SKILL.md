@@ -48,7 +48,7 @@ A worktree is stale if its branch no longer exists or has been merged into main.
 
 ### 5. Summary
 
-Report: PRs merged (if any), branches cleaned up, worktrees removed, current branch and sync status.
+Report: PRs assessed as merge-ready (if any), branches cleaned up, worktrees removed, current branch and sync status.
 
 ## Common Mistake to Avoid
 

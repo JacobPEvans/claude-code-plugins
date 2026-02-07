@@ -41,11 +41,12 @@ git push origin <branch>
 If this happens during a rebase operation:
 
 ```bash
-MAIN_PATH=$(git worktree list | grep '\[main\]' | awk '{print $1}')
-cd "$MAIN_PATH"
-git add -A
-git commit --amend --no-edit
-git push origin main
+# In the worktree where the rebase is running:
+git add -A                    # stage the hook changes
+git commit --amend --no-edit  # update the current commit in the rebase
+git rebase --continue         # continue the rebase
+# After the rebase finishes:
+git push origin <branch>      # push the rebased branch
 ```
 
 ### Debugging: Hook Loop

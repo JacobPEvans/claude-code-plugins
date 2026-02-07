@@ -13,9 +13,17 @@ Check: `pwd`, `git status`, `git branch --show-current`, `git worktree list`, `g
 
 ## Error: Push Rejected (Non-Fast-Forward)
 
-Branches diverged. Fix: `git fetch origin && git rebase origin/main && git push origin main`
+Branches have diverged. First, confirm your current branch: `git branch --show-current`.
 
-If fails again, origin/main was updated during rebase - start over from the beginning.
+- If this is a **feature branch** (for example `feature/foo`) and the push was rejected:
+  - Rebase onto the latest main: `git fetch origin && git rebase origin/main`
+  - Then push your feature branch: `git push --force-with-lease origin HEAD`
+
+- If you are on **main** and are behind `origin/main`, do **not** rebase main:
+  - Update main: `git fetch origin && git reset --hard origin/main`
+  - Then retry your original operation (for example, rebase your feature branch onto main and push the feature branch).
+
+If the rebase fails because `origin/main` moved again, repeat: fetch, rebase your feature branch, then push with `--force-with-lease`.
 
 ## Error: Repository Rule Violations
 

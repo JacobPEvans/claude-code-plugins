@@ -27,8 +27,9 @@ or all open PR branches when using the `all` parameter.
 1. **Verify state**: `git branch --show-current`, `git status --porcelain`
    - STOP if on main or uncommitted changes
 2. **Find and sync main**: `cd ~/git/<repo>/main && git fetch --all --prune && git pull`
-3. **Check for updates**: `git fetch origin main && git merge-base --is-ancestor origin/main HEAD`
-4. **Inform user**: Report if branch is behind main with summary of commits
+3. **Check for updates**: `git fetch origin main`
+4. **Inform user**: Report if the branch is behind `main` by checking for new commits with
+   `git log --oneline HEAD..origin/main`. The output also serves as the summary of commits.
 5. **Request confirmation**: Ask user if they want to merge main into current branch
 6. **Merge (if confirmed)**: `git merge origin/main --no-edit`
 7. **Push (if confirmed)**: `git push origin $(git branch --show-current)`
