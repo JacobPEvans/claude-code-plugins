@@ -1,0 +1,24 @@
+{
+  "name": "git-workflows",
+  "version": "1.0.0",
+  "description": "Git worktree initialization, main branch sync, and repository refresh workflows",
+  "author": "Jacob Evans",
+  "license": "MIT",
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
+  "keywords": ["git", "worktree", "sync", "refresh", "branch", "workflow"],
+  "skills": [
+    {
+      "name": "init-worktree",
+      "description": "Initialize a clean worktree for new development work"
+    },
+    {
+      "name": "sync-main",
+      "description": "Update main from remote and merge into current or all PR branches"
+    },
+    {
+      "name": "git-refresh",
+      "description": "Check PR merge readiness, sync local repo, and cleanup stale worktrees"
+    }
+  ]
+}
