@@ -30,12 +30,14 @@ jobs:
 
       - name: Validate plugin structure
         run: |
-          echo "Validating main-branch-guard plugin..."
-          $HOME/go/bin/cclint main-branch-guard
-          echo "Validating webfetch-guard plugin..."
-          $HOME/go/bin/cclint webfetch-guard
-          echo "Validating markdown-validator plugin..."
-          $HOME/go/bin/cclint markdown-validator
+          # Validate all plugins with .claude-plugin/plugin.json
+          for plugin_dir in */; do
+            plugin_name="${plugin_dir%/}"
+            if [ -f "$plugin_dir.claude-plugin/plugin.json" ]; then
+              echo "Validating $plugin_name plugin..."
+              $HOME/go/bin/cclint "$plugin_name"
+            fi
+          done
 
       - name: Validate marketplace.json
         run: |
@@ -59,7 +61,7 @@ jobs:
               fi
             fi
           done
-          
+
           find . -name "*.sh" -path "*/scripts/*" | while read -r script; do
             if [ -f "$script" ]; then
               echo "Validating Bash syntax: $script"
