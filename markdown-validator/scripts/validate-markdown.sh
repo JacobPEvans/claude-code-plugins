@@ -38,8 +38,8 @@ if command -v markdownlint-cli2 &>/dev/null; then
   has_project_config=false
 
   # Walk up from the file's directory looking for project-level config
-  search_dir="$(dirname "$file_path")"
-  while [[ "$search_dir" != "/" ]]; do
+  search_dir="$(dirname -- "$file_path")"
+  while true; do
     if [[ -f "$search_dir/.markdownlint-cli2.yaml" ]] ||
        [[ -f "$search_dir/.markdownlint-cli2.jsonc" ]] ||
        [[ -f "$search_dir/.markdownlint-cli2.cjs" ]] ||
@@ -53,7 +53,12 @@ if command -v markdownlint-cli2 &>/dev/null; then
       has_project_config=true
       break
     fi
-    search_dir="$(dirname "$search_dir")"
+
+    parent_dir="$(dirname -- "$search_dir")"
+    if [[ "$parent_dir" == "$search_dir" ]]; then
+      break
+    fi
+    search_dir="$parent_dir"
   done
 
   if [[ "$has_project_config" == "true" ]]; then
