@@ -142,6 +142,15 @@ gh api graphql \
 
 Where `{THREAD_ID}` is the thread's `PRRT_*` node ID from Step 1.
 
+**Fallback**: If the mutation fails with permission errors, fall back to a
+top-level PR comment. This loses threading but still documents the response:
+
+```bash
+gh pr comment {PR_NUMBER} --body "**Re: {reviewer}'s feedback on {path}:{line}**
+
+{detailed response}"
+```
+
 **Reply guidelines:**
 
 - If fixed: Include commit hash and specific changes made
@@ -234,4 +243,5 @@ Status: COMPLETE | PARTIAL ({remaining} need attention)
 | `Resource not accessible` | Permission issue | Check `gh auth status`, need repo write access |
 | Verification shows >0 | Thread not resolved | Re-run mutation for remaining threads |
 | Empty reviewThreads | No reviews yet | Nothing to resolve, exit cleanly |
+| `addPullRequestReviewComment` fails | Token lacks review permissions | Fall back to `gh pr comment` (loses threading) |
 | Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
