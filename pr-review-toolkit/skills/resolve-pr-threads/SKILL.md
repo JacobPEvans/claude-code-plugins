@@ -183,7 +183,7 @@ When `$ARGUMENTS` is `all`:
 1. List open PRs: `gh pr list --state open --json number,headRefName`
 2. For each PR, check for unresolved threads via GraphQL
 3. Skip PRs with zero unresolved threads
-4. Process each PR using the Task tool with this skill's workflow
+4. For each PR with unresolved threads, run this skill's standard workflow
 5. Verify each PR independently before moving to the next
 
 ## Special Cases
