@@ -156,7 +156,7 @@ immediately pull in plugin updates instead of waiting for scheduled updates.
 
 The trigger workflow requires a GitHub Personal Access Token (PAT) stored as an organization secret:
 
-**Secret Name**: `WORKFLOW_DISPATCH_PAT`
+**Secret Name**: `GH_PAT_WORKFLOW_DISPATCH`
 
 **Required Scopes**:
 
@@ -170,7 +170,7 @@ The trigger workflow requires a GitHub Personal Access Token (PAT) stored as an 
 3. Set expiration to 1 year
 4. Copy the token
 5. Add as organization secret: Organization Settings → Secrets and variables → Actions → New organization secret
-6. Name: `WORKFLOW_DISPATCH_PAT`
+6. Name: `GH_PAT_WORKFLOW_DISPATCH`
 7. Paste token value
 8. Select repository access (all repositories or specific repos)
 

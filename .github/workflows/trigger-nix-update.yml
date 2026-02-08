@@ -29,7 +29,7 @@ jobs:
             --field client_payload[source_ref]="$SOURCE_REF" \
             --field client_payload[commit_sha]="$COMMIT_SHA"
         env:
-          GH_TOKEN: ${{ secrets.WORKFLOW_DISPATCH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_PAT_WORKFLOW_DISPATCH }}
           SOURCE_REPO: ${{ github.repository }}
           SOURCE_REF: ${{ github.ref }}
           COMMIT_SHA: ${{ github.sha }}
