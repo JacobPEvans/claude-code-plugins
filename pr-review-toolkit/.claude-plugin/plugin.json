@@ -1,0 +1,16 @@
+{
+  "name": "pr-review-toolkit",
+  "version": "1.0.0",
+  "description": "Resolve GitHub PR review threads - read comments, implement fixes, reply, and mark threads resolved via GraphQL",
+  "author": "Jacob Evans",
+  "license": "MIT",
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
+  "keywords": ["pr", "review", "thread", "resolve", "github", "graphql", "code-review"],
+  "skills": [
+    {
+      "name": "resolve-pr-threads",
+      "description": "Resolve GitHub PR review threads by implementing fixes or explanations, replying, and marking resolved via GraphQL"
+    }
+  ]
+}
