@@ -31,7 +31,9 @@ Current PR info from branch context:
 
 ```text
 PR number: !`gh pr view --json number --jq .number 2>/dev/null || echo "none"`
-Repo: !`gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || echo "unknown"`
+Repo (owner/name): !`gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || echo "unknown"`
+OWNER: !`gh repo view --json owner --jq .owner.login 2>/dev/null || echo "unknown"`
+REPO: !`gh repo view --json name --jq .name 2>/dev/null || echo "unknown"`
 Branch: !`git branch --show-current 2>/dev/null || echo "detached"`
 ```
 
@@ -56,6 +58,7 @@ Filter to threads where `isResolved == false`. Extract from each:
 - `id` (`PRRT_*` node ID) - needed for resolution mutation
 - `path` - file being reviewed
 - `line`/`startLine` - location in file
+- `comments.nodes[].id` - comment node ID for threading replies
 - `comments.nodes[].body` - comment text
 - `comments.nodes[].author.login` - who commented
 
@@ -116,13 +119,28 @@ descriptive message.
 
 ### Step 6: Reply to Each Thread
 
-Post a reply as a PR comment referencing the specific feedback:
+Reply within the specific review thread using the comment ID from Step 1.
+This ensures the reply is threaded correctly, not posted as a standalone comment.
+
+Use `printf` to safely handle multi-line content:
 
 ```bash
-gh pr comment {PR_NUMBER} --body "**Re: {reviewer}'s feedback on {path}:{line}**
-
-{detailed response}"
+printf "**Re: %s's feedback on %s:%s**\n\n%s" \
+  "{reviewer}" "{path}" "{line}" "{detailed response}" | \
+gh api graphql \
+  -f query='mutation($threadId: ID!, $body: String!) {
+    addPullRequestReviewComment(input: {
+      pullRequestReviewThreadId: $threadId,
+      body: $body
+    }) {
+      comment { id url }
+    }
+  }' \
+  -f threadId="{THREAD_ID}" \
+  -F body=-
 ```
+
+Where `{THREAD_ID}` is the thread's `PRRT_*` node ID from Step 1.
 
 **Reply guidelines:**
 
