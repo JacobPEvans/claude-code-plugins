@@ -24,7 +24,7 @@ jobs:
           gh api repos/JacobPEvans/nix/dispatches \
             --method POST \
             --field event_type='upstream-repo-updated' \
-            --field client_payload[flake_input_name]='claude-code-plugins' \
+            --field client_payload[flake_input_name]='jacobpevans-cc-plugins' \
             --field client_payload[source_repo]="$SOURCE_REPO" \
             --field client_payload[source_ref]="$SOURCE_REF" \
             --field client_payload[commit_sha]="$COMMIT_SHA"
