@@ -73,7 +73,7 @@ config:
   MD013:
     line_length: 160
     heading_line_length: 120
-    code_block_line_length: 160
+    code_block_line_length: 120
     tables: false
   MD060: false
 fix: true
@@ -90,7 +90,7 @@ To override per-project, add a markdownlint config file to your project root (e.
 - **MD013**: Line length limits configured for readability
   - `line_length: 160`: Regular text lines (default 80 breaks sentences mid-sentence)
   - `heading_line_length: 120`: Heading lines
-  - `code_block_line_length: 160`: Code block lines
+  - `code_block_line_length: 120`: Code block lines (keeps code concise)
   - `tables: false`: Disable table line length checks
 - **MD060**: Disabled due to version mismatch between GitHub Actions and nixpkgs
 - **fix: true**: Auto-fix issues where possible during validation
