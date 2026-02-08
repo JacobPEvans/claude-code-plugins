@@ -56,6 +56,7 @@ claude plugins add jacobpevans-cc-plugins/<plugin-name>
 ```
 
 **Available plugins**:
+
 - `jacobpevans-cc-plugins/git-rebase-workflow`
 - `jacobpevans-cc-plugins/issue-limiter`
 - `jacobpevans-cc-plugins/markdown-validator`
@@ -80,7 +81,7 @@ claude plugins link ./webfetch-guard
 
 Each plugin follows Claude Code official best practices. Most plugins use hook-based structure:
 
-```
+```text
 plugin-name/
 ├── .claude-plugin/
 │   └── plugin.json       # Plugin metadata
@@ -93,7 +94,7 @@ plugin-name/
 
 Command/skill-based plugins use a different structure:
 
-```
+```text
 plugin-name/
 ├── .claude-plugin/
 │   └── plugin.json       # Plugin metadata
@@ -136,12 +137,65 @@ claude plugins list
 # (trigger the hook conditions for the specific plugin)
 ```
 
+## Repository Integration
+
+### Nix Flake Auto-Update
+
+This repository automatically triggers Nix flake updates when changes are merged to main.
+This ensures downstream repositories (like [nix-config](https://github.com/JacobPEvans/nix))
+immediately pull in plugin updates instead of waiting for scheduled updates.
+
+#### How It Works
+
+1. Changes merged to `main` branch trigger `.github/workflows/trigger-nix-update.yml`
+2. Workflow sends a `repository_dispatch` event to the nix repository
+3. Nix repository's `deps-update-flake.yml` workflow updates the `claude-code-plugins` flake input
+4. Automated PR created with the updated `flake.lock`
+
+#### Organization Secret Required
+
+The trigger workflow requires a GitHub Personal Access Token (PAT) stored as an organization secret:
+
+**Secret Name**: `WORKFLOW_DISPATCH_PAT`
+
+**Required Scopes**:
+
+- `repo` - Full control of private repositories
+- `workflow` - Update GitHub Action workflows
+
+**Setup Instructions**:
+
+1. Generate PAT: GitHub.com → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Select required scopes: `repo` and `workflow`
+3. Set expiration to 1 year
+4. Copy the token
+5. Add as organization secret: Organization Settings → Secrets and variables → Actions → New organization secret
+6. Name: `WORKFLOW_DISPATCH_PAT`
+7. Paste token value
+8. Select repository access (all repositories or specific repos)
+
+**Security Notes**:
+
+- Token has minimal scopes (no admin, no packages)
+- Rotate token annually before expiration
+- Never expose token in logs or workflow outputs
+- Organization-level secret is accessible to all repos
+
+#### Reusable Pattern
+
+This pattern can be replicated to any JacobPEvans repository that's a flake input. Simply:
+
+1. Copy `.github/workflows/trigger-nix-update.yml` to the target repository
+2. Update the `flake_input_name` field to match the flake input name in `nix/flake.nix`
+3. No changes needed to the nix repository workflow (uses generic event type)
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
 
 ## Author
 
-**JacobPEvans**
+JacobPEvans
+
 - GitHub: [@JacobPEvans](https://github.com/JacobPEvans)
-- Email: 20714140+JacobPEvans@users.noreply.github.com
+- Email: <20714140+JacobPEvans@users.noreply.github.com>
