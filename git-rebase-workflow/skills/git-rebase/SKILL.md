@@ -250,10 +250,13 @@ git push --force-with-lease origin "$BRANCH"
 ```
 
 If `--force-with-lease` fails (common with bot branches like Renovate that were
-fetched via `FETCH_HEAD` without proper tracking):
+fetched via `FETCH_HEAD` without proper tracking), fix the tracking first:
 
 ```bash
-git push -f origin "$BRANCH"
+git fetch origin "$BRANCH":"$BRANCH"
+git checkout "$BRANCH"
+git branch --set-upstream-to="origin/$BRANCH" "$BRANCH"
+git push --force-with-lease origin "$BRANCH"
 ```
 
 ### 3.5.2 Wait for CI on Rebased Commits
@@ -532,7 +535,6 @@ start point.
 ```bash
 # After each PR merge completes Phase 5
 cd "$MAIN_WORKTREE"
-git fetch origin main
 git pull origin main
 # Then start next PR
 ```
