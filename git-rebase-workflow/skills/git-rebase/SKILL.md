@@ -1,9 +1,11 @@
 ---
 title: "Git Rebase Workflow for Pull Requests"
 description: "Local rebase-merge workflow for pull requests with linear git history and signed commits. Rebases PR onto main and pushes to origin/main."
-version: "1.0.0"
+version: "1.1.0"
 author: "JacobPEvans"
 ---
+
+<!-- cspell:words worktree worktrees oneline subshell -->
 
 Local rebase workflow for merging pull requests that maintains linear history with signed commits by rebasing PR branches onto main and
 pushing directly to origin/main (auto-closing the pull request).
@@ -35,6 +37,7 @@ Do NOT use when:
 3. **Pull request must be approved** (unless review not required)
 4. **Local main must be synced** - Stale main causes non-fast-forward errors
 5. **Commits must be signed** - Required for repositories with signing policies (this is why we can't use `gh pr merge`)
+6. **CodeQL must scan rebased commits** - After rebase creates new SHAs, push branch to origin and wait for CI before pushing to main
 
 ---
 
@@ -235,6 +238,37 @@ echo "Branch is $COMMITS_AHEAD commits ahead of main"
 
 ---
 
+## Phase 3.5: Push Rebased Branch and Wait for CI
+
+After rebase, the branch has new commit SHAs that CodeQL hasn't scanned.
+Push the branch to origin so CI runs on the rebased commits before merging.
+
+### 3.5.1 Force-Push Rebased Branch
+
+```bash
+git push --force-with-lease origin "$BRANCH"
+```
+
+If `--force-with-lease` fails (common with bot branches like Renovate that were
+fetched via `FETCH_HEAD` without proper tracking):
+
+```bash
+git push -f origin "$BRANCH"
+```
+
+### 3.5.2 Wait for CI on Rebased Commits
+
+```bash
+gh pr checks "$PR_NUMBER" --watch --interval 15
+```
+
+**If CI fails after rebase**: ABORT with "CI failed on rebased commits. Fix
+issues before merging."
+
+Do NOT proceed to Phase 4 until all checks pass on the rebased branch.
+
+---
+
 ## Phase 4: Fast-Forward Merge to Main
 
 ### 4.1 Switch to Main Worktree
@@ -288,6 +322,18 @@ echo "Main now includes: $(git log -1 --format='%s')"
 ```bash
 git push origin main
 ```
+
+**If push is rejected with "Code scanning is waiting for results"**: This means
+CodeQL hasn't finished scanning the rebased commits. Wait and retry:
+
+```bash
+gh pr checks "$PR_NUMBER" --watch --interval 15
+git push origin main
+```
+
+**NEVER fall back to `gh pr merge`** - it cannot sign rebase commits, which
+violates the `required_signatures` branch protection rule. This local workflow
+exists specifically because `gh pr merge` doesn't sign commits.
 
 **This automatically closes the pull request** because the PR's commits (with signatures) are now on main.
 
@@ -451,6 +497,46 @@ This repository may not be using worktree structure.
 See /init-worktree to set up proper worktree structure.
 ```
 
+### Push to Main Rejected: Code Scanning Pending
+
+**Detection**: `git push origin main` fails with "Code scanning is waiting for results"
+
+**Action**: Wait for CodeQL to finish, then retry:
+
+```bash
+gh pr checks "$PR_NUMBER" --watch --interval 15
+git push origin main
+```
+
+### Remote-Only Branch (No Local Worktree)
+
+**Detection**: Bot branches (Renovate, Dependabot) exist only on the remote
+
+**Action**: Fetch and create a local tracking branch:
+
+```bash
+git fetch origin <branch>
+git checkout -b <branch> origin/<branch>
+```
+
+**NEVER** use `FETCH_HEAD` to create the local branch - it lacks proper tracking
+and causes `--force-with-lease` to fail. Always use `origin/<branch>` as the
+start point.
+
+### Batch Processing Multiple PRs
+
+**Detection**: Processing more than one PR in sequence
+
+**Action**: Re-sync main between each PR since HEAD changes after each merge:
+
+```bash
+# After each PR merge completes Phase 5
+cd "$MAIN_WORKTREE"
+git fetch origin main
+git pull origin main
+# Then start next PR
+```
+
 ---
 
 ## Summary Output Template
@@ -467,6 +553,7 @@ Method: Local rebase + fast-forward push
 1. ✅ Validated PR: OPEN, MERGEABLE, CI SUCCESS, APPROVED
 2. ✅ Synced main: <old-sha> → <new-sha>
 3. ✅ Rebased branch: <commits> commit(s)
+3.5. ✅ Pushed branch, CI passed on rebased commits
 4. ✅ Fast-forward merged to main
 5. ✅ Pushed to origin/main
 6. ✅ PR auto-closed by GitHub
@@ -495,6 +582,9 @@ Linear history preserved ✨
 | Rebase when others are pushing to branch | Coordinate with team first |
 | Delete branch before verifying merge | Confirm PR state is MERGED |
 | Use `git checkout --theirs` blindly | Analyze and combine both sides |
+| Use `gh pr merge` as fallback | Never - can't sign rebase commits |
+| Push to main without waiting for CI on rebased commits | Always push branch first, wait for CI |
+| Create local branch from `FETCH_HEAD` | Use `origin/<branch>` tracking ref |
 
 ---
 
