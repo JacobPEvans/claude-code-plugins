@@ -1,19 +1,21 @@
 ---
 name: resolve-pr-threads
 description: >-
-  Resolve GitHub PR review threads by implementing fixes or explanations,
-  replying, and marking resolved via GraphQL. Use when a PR has unresolved
-  review comments that block merge. No other plugin does this.
+  Systematically resolve all unresolved GitHub PR review threads end-to-end:
+  fetch threads via GraphQL, implement fixes or write explanations, reply to
+  each comment, and mark threads resolved so the PR becomes mergeable.
+  Use when you need to batch-process review feedback to unblock a PR merge.
 argument-hint: "[PR_NUMBER|all]"
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh:*), Bash(git:*)
 ---
 
-<!-- cspell:words PRRT -->
+<!-- cspell:words PRRT oneline -->
 
 # Resolve PR Review Threads
 
-Addresses unresolved PR review comments by implementing requested changes or providing
-explanations, then resolves threads via GitHub's GraphQL API so the PR becomes mergeable.
+Systematically addresses all unresolved PR review comments by implementing
+requested changes or providing explanations, then resolves threads via
+GitHub's GraphQL API so the PR becomes mergeable.
 
 ## Usage
 
@@ -37,9 +39,9 @@ Branch: !`git branch --show-current 2>/dev/null || echo "detached"`
 
 Every thread follows exactly one of two paths. Both end with resolution.
 
-**Path A - Technical Fix**: Read comment -> Implement change -> Commit -> Reply with commit hash -> Resolve thread
+**Path A - Technical Fix**: Implement change -> Commit -> Reply with hash -> Resolve
 
-**Path B - Explanation Only**: Read comment -> Draft explanation -> Reply with reasoning -> Resolve thread
+**Path B - Explanation Only**: Draft explanation -> Reply with reasoning -> Resolve
 
 Never reply without resolving. Never resolve without replying.
 
@@ -47,28 +49,11 @@ Never reply without resolving. Never resolve without replying.
 
 ### Step 1: Fetch Unresolved Threads
 
-**CRITICAL**: `gh pr view --json` does NOT support `reviewThreads`. Use GraphQL:
+Use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
 
-```bash
-gh api graphql --raw-field 'query=query {
-  repository(owner: "{OWNER}", name: "{REPO}") {
-    pullRequest(number: {NUMBER}) {
-      reviewThreads(last: 100) {
-        nodes {
-          id isResolved path line startLine
-          comments(last: 100) {
-            nodes { id databaseId body author { login } createdAt }
-          }
-        }
-      }
-    }
-  }
-}'
-```
+Filter to threads where `isResolved == false`. Extract from each:
 
-Extract from each unresolved thread (`isResolved == false`):
-
-- `id` (starts with `PRRT_`) - needed for resolution mutation
+- `id` (`PRRT_*` node ID) - needed for resolution mutation
 - `path` - file being reviewed
 - `line`/`startLine` - location in file
 - `comments.nodes[].body` - comment text
@@ -95,28 +80,41 @@ limit = 30
 Read(file_path="<path>", offset=<offset>, limit=<limit>)
 ```
 
-Understand what the code does, why the reviewer raised the concern, and the impact
-of potential changes before acting.
+Understand what the code does, why the reviewer raised the concern, and the
+impact of potential changes before acting.
 
-### Step 4: Implement or Explain
+### Step 4: Check If Already Addressed
+
+Before implementing a fix, check if a subsequent commit already addressed it:
+
+```bash
+git log --oneline -- {path}
+```
+
+If the concern was already fixed in a later commit, skip to Step 5 and reply
+with: "Addressed in commit {hash}" with a brief explanation of the change.
+
+### Step 5: Implement or Explain
 
 **Decision tree:**
 
 ```text
-Has suggestion block?  -> Apply exact code change
-Is blocking?           -> Fix immediately
+Already addressed?         -> Reply with commit ref, skip to Step 6
+Has suggestion block?      -> Apply exact code change
+Is blocking?               -> Fix immediately
 Is a question?
-  Needs code change?   -> Make code clearer + explain
-  Answer only?         -> Explain in reply
+  Needs code change?       -> Make code clearer + explain
+  Answer only?             -> Explain in reply
 Has merit?
-  Yes                  -> Implement fix
-  No                   -> Reply with respectful disagreement
-  Unsure               -> Follow project conventions
+  Yes                      -> Implement fix
+  No                       -> Reply with respectful disagreement
+  Unsure                   -> Follow project conventions
 ```
 
-For code changes: use Edit tool, follow project standards, commit with descriptive message.
+For code changes: use Edit tool, follow project standards, commit with
+descriptive message.
 
-### Step 5: Reply to Each Thread
+### Step 6: Reply to Each Thread
 
 Post a reply as a PR comment referencing the specific feedback:
 
@@ -130,39 +128,24 @@ gh pr comment {PR_NUMBER} --body "**Re: {reviewer}'s feedback on {path}:{line}**
 
 - If fixed: Include commit hash and specific changes made
 - If question: Give clear technical answer with rationale
-- If disagreeing: Acknowledge the point, explain why not implementing with reasoning
+- If disagreeing: Acknowledge the point, explain why not with reasoning
 - NEVER tag AI assistants (@gemini-code-assist, @copilot, etc.) in replies
 - NEVER tag bots - only tag human reviewers when needed
 
-### Step 6: Resolve Each Thread
+### Step 7: Resolve Each Thread
 
-Immediately after replying, resolve via GraphQL mutation:
+Immediately after replying, use the **Resolve Thread Mutation** from
+[graphql-queries.md](graphql-queries.md) with the `PRRT_*` node ID from Step 1.
 
-```bash
-gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{THREAD_ID}"}) { thread { id isResolved } } }'
-```
+### Step 8: Verify Zero Unresolved
 
-Where `{THREAD_ID}` is the `PRRT_*` node ID from Step 1.
+Use the **Verify Zero Unresolved** query from
+[graphql-queries.md](graphql-queries.md).
 
-### Step 7: Verify Zero Unresolved
+**Must return `0`**. If not, identify and address remaining threads. Do not
+report completion until verification passes.
 
-After resolving all threads, verify none remain:
-
-```bash
-gh api graphql --raw-field 'query=query {
-  repository(owner: "{OWNER}", name: "{REPO}") {
-    pullRequest(number: {NUMBER}) {
-      reviewThreads(last: 100) { nodes { isResolved } }
-    }
-  }
-}' | jq '[.data.repository.pullRequest.reviewThreads.nodes[]
-  | select(.isResolved == false)] | length'
-```
-
-**Must return `0`**. If not, identify and address remaining threads. Do not report
-completion until verification passes.
-
-### Step 8: Commit and Push
+### Step 9: Commit and Push
 
 ```bash
 git add <changed-files>
@@ -182,43 +165,35 @@ When `$ARGUMENTS` is `all`:
 1. List open PRs: `gh pr list --state open --json number,headRefName`
 2. For each PR, check for unresolved threads via GraphQL
 3. Skip PRs with zero unresolved threads
-4. Process each PR with unresolved threads using the Task tool with this skill's workflow
+4. Process each PR using the Task tool with this skill's workflow
 5. Verify each PR independently before moving to the next
 
 ## Special Cases
 
+### Already-Addressed Comments
+
+If a subsequent commit already fixed the reviewer's concern, reply with the
+commit reference and resolve. Do NOT re-implement the same fix.
+
 ### Multi-Reviewer Threads
 
-If multiple reviewers commented on the same thread:
-
-1. Read ALL comments chronologically
-2. If 2+ reviewers agree, follow consensus
-3. If no consensus, decide based on project conventions and explain reasoning
+Read ALL comments chronologically. If 2+ reviewers agree, follow consensus.
+If no consensus, decide based on project conventions and explain reasoning.
 
 ### Contradictory Feedback
 
-If different threads give conflicting advice:
-
-1. Reply to BOTH threads acknowledging the conflict
-2. Propose a decision with technical rationale
-3. Tag HUMAN reviewers only (never AI bots) to request consensus
+Reply to BOTH threads acknowledging the conflict. Propose a decision with
+technical rationale. Tag HUMAN reviewers only (never AI bots) for consensus.
 
 ### Outdated Comments
 
-If a comment references deleted or moved code:
-
-1. Check git history for context
-2. Reply explaining what happened to the code
-3. Provide new location if moved
-4. Resolve the outdated thread
+Check git history, reply explaining what happened to the code, provide new
+location if moved, and resolve the outdated thread.
 
 ### Batch Comments
 
-If one comment lists multiple issues:
-
-1. Address ALL items in the comment
-2. Reply with numbered responses matching each item
-3. Only resolve after ALL items are addressed
+If one comment lists multiple issues, address ALL items with numbered
+responses. Only resolve after ALL items are addressed.
 
 ## Output Format
 
@@ -239,5 +214,6 @@ Status: COMPLETE | PARTIAL ({remaining} need attention)
 |-------|-------|-----|
 | `Could not resolve to a node` | Invalid thread ID | Re-fetch threads, IDs may have changed |
 | `Resource not accessible` | Permission issue | Check `gh auth status`, need repo write access |
-| Verification shows >0 | Thread not resolved | Re-run resolution mutation for remaining threads |
+| Verification shows >0 | Thread not resolved | Re-run mutation for remaining threads |
 | Empty reviewThreads | No reviews yet | Nothing to resolve, exit cleanly |
+| Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
