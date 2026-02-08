@@ -18,6 +18,19 @@ if [[ -z "$file_path" ]]; then
   exit 0
 fi
 
+# Expand ~ to $HOME for consistent comparison
+expanded_path="${file_path/#\~/$HOME}"
+
+# Skip files in home dotfiles/dotdirs (e.g., ~/.config/, ~/.local/, ~/.claude/)
+if [[ "$expanded_path" == "$HOME/".* ]]; then
+  exit 0
+fi
+
+# Skip files within ANY .claude directory at ANY level
+if [[ "$file_path" == */.claude/* ]]; then
+  exit 0
+fi
+
 # Only validate markdown files
 if [[ ! "$file_path" =~ \.md$ ]]; then
   exit 0
@@ -65,9 +78,34 @@ if command -v markdownlint-cli2 &>/dev/null; then
     # Let markdownlint-cli2 discover the project config naturally
     config_flag=()
   elif [[ -f "$HOME/.markdownlint-cli2.yaml" ]]; then
+    # Use user's home config
     config_flag=(--config "$HOME/.markdownlint-cli2.yaml")
   else
-    config_flag=(--config "${CLAUDE_PLUGIN_ROOT}/config/.markdownlint-cli2.yaml")
+    # Use plugin default config if available, otherwise create temporary fallback
+    plugin_config="${CLAUDE_PLUGIN_ROOT}/config/.markdownlint-cli2.yaml"
+
+    if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -f "$plugin_config" ]]; then
+      # Plugin config exists and is readable
+      config_flag=(--config "$plugin_config")
+    else
+      # Create temporary inline config with MD013 hardcoded to 160
+      temp_config=$(mktemp)
+      trap 'rm -f "$temp_config"' EXIT
+
+      cat > "$temp_config" <<'EOF'
+config:
+  default: true
+  MD013:
+    line_length: 160
+    heading_line_length: 120
+    code_block_line_length: 160
+    tables: false
+  MD060: false
+fix: true
+EOF
+
+      config_flag=(--config "$temp_config")
+    fi
   fi
 
   if ! markdownlint_output=$(markdownlint-cli2 "${config_flag[@]}" "$file_path" 2>&1); then
