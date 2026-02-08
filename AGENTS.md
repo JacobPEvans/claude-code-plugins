@@ -16,6 +16,7 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 | **main-branch-guard** | PreToolUse | Edit, Write, NotebookEdit | Blocks file edits on main branch |
 | **markdown-validator** | PostToolUse | Write, Edit | Validates markdown with markdownlint and cspell |
 | **token-validator** | PreToolUse | Write, Edit | Enforces configurable file token limits |
+| **pr-review-toolkit** | Skill | `/resolve-pr-threads` | Resolve PR review threads via GraphQL (read, reply, resolve) |
 | **webfetch-guard** | PreToolUse | WebFetch, WebSearch | Blocks outdated year references in web queries |
 
 ## Plugin Development
