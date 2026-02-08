@@ -40,13 +40,21 @@ npm install -g cspell
 
 ## Configuration
 
-### Global Markdownlint Configuration
+### Markdownlint Config Resolution
 
-This plugin uses a global markdownlint configuration file at `~/.markdownlint-cli2.yaml`. The configuration
-defines the validation rules used by this plugin. If this file is missing, the validation hook will fail with
-a clear error message prompting you to create it.
+The plugin resolves markdownlint configuration in this order:
 
-**Recommended configuration** (`~/.markdownlint-cli2.yaml`):
+1. **Project config** — if a markdownlint config file exists in the edited file's directory tree
+   (e.g., `.markdownlint.json`, `.markdownlint-cli2.yaml`), markdownlint-cli2 discovers it naturally
+2. **User override** — `~/.markdownlint-cli2.yaml`, if it exists
+3. **Plugin default** — `config/.markdownlint-cli2.yaml` bundled with this plugin
+
+This means the plugin always has a working config. Project configs take precedence, user home overrides
+are respected but not required, and plugin upgrades update the default without touching user overrides.
+
+### Customizing Rules
+
+To override the plugin default globally, create `~/.markdownlint-cli2.yaml`:
 
 ```yaml
 config:
@@ -60,11 +68,13 @@ config:
 fix: true
 ```
 
-> **Note:** The YAML format shown above uses markdownlint-cli2's structure with a `config:` wrapper for rules
-> and a top-level `fix:` option. If using JSON format (`.markdownlint.json`), use a flat structure without
-> the `config` wrapper and omit the `fix` property, as shown in this repository's `.markdownlint.json`.
+To override per-project, add a markdownlint config file to your project root (e.g., `.markdownlint.json`).
 
-**Key settings:**
+> **Note:** The YAML format uses markdownlint-cli2's structure with a `config:` wrapper for rules
+> and a top-level `fix:` option. If using JSON format (`.markdownlint.json`), use a flat structure without
+> the `config` wrapper and omit the `fix` property.
+
+**Default rule settings:**
 
 - **MD013**: Line length limits configured for readability
   - `line_length: 160`: Regular text lines (default 80 breaks sentences mid-sentence)
@@ -73,8 +83,6 @@ fix: true
   - `tables: false`: Disable table line length checks
 - **MD060**: Disabled due to version mismatch between GitHub Actions and nixpkgs
 - **fix: true**: Auto-fix issues where possible during validation
-
-If you don't have this file, create it with the above configuration.
 
 ### Hook Configuration
 

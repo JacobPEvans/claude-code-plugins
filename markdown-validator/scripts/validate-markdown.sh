@@ -33,11 +33,39 @@ errors=()
 
 # Run markdownlint-cli2
 if command -v markdownlint-cli2 &>/dev/null; then
-  config_file="$HOME/.markdownlint-cli2.yaml"
-  if [[ ! -f "$config_file" ]]; then
-    errors+=("markdownlint-cli2 config not found: $config_file")
-    errors+=("Please create this file as documented in the plugin README.")
-  elif ! markdownlint_output=$(markdownlint-cli2 --config "$config_file" "$file_path" 2>&1); then
+  # Config resolution: project config > user home config > plugin default
+  config_flag=()
+  has_project_config=false
+
+  # Walk up from the file's directory looking for project-level config
+  search_dir="$(dirname "$file_path")"
+  while [[ "$search_dir" != "/" ]]; do
+    if [[ -f "$search_dir/.markdownlint-cli2.yaml" ]] ||
+       [[ -f "$search_dir/.markdownlint-cli2.jsonc" ]] ||
+       [[ -f "$search_dir/.markdownlint-cli2.cjs" ]] ||
+       [[ -f "$search_dir/.markdownlint-cli2.mjs" ]] ||
+       [[ -f "$search_dir/.markdownlint.json" ]] ||
+       [[ -f "$search_dir/.markdownlint.jsonc" ]] ||
+       [[ -f "$search_dir/.markdownlint.yaml" ]] ||
+       [[ -f "$search_dir/.markdownlint.yml" ]] ||
+       [[ -f "$search_dir/.markdownlint.cjs" ]] ||
+       [[ -f "$search_dir/.markdownlint.mjs" ]]; then
+      has_project_config=true
+      break
+    fi
+    search_dir="$(dirname "$search_dir")"
+  done
+
+  if [[ "$has_project_config" == "true" ]]; then
+    # Let markdownlint-cli2 discover the project config naturally
+    config_flag=()
+  elif [[ -f "$HOME/.markdownlint-cli2.yaml" ]]; then
+    config_flag=(--config "$HOME/.markdownlint-cli2.yaml")
+  else
+    config_flag=(--config "${CLAUDE_PLUGIN_ROOT}/config/.markdownlint-cli2.yaml")
+  fi
+
+  if ! markdownlint_output=$(markdownlint-cli2 "${config_flag[@]}" "$file_path" 2>&1); then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
   fi
