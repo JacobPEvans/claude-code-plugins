@@ -1,6 +1,6 @@
 {
   "name": "git-rebase-workflow",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Local rebase-merge workflow for linear git history and signed commits",
   "author": {
     "name": "JacobPEvans",
