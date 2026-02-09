@@ -54,7 +54,7 @@ plugin-name/
     "name": "JacobPEvans",
     "email": "20714140+JacobPEvans@users.noreply.github.com"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": ["hooks", "category", "relevant-tags"]
 }
 ```

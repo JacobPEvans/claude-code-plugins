@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Troubleshoot and recover from git rebase failures, pre-commit hook issues, and worktree problems",
   "author": "Jacob Evans",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["git", "troubleshooting", "rebase", "pre-commit", "worktree", "recovery"],

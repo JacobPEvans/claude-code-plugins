@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Resolve GitHub PR review threads - read comments, implement fixes, reply, and mark threads resolved via GraphQL",
   "author": "Jacob Evans",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["pr", "review", "thread", "resolve", "github", "graphql", "code-review"],
