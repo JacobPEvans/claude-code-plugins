@@ -191,7 +191,7 @@ This pattern can be replicated to any JacobPEvans repository that's a flake inpu
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Author
 
@@ -199,4 +199,3 @@ JacobPEvans
 
 - GitHub: [@JacobPEvans](https://github.com/JacobPEvans)
 - Email: <20714140+JacobPEvans@users.noreply.github.com>
-

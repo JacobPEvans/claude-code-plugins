@@ -5,5 +5,5 @@
   "author": "JacobPEvans",
   "homepage": "https://github.com/JacobPEvans/claude-code-plugins",
   "keywords": ["main-branch", "worktree", "permissions", "safety", "hooks"],
-  "license": "MIT"
+  "license": "Apache-2.0"
 }

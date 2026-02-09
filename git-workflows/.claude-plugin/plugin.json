@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Git worktree initialization, main branch sync, and repository refresh workflows",
   "author": "Jacob Evans",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["git", "worktree", "sync", "refresh", "branch", "workflow"],

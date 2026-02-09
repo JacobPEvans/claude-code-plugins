@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "PR management, multi-repo PR finalization, and issue shaping with Shape Up methodology",
   "author": "Jacob Evans",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["github", "pull-request", "issues", "pr-management", "shape-up", "workflow"],

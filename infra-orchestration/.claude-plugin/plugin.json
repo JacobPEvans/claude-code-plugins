@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cross-repo infrastructure orchestration for Terraform and Ansible workflows",
   "author": "Jacob Evans",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["infrastructure", "terraform", "ansible", "orchestration", "inventory", "e2e-testing"],
