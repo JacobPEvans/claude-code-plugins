@@ -2,39 +2,19 @@
   "name": "git-workflows",
   "version": "1.0.0",
   "description": "Git worktree initialization, main branch sync, and repository refresh workflows",
-  "author": "Jacob Evans",
+  "author": {
+    "name": "JacobPEvans"
+  },
   "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
-  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["git", "worktree", "sync", "refresh", "branch", "workflow"],
   "skills": [
-    {
-      "name": "init-worktree",
-      "description": "Initialize a clean worktree for new development work"
-    },
-    {
-      "name": "sync-main",
-      "description": "Update main from remote and merge into current or all PR branches"
-    },
-    {
-      "name": "refresh-repo",
-      "description": "Check PR merge readiness, sync local repo, and cleanup stale worktrees"
-    },
-    {
-      "name": "rebase-pr",
-      "description": "Local rebase-merge workflow for pull requests with linear git history and signed commits"
-    },
-    {
-      "name": "troubleshoot-rebase",
-      "description": "Diagnose and recover from git rebase failures"
-    },
-    {
-      "name": "troubleshoot-precommit",
-      "description": "Troubleshoot pre-commit hook failures and auto-fixes"
-    },
-    {
-      "name": "troubleshoot-worktree",
-      "description": "Troubleshoot git worktree, branch, and refname issues"
-    }
+    "./skills/init-worktree",
+    "./skills/sync-main",
+    "./skills/refresh-repo",
+    "./skills/rebase-pr",
+    "./skills/troubleshoot-rebase",
+    "./skills/troubleshoot-precommit",
+    "./skills/troubleshoot-worktree"
   ]
 }
