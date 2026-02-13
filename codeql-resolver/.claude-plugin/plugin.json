@@ -23,7 +23,7 @@
     "./agents/codeql-generic-resolver.md"
   ],
   "skills": [
-    "./skills/codeql-permission-classification.md",
-    "./skills/github-workflow-security-patterns.md"
+    "./skills/codeql-permission-classification",
+    "./skills/github-workflow-security-patterns"
   ]
 }
