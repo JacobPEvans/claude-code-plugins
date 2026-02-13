@@ -1,0 +1,17 @@
+{
+  "name": "content-guards",
+  "version": "1.0.0",
+  "description": "Combined content validation and guard plugin that merges token-validator, markdown-validator, webfetch-guard, and issue-limiter functionality",
+  "author": "Jacob Evans",
+  "license": "Apache-2.0",
+  "keywords": [
+    "hooks",
+    "validation",
+    "content-guards",
+    "token-limits",
+    "markdown",
+    "webfetch",
+    "issue-management",
+    "code-quality"
+  ]
+}

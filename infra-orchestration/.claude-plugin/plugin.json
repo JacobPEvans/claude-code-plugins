@@ -9,15 +9,15 @@
   "keywords": ["infrastructure", "terraform", "ansible", "orchestration", "inventory", "e2e-testing"],
   "skills": [
     {
-      "name": "infra-orchestrate",
+      "name": "orchestrate-infra",
       "description": "Master orchestrator for cross-repo infrastructure with dependency graph dispatch"
     },
     {
-      "name": "infra-sync-inventory",
+      "name": "sync-inventory",
       "description": "Export Terraform inventory and distribute to Ansible repositories"
     },
     {
-      "name": "infra-e2e-test",
+      "name": "test-e2e",
       "description": "End-to-end infrastructure pipeline validation across Terraform and Ansible repos"
     }
   ]

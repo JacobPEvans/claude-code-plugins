@@ -13,7 +13,7 @@
       "description": "Route tasks to external AI models via PAL MCP tools"
     },
     {
-      "name": "auto-claude",
+      "name": "auto-maintain",
       "description": "Autonomous maintenance orchestrator that continuously finds and dispatches work"
     }
   ]
