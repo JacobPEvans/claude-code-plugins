@@ -2,27 +2,16 @@
   "name": "github-workflows",
   "version": "1.0.0",
   "description": "PR management, multi-repo PR finalization, and issue shaping with Shape Up methodology",
-  "author": "JacobPEvans",
+  "author": {
+    "name": "JacobPEvans"
+  },
   "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
-  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["github", "pull-request", "issues", "pr-management", "shape-up", "workflow"],
   "skills": [
-    {
-      "name": "manage-pr",
-      "description": "Create, monitor, and fix pull requests until ready to merge"
-    },
-    {
-      "name": "finalize-prs",
-      "description": "Orchestrate PR finalization across all repositories and report merge-readiness"
-    },
-    {
-      "name": "shape-issues",
-      "description": "Shape raw ideas into actionable GitHub Issues using Shape Up methodology"
-    },
-    {
-      "name": "resolve-pr-threads",
-      "description": "Systematically resolve all unresolved GitHub PR review threads end-to-end"
-    }
+    "./skills/manage-pr",
+    "./skills/finalize-prs",
+    "./skills/shape-issues",
+    "./skills/resolve-pr-threads"
   ]
 }

@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claude Code Plugin Manifest",
+  "description": "Schema for Claude Code plugin.json manifest files",
+  "type": "object",
+  "required": ["name", "version", "description", "author"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin name (must match directory name)",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief plugin description",
+      "minLength": 10
+    },
+    "author": {
+      "type": "object",
+      "description": "Plugin author (MUST be object, NOT string)",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Author email",
+          "format": "email"
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier"
+    },
+    "repository": {
+      "type": "string",
+      "description": "Repository URL",
+      "format": "uri"
+    },
+    "homepage": {
+      "type": "string",
+      "description": "Documentation/homepage URL",
+      "format": "uri"
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Tags for discoverability",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "skills": {
+      "type": "array",
+      "description": "Paths to skill files (NOT objects with name/description)",
+      "items": {
+        "type": "string",
+        "pattern": "^\\./skills/[a-z0-9-]+$"
+      },
+      "uniqueItems": true
+    },
+    "commands": {
+      "type": "array",
+      "description": "Paths to command files (NOT objects with name/description)",
+      "items": {
+        "type": "string",
+        "pattern": "^\\./commands/[a-z0-9-]+\\.md$"
+      },
+      "uniqueItems": true
+    },
+    "agents": {
+      "type": "array",
+      "description": "Paths to agent files (NOT objects with name/description)",
+      "items": {
+        "type": "string",
+        "pattern": "^\\./agents/[a-z0-9-]+\\.md$"
+      },
+      "uniqueItems": true
+    }
+  }
+}

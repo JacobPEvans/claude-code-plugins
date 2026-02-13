@@ -46,6 +46,25 @@ jobs:
             jq empty .claude-plugin/marketplace.json
           fi
 
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install check-jsonschema
+        run: pip install check-jsonschema
+
+      - name: Validate plugin.json schemas
+        run: |
+          # Validate all plugin.json files against the schema
+          for plugin_dir in */; do
+            plugin_name="${plugin_dir%/}"
+            if [ -f "$plugin_dir.claude-plugin/plugin.json" ]; then
+              echo "Schema validating $plugin_name plugin.json..."
+              check-jsonschema --schemafile schemas/plugin.schema.json "$plugin_dir.claude-plugin/plugin.json"
+            fi
+          done
+
       - name: Validate hook scripts
         run: |
           echo "Checking hook scripts..."
