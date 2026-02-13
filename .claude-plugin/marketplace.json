@@ -15,7 +15,7 @@
       "description": "Combined git security and workflow protection via PreToolUse hooks - merges git-permission-guard and main-branch-guard functionality",
       "version": "1.0.0",
       "author": {
-        "name": "JacobPEvans"
+        "name": "Jacob Evans"
       }
     },
     {
@@ -24,7 +24,7 @@
       "description": "Combined content validation and guard plugin that merges token-validator, markdown-validator, webfetch-guard, and issue-limiter functionality",
       "version": "1.0.0",
       "author": {
-        "name": "JacobPEvans"
+        "name": "Jacob Evans"
       }
     },
     {

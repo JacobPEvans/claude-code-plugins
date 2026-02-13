@@ -2,7 +2,7 @@
   "name": "git-guards",
   "version": "1.0.0",
   "description": "Combined git security and workflow protection via PreToolUse hooks - merges git-permission-guard and main-branch-guard functionality",
-  "author": "JacobPEvans",
+  "author": "Jacob Evans",
   "homepage": "https://github.com/JacobPEvans/claude-code-plugins",
   "keywords": ["git", "github", "permissions", "main-branch", "worktree", "security", "hooks"],
   "license": "Apache-2.0"
