@@ -2,7 +2,7 @@
   "name": "codeql-resolver",
   "version": "1.0.0",
   "description": "Systematic CodeQL alert analysis and resolution for GitHub Actions workflows",
-  "author": "Jacob Evans",
+  "author": "JacobPEvans",
   "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",

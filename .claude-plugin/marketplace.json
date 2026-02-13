@@ -15,7 +15,7 @@
       "description": "Combined git security and workflow protection via PreToolUse hooks - merges git-permission-guard and main-branch-guard functionality",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -24,7 +24,7 @@
       "description": "Combined content validation and guard plugin that merges token-validator, markdown-validator, webfetch-guard, and issue-limiter functionality",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -33,7 +33,7 @@
       "description": "Git worktree initialization, main branch sync, repository refresh, and troubleshooting workflows",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -42,7 +42,7 @@
       "description": "PR management, multi-repo PR finalization, and issue shaping with Shape Up methodology",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -51,7 +51,7 @@
       "description": "Cross-repo infrastructure orchestration for Terraform and Ansible workflows",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -60,7 +60,7 @@
       "description": "Delegate tasks to external AI models and run autonomous maintenance loops",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -69,7 +69,7 @@
       "description": "Sync AI tool permissions across repos and quickly add always-allow permissions",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     },
     {
@@ -78,7 +78,7 @@
       "description": "Systematic CodeQL alert analysis and resolution for GitHub Actions workflows",
       "version": "1.0.0",
       "author": {
-        "name": "Jacob Evans"
+        "name": "JacobPEvans"
       }
     }
   ]
