@@ -2,19 +2,14 @@
   "name": "config-management",
   "version": "1.0.0",
   "description": "Sync AI tool permissions across repos and quickly add always-allow permissions",
-  "author": "JacobPEvans",
+  "author": {
+    "name": "JacobPEvans"
+  },
   "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
-  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["permissions", "config", "sync", "claude", "gemini", "management"],
   "skills": [
-    {
-      "name": "sync-permissions",
-      "description": "Merge local AI permission settings into repository-wide permissions"
-    },
-    {
-      "name": "quick-add-permission",
-      "description": "Quickly add always-allow permissions to all AI tool permission lists"
-    }
+    "./skills/sync-permissions",
+    "./skills/quick-add-permission"
   ]
 }

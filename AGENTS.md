@@ -43,19 +43,44 @@ plugin-name/
 └── README.md                   # Documentation (required)
 ```
 
-### plugin.json Schema
+### plugin.json Schema (Strict)
 
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `name` | string | YES | Must match directory name |
+| `version` | string | YES | Semver (e.g., "1.0.0") |
+| `description` | string | YES | Brief description |
+| `author` | object | YES | `{"name": "JacobPEvans"}` — MUST be object, NOT string |
+| `license` | string | no | SPDX identifier |
+| `repository` | string | no | GitHub URL |
+| `homepage` | string | no | Documentation URL |
+| `keywords` | string[] | no | Tags for discoverability |
+| `skills` | string[] | no | Paths: `["./skills/skill-name"]` — NOT objects |
+| `commands` | string[] | no | Paths: `["./commands/cmd.md"]` — NOT objects |
+| `agents` | string[] | no | Paths: `["./agents/agent.md"]` — NOT objects |
+
+**Forbidden fields**: `bugs` (unrecognized by Claude Code runtime)
+
+**Common mistakes**:
+- `author` as string instead of object
+- `skills`/`commands`/`agents` as arrays of objects with name/description instead of string paths
+
+**Example**:
 ```json
 {
   "name": "plugin-name",
   "version": "1.0.0",
   "description": "Brief description",
   "author": {
-    "name": "JacobPEvans",
-    "email": "20714140+JacobPEvans@users.noreply.github.com"
+    "name": "JacobPEvans"
   },
   "license": "Apache-2.0",
-  "keywords": ["hooks", "category", "relevant-tags"]
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "keywords": ["hooks", "category", "relevant-tags"],
+  "skills": [
+    "./skills/skill-one",
+    "./skills/skill-two"
+  ]
 }
 ```
 

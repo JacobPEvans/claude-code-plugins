@@ -2,19 +2,11 @@
   "name": "ai-delegation",
   "version": "1.0.0",
   "description": "Delegate tasks to external AI models and run autonomous maintenance loops",
-  "author": "JacobPEvans",
+  "author": {
+    "name": "JacobPEvans"
+  },
   "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
-  "bugs": "https://github.com/JacobPEvans/claude-code-plugins/issues",
   "keywords": ["ai", "delegation", "multi-model", "orchestration", "autonomous", "maintenance"],
-  "skills": [
-    {
-      "name": "delegate-to-ai",
-      "description": "Route tasks to external AI models via PAL MCP tools"
-    },
-    {
-      "name": "auto-maintain",
-      "description": "Autonomous maintenance orchestrator that continuously finds and dispatches work"
-    }
-  ]
+  "skills": ["./skills/delegate-to-ai", "./skills/auto-maintain"]
 }
