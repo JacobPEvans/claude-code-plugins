@@ -1,9 +1,0 @@
-{
-  "name": "git-permission-guard",
-  "version": "1.0.0",
-  "description": "Centralized git and gh permission management via PreToolUse hooks with detailed warnings",
-  "author": "JacobPEvans",
-  "homepage": "https://github.com/JacobPEvans/claude-code-plugins",
-  "keywords": ["git", "github", "permissions", "security", "hooks"],
-  "license": "Apache-2.0"
-}

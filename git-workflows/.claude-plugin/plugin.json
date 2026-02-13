@@ -17,8 +17,24 @@
       "description": "Update main from remote and merge into current or all PR branches"
     },
     {
-      "name": "git-refresh",
+      "name": "refresh-repo",
       "description": "Check PR merge readiness, sync local repo, and cleanup stale worktrees"
+    },
+    {
+      "name": "rebase-pr",
+      "description": "Local rebase-merge workflow for pull requests with linear git history and signed commits"
+    },
+    {
+      "name": "troubleshoot-rebase",
+      "description": "Diagnose and recover from git rebase failures"
+    },
+    {
+      "name": "troubleshoot-precommit",
+      "description": "Troubleshoot pre-commit hook failures and auto-fixes"
+    },
+    {
+      "name": "troubleshoot-worktree",
+      "description": "Troubleshoot git worktree, branch, and refname issues"
     }
   ]
 }

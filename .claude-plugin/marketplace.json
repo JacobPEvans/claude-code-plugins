@@ -6,61 +6,79 @@
   },
   "metadata": {
     "description": "Claude Code plugins and hooks by JacobPEvans",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "plugins": [
     {
-      "name": "git-rebase-workflow",
-      "source": "./git-rebase-workflow",
-      "description": "Local rebase-merge workflow for linear git history and signed commits",
+      "name": "git-guards",
+      "source": "./git-guards",
+      "description": "Combined git security and workflow protection via PreToolUse hooks - merges git-permission-guard and main-branch-guard functionality",
       "version": "1.0.0",
       "author": {
         "name": "JacobPEvans"
       }
     },
     {
-      "name": "issue-limiter",
-      "source": "./issue-limiter",
-      "description": "PreToolUse hook that enforces GitHub issue creation limits to prevent backlog overflow",
+      "name": "content-guards",
+      "source": "./content-guards",
+      "description": "Combined content validation and guard plugin that merges token-validator, markdown-validator, webfetch-guard, and issue-limiter functionality",
       "version": "1.0.0",
       "author": {
         "name": "JacobPEvans"
       }
     },
     {
-      "name": "main-branch-guard",
-      "source": "./main-branch-guard",
-      "description": "PreToolUse hook that blocks Edit/Write/NotebookEdit operations on main branch or worktree",
+      "name": "git-workflows",
+      "source": "./git-workflows",
+      "description": "Git worktree initialization, main branch sync, repository refresh, and troubleshooting workflows",
       "version": "1.0.0",
       "author": {
-        "name": "JacobPEvans"
+        "name": "Jacob Evans"
       }
     },
     {
-      "name": "markdown-validator",
-      "source": "./markdown-validator",
-      "description": "PostToolUse hook that validates markdown files with markdownlint-cli2 and cspell",
+      "name": "github-workflows",
+      "source": "./github-workflows",
+      "description": "PR management, multi-repo PR finalization, and issue shaping with Shape Up methodology",
       "version": "1.0.0",
       "author": {
-        "name": "JacobPEvans"
+        "name": "Jacob Evans"
       }
     },
     {
-      "name": "token-validator",
-      "source": "./token-validator",
-      "description": "PreToolUse hook that validates file token limits on Write and Edit operations",
+      "name": "infra-orchestration",
+      "source": "./infra-orchestration",
+      "description": "Cross-repo infrastructure orchestration for Terraform and Ansible workflows",
       "version": "1.0.0",
       "author": {
-        "name": "JacobPEvans"
+        "name": "Jacob Evans"
       }
     },
     {
-      "name": "webfetch-guard",
-      "source": "./webfetch-guard",
-      "description": "Intercepts WebFetch calls to block outdated year references and warn about date awareness",
+      "name": "ai-delegation",
+      "source": "./ai-delegation",
+      "description": "Delegate tasks to external AI models and run autonomous maintenance loops",
       "version": "1.0.0",
       "author": {
-        "name": "JacobPEvans"
+        "name": "Jacob Evans"
+      }
+    },
+    {
+      "name": "config-management",
+      "source": "./config-management",
+      "description": "Sync AI tool permissions across repos and quickly add always-allow permissions",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jacob Evans"
+      }
+    },
+    {
+      "name": "codeql-resolver",
+      "source": "./codeql-resolver",
+      "description": "Systematic CodeQL alert analysis and resolution for GitHub Actions workflows",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jacob Evans"
       }
     }
   ]

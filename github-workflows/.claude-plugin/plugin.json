@@ -13,12 +13,16 @@
       "description": "Create, monitor, and fix pull requests until ready to merge"
     },
     {
-      "name": "ready-player-one",
+      "name": "finalize-prs",
       "description": "Orchestrate PR finalization across all repositories and report merge-readiness"
     },
     {
       "name": "shape-issues",
       "description": "Shape raw ideas into actionable GitHub Issues using Shape Up methodology"
+    },
+    {
+      "name": "resolve-pr-threads",
+      "description": "Systematically resolve all unresolved GitHub PR review threads end-to-end"
     }
   ]
 }
