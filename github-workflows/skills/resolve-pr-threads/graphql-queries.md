@@ -32,12 +32,25 @@ gh api graphql --raw-field 'query=query { repository(owner: "{OWNER}", name: "{R
 Fields: `id` (`PRRT_*` node ID), `isResolved`, `path`, `line`/`startLine`,
 `comments.nodes[].body`, `comments.nodes[].author.login`, `comments.nodes[].databaseId`
 
-**Placeholder substitution**: Replace `{OWNER}`, `{REPO}`, `{NUMBER}` with actual values before running. Example:
+**Placeholder substitution**: Replace `{OWNER}`, `{REPO}`, `{NUMBER}` with actual values before running.
+
+**CRITICAL: Always set AND verify variables before running GraphQL queries.** Missing or empty variables cause GraphQL parsing errors.
+
+Example:
 
 ```bash
+# Step 1: Set variables
 OWNER=$(gh repo view --json owner --jq .owner.login)
 REPO=$(gh repo view --json name --jq .name)
 NUMBER=$(gh pr view --json number --jq .number)
+
+# Step 2: Verify all variables are set (prevents "Expected VALUE" errors)
+if [[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]]; then
+  echo "Error: Failed to get repo context. Ensure you're in a git repo with a GitHub remote."
+  exit 1
+fi
+
+# Step 3: Run query
 <!-- markdownlint-disable-next-line MD013 -->
 gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: \"${REPO}\") { pullRequest(number: ${NUMBER}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }"
 ```
@@ -55,10 +68,16 @@ gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadI
 
 `{THREAD_ID}` is the `PRRT_*` node ID from the fetch query.
 
-**Placeholder substitution**: Replace `{THREAD_ID}` with the actual thread ID. Example:
+**Placeholder substitution**: Replace `{THREAD_ID}` with the actual thread ID.
+
+**CRITICAL: Verify THREAD_ID is set before running.**
+
+Example:
 
 ```bash
 THREAD_ID="PRRT_kwDO..."  # From fetch query
+[[ -z "$THREAD_ID" ]] && { echo "Error: THREAD_ID not set"; exit 1; }
+
 gh api graphql --raw-field "query=mutation { resolveReviewThread(input: {threadId: \"${THREAD_ID}\"}) { thread { id isResolved } } }"
 ```
 
@@ -71,12 +90,20 @@ gh api graphql --raw-field 'query=query { repository(owner: "{OWNER}", name: "{R
 
 Must return `0`. Any non-zero value means threads remain unresolved.
 
-**Placeholder substitution**: Replace `{OWNER}`, `{REPO}`, `{NUMBER}` with actual values. Example:
+**Placeholder substitution**: Replace `{OWNER}`, `{REPO}`, `{NUMBER}` with actual values.
+
+**CRITICAL: Verify variables before running.** Empty variables cause "Expected VALUE, actual: RPAREN" errors.
+
+Example:
 
 ```bash
+# Set and verify variables (REQUIRED before every GraphQL query)
 OWNER=$(gh repo view --json owner --jq .owner.login)
 REPO=$(gh repo view --json name --jq .name)
 NUMBER=$(gh pr view --json number --jq .number)
+[[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]] && { echo "Error: Missing repo context"; exit 1; }
+
+# Run query
 <!-- markdownlint-disable-next-line MD013 -->
 gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: \"${REPO}\") { pullRequest(number: ${NUMBER}) { reviewThreads(last: 100) { nodes { isResolved } } } } }" | jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
 ```

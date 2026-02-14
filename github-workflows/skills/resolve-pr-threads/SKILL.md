@@ -38,6 +38,16 @@ GitHub's GraphQL API so the PR becomes mergeable.
 
 **If you see or are tempted to write a multi-line GraphQL query, STOP. It is WRONG.**
 
+**ALWAYS verify variables are set before running GraphQL queries.** Empty variables cause "Expected VALUE, actual: RPAREN" errors:
+
+```bash
+# REQUIRED before every GraphQL query
+OWNER=$(gh repo view --json owner --jq .owner.login)
+REPO=$(gh repo view --json name --jq .name)
+NUMBER=$(gh pr view --json number --jq .number)
+[[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]] && { echo "Error: Missing repo context"; exit 1; }
+```
+
 All GraphQL patterns are documented in [graphql-queries.md](graphql-queries.md) in correct single-line format.
 
 ## Determine PR Context
@@ -66,7 +76,16 @@ Never reply without resolving. Never resolve without replying.
 
 ### Step 1: Fetch Unresolved Threads
 
-Use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
+**First, set and verify repo context variables:**
+
+```bash
+OWNER=$(gh repo view --json owner --jq .owner.login)
+REPO=$(gh repo view --json name --jq .name)
+NUMBER=$(gh pr view --json number --jq .number)
+[[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]] && { echo "Error: Missing repo context"; exit 1; }
+```
+
+Then use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
 
 Filter to threads where `isResolved == false`. Extract from each:
 
