@@ -107,12 +107,12 @@ COMMENT_ID=$(echo "$THREADS_JSON" | jq -r \
 
 ```bash
 # 1. Fetch threads via GraphQL (see graphql-queries.md)
-OWNER=$(gh repo view --json owner --jq -r '.owner.login')
-REPO=$(gh repo view --json name --jq -r '.name')
-NUMBER=$(gh pr view --json number --jq -r '.number')
+OWNER=$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)
+REPO=$(gh repo view --json name --jq -r '.name' 2>/dev/null)
+NUMBER=$(gh pr view --json number --jq -r '.number' 2>/dev/null)
 
 <!-- markdownlint-disable-next-line MD013 -->
-THREADS_JSON=$(gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: \"${REPO}\") { pullRequest(number: ${NUMBER}) { reviewThreads(last: 100) { nodes { id comments(last: 100) { nodes { databaseId body author { login } } } } } } } }")
+THREADS_JSON=$(gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: \"${REPO}\") { pullRequest(number: ${NUMBER}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }")
 
 # 2. Extract database ID for the thread you want to reply to
 THREAD_ID="PRRT_kwDO..."  # The thread's GraphQL node ID

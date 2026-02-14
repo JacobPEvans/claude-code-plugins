@@ -2,7 +2,7 @@
 name: resolve-pr-threads
 description: >-
   Orchestrates resolution of GitHub PR review threads by grouping related
-  comments, dispatching sub-agents guided by receiving-code-review pattern,
+  comments, dispatching sub-agents that invoke superpowers:receiving-code-review,
   and resolving threads via GraphQL. Use when you need to batch-process
   review feedback to unblock a PR merge.
 argument-hint: "[PR_NUMBER|all]"
@@ -100,8 +100,11 @@ For each group, launch a `general-purpose` sub-agent using the Task tool.
 **Sub-agent prompt template:**
 
 ```text
-You are addressing PR review feedback following the receiving-code-review
-pattern: READ → UNDERSTAND → VERIFY → EVALUATE → RESPOND → IMPLEMENT.
+You are resolving PR review threads. Your workflow:
+
+1. Invoke the `superpowers:receiving-code-review` skill using the Skill tool
+2. Apply that skill's full pattern to the review threads below
+3. For each thread, read the code, evaluate the feedback, implement or push back
 
 Review threads to address:
 {for each thread in group}
@@ -112,19 +115,16 @@ Review threads to address:
 - Database ID: {databaseId}
 {end for}
 
-For REST API reply patterns and detailed examples, refer to:
-rest-api-patterns.md in the resolve-pr-threads skill directory.
-
 Reply to threads using:
-gh api repos/{OWNER}/{REPO}/pulls/{NUMBER}/comments/{databaseId}/replies \
-  -f body="your reply here"
+gh api repos/{OWNER}/{REPO}/pulls/{NUMBER}/comments/{databaseId}/replies -f body="..."
 
-After addressing each thread, output ONE line per thread in this format:
+For REST API details: read rest-api-patterns.md in the resolve-pr-threads skill directory.
+
+Output ONE line per thread:
 PRRT_xxx: handled [commit:abc1234]
-or
 PRRT_xxx: needs-human [reason]
 
-Commit your changes but DO NOT push. The orchestrator will push once.
+Commit changes but DO NOT push.
 ```
 
 **Launch groups in parallel** - use a single message with multiple Task calls.
@@ -157,6 +157,22 @@ When `$ARGUMENTS` is `all`:
 3. Skip PRs with zero unresolved threads
 4. For each PR with unresolved threads, run this skill's standard workflow
 5. Verify each PR independently before moving to the next
+
+## Special Cases for Sub-Agents
+
+Sub-agents handle these via `superpowers:receiving-code-review`, but these
+GitHub-specific edge cases need explicit attention:
+
+- **Already addressed**: Check `git log --oneline -- {path}` before re-implementing.
+  Reply with commit ref if already fixed.
+- **Multi-reviewer threads**: Read ALL comments chronologically. Follow consensus
+  if 2+ reviewers agree; otherwise decide by project conventions.
+- **Contradictory feedback**: Reply to both threads acknowledging the conflict.
+  Propose a decision with technical rationale.
+- **Outdated comments**: Check git history, explain what changed, provide new
+  location if code moved.
+- **Batch comments**: Address ALL items with numbered responses. Only mark
+  `handled` after ALL items are addressed.
 
 ## Output Format
 
