@@ -38,14 +38,13 @@ GitHub's GraphQL API so the PR becomes mergeable.
 
 **If you see or are tempted to write a multi-line GraphQL query, STOP. It is WRONG.**
 
-**ALWAYS verify variables are set before running GraphQL queries.** Empty variables cause "Expected VALUE, actual: RPAREN" errors:
+**Context inference**: When no arguments provided, automatically infer owner/repo/PR from current git context:
 
 ```bash
-# REQUIRED before every GraphQL query
-OWNER=$(gh repo view --json owner --jq .owner.login)
-REPO=$(gh repo view --json name --jq .name)
-NUMBER=$(gh pr view --json number --jq .number)
-[[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]] && { echo "Error: Missing repo context"; exit 1; }
+# Smart inference - uses current context when available
+OWNER=${OWNER:-$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)}
+REPO=${REPO:-$(gh repo view --json name --jq -r '.name' 2>/dev/null)}
+NUMBER=${NUMBER:-$(gh pr view --json number --jq -r '.number' 2>/dev/null)}
 ```
 
 All GraphQL patterns are documented in [graphql-queries.md](graphql-queries.md) in correct single-line format.
@@ -76,13 +75,13 @@ Never reply without resolving. Never resolve without replying.
 
 ### Step 1: Fetch Unresolved Threads
 
-**First, set and verify repo context variables:**
+**Infer repo/PR context** (uses current git context when no arguments provided):
 
 ```bash
-OWNER=$(gh repo view --json owner --jq .owner.login)
-REPO=$(gh repo view --json name --jq .name)
-NUMBER=$(gh pr view --json number --jq .number)
-[[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]] && { echo "Error: Missing repo context"; exit 1; }
+# Smart inference - automatically uses current repo/PR when available
+OWNER=${OWNER:-$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)}
+REPO=${REPO:-$(gh repo view --json name --jq -r '.name' 2>/dev/null)}
+NUMBER=${NUMBER:-$(gh pr view --json number --jq -r '.number' 2>/dev/null)}
 ```
 
 Then use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
