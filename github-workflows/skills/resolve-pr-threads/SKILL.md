@@ -1,21 +1,21 @@
 ---
 name: resolve-pr-threads
 description: >-
-  Systematically resolve all unresolved GitHub PR review threads end-to-end:
-  fetch threads via GraphQL, implement fixes or write explanations, reply to
-  each comment, and mark threads resolved so the PR becomes mergeable.
-  Use when you need to batch-process review feedback to unblock a PR merge.
+  Orchestrates resolution of GitHub PR review threads by grouping related
+  comments, dispatching sub-agents that invoke superpowers:receiving-code-review,
+  and resolving threads via GraphQL. Use when you need to batch-process
+  review feedback to unblock a PR merge.
 argument-hint: "[PR_NUMBER|all]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh:*), Bash(git:*)
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh:*), Bash(git:*), Task
 ---
 
-<!-- cspell:words PRRT oneline -->
+<!-- cspell:words PRRT oneline databaseId -->
 
-# Resolve PR Review Threads
+# Resolve PR Review Threads (Orchestrator)
 
-Systematically addresses all unresolved PR review comments by implementing
-requested changes or providing explanations, then resolves threads via
-GitHub's GraphQL API so the PR becomes mergeable.
+Orchestrates resolution of all unresolved PR review comments by grouping
+related threads, dispatching sub-agents to implement fixes or provide
+explanations, then resolving threads via GitHub's GraphQL API.
 
 ## Usage
 
@@ -61,172 +61,92 @@ REPO: !`gh repo view --json name --jq .name 2>/dev/null || echo "unknown"`
 Branch: !`git branch --show-current 2>/dev/null || echo "detached"`
 ```
 
-## Core Principle: Reply AND Resolve Are Atomic
-
-Every thread follows exactly one of two paths. Both end with resolution.
-
-**Path A - Technical Fix**: Implement change -> Commit -> Reply with hash -> Resolve
-
-**Path B - Explanation Only**: Draft explanation -> Reply with reasoning -> Resolve
-
-Never reply without resolving. Never resolve without replying.
-
 ## Workflow
 
 ### Step 1: Fetch Unresolved Threads
 
-**Infer repo/PR context** (uses current git context when no arguments provided):
-
-```bash
-# Smart inference - automatically uses current repo/PR when available
-OWNER=${OWNER:-$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)}
-REPO=${REPO:-$(gh repo view --json name --jq -r '.name' 2>/dev/null)}
-NUMBER=${NUMBER:-$(gh pr view --json number --jq -r '.number' 2>/dev/null)}
-```
-
-Then use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
+Use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
 
 Filter to threads where `isResolved == false`. Extract from each:
 
 - `id` (`PRRT_*` node ID) - needed for resolution mutation
 - `path` - file being reviewed
 - `line`/`startLine` - location in file
-- `comments.nodes[].id` - comment node ID for threading replies
+- `comments.nodes[].id` - comment node ID
+- `comments.nodes[].databaseId` - REST API ID for replies
 - `comments.nodes[].body` - comment text
 - `comments.nodes[].author.login` - who commented
 
-### Step 2: Classify and Prioritize
+### Step 2: Group Related Comments
 
-Process threads in priority order:
+Analyze threads and group by proximity:
 
-1. **Blocking** ("BLOCKING", "must fix", "required") - Must fix before merge
-2. **Bugs/Security** (identifies a defect or vulnerability) - Critical correctness
-3. **Suggestion with code** (contains ` ```suggestion ` block) - Apply directly
-4. **Questions** (ends with `?`, "could you explain") - Answer clearly
-5. **Suggestion without code** ("should", "consider", "recommend") - Evaluate merit
-6. **Nitpick** ("nit:", "minor:") - Quick fix if easy
+- **Same file + within 30 lines** → group together (max 5 threads per group)
+- **Different file or >30 lines apart** → singleton groups
+- **Output numbered group list** before dispatching
 
-### Step 3: Read Code Context
-
-For each comment, use the Read tool with offset/limit to see surrounding code:
+Example:
 
 ```text
-offset = max(0, line - 15)
-limit = 30
-Read(file_path="<path>", offset=<offset>, limit=<limit>)
+Group 1: src/auth.ts (3 threads at lines 45, 52, 58)
+Group 2: src/api.ts (1 thread at line 120)
+Group 3: README.md (2 threads at lines 15, 18)
 ```
 
-Understand what the code does, why the reviewer raised the concern, and the
-impact of potential changes before acting.
+### Step 3: Dispatch Sub-Agents
 
-### Step 4: Check If Already Addressed
+For each group, launch a `general-purpose` sub-agent using the Task tool.
 
-Before implementing a fix, check if a subsequent commit already addressed it:
-
-```bash
-git log --oneline -- {path}
-```
-
-If the concern was already fixed in a later commit, skip to Step 5 and reply
-with: "Addressed in commit {hash}" with a brief explanation of the change.
-
-### Step 5: Implement or Explain
-
-**Decision tree:**
+**Sub-agent prompt template:**
 
 ```text
-Already addressed?         -> Reply with commit ref, skip to Step 6
-Has suggestion block?      -> Apply exact code change
-Is blocking?               -> Fix immediately
-Is a question?
-  Needs code change?       -> Make code clearer + explain
-  Answer only?             -> Explain in reply
-Has merit?
-  Yes                      -> Implement fix
-  No                       -> Reply with respectful disagreement
-  Unsure                   -> Follow project conventions
+You are resolving PR review threads. Your workflow:
+
+1. Invoke the `superpowers:receiving-code-review` skill using the Skill tool
+2. Apply that skill's full pattern to the review threads below
+3. For each thread, read the code, evaluate the feedback, implement or push back
+
+Review threads to address:
+{for each thread in group}
+- Thread ID: {PRRT_xxx}
+- File: {path}:{line}
+- Reviewer: {author}
+- Comment: {body}
+- Database ID: {databaseId}
+{end for}
+
+Reply to threads using:
+gh api repos/{OWNER}/{REPO}/pulls/{NUMBER}/comments/{databaseId}/replies -f body="..."
+
+For REST API details: read rest-api-patterns.md in the resolve-pr-threads skill directory.
+
+Output ONE line per thread:
+PRRT_xxx: handled [commit:abc1234]
+PRRT_xxx: needs-human [reason]
+
+Commit changes but DO NOT push.
 ```
 
-For code changes: use Edit tool, follow project standards, commit with
-descriptive message.
+**Launch groups in parallel** - use a single message with multiple Task calls.
 
-### Step 6: Reply to Each Thread
+Sub-agents commit their own changes but do NOT push.
 
-Reply within the specific review thread to maintain conversation structure.
+### Step 4: Resolve Threads
 
-#### Step 6a: Extract comment database ID
+After all sub-agents complete:
 
-From Step 1's GraphQL response, get the first comment's `databaseId`:
+1. Parse each sub-agent's output for `handled` vs `needs-human` status
+2. For each `handled` thread, run the **Resolve Thread Mutation** from
+   [graphql-queries.md](graphql-queries.md) using the `PRRT_*` node ID
+3. For `needs-human` threads, skip resolution and flag for manual attention
 
-```bash
-COMMENT_ID=$(echo "$THREADS_JSON" | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "PRRT_xxx") | .comments.nodes[0].databaseId')
-```
+### Step 5: Verify and Push
 
-#### Step 6b: Post threaded reply via REST API
-
-Use GitHub's REST API to maintain native threading:
-
-```bash
-OWNER=$(gh repo view --json owner --jq .owner.login)
-REPO=$(gh repo view --json name --jq .name)
-NUMBER=$(gh pr view --json number --jq .number)
-
-gh api repos/${OWNER}/${REPO}/pulls/${NUMBER}/comments/${COMMENT_ID}/replies \
-  -f body="**Re: {reviewer}'s feedback on {path}:{line}**
-
-{detailed response}
-
-{commit_reference_if_applicable}"
-```
-
-**Key points:**
-
-- `COMMENT_ID` must be numeric `databaseId` (e.g., `123456`), not GraphQL node ID (not `PRRT_*`)
-- Reply appears in the review thread UI on GitHub
-- Automatically links to the parent comment
-- Body can be multi-line markdown
-
-**Fallback**: If REST API fails (permissions), use top-level comment:
-
-```bash
-gh pr comment ${NUMBER} --body "**Re: {reviewer}'s feedback on {path}:{line}**
-
-{detailed response}"
-```
-
-**Reply guidelines:**
-
-- If fixed: Include commit hash and specific changes made
-- If question: Give clear technical answer with rationale
-- If disagreeing: Acknowledge the point, explain why not with reasoning
-- NEVER tag AI assistants (@gemini-code-assist, @copilot, etc.) in replies
-- NEVER tag bots - only tag human reviewers when needed
-
-### Step 7: Resolve Each Thread
-
-Immediately after replying, use the **Resolve Thread Mutation** from
-[graphql-queries.md](graphql-queries.md) with the `PRRT_*` node ID from Step 1.
-
-### Step 8: Verify Zero Unresolved
-
-Use the **Verify Zero Unresolved** query from
-[graphql-queries.md](graphql-queries.md).
-
-**Must return `0`**. If not, identify and address remaining threads. Do not
-report completion until verification passes.
-
-### Step 9: Commit and Push
-
-```bash
-git add <changed-files>
-git commit -m "fix: address PR review feedback
-
-- <change 1>
-- <change 2>
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-git push
-```
+1. Run the **Verify Zero Unresolved** query from
+   [graphql-queries.md](graphql-queries.md)
+2. **Must return `0`**. If not, identify remaining threads and report
+3. Push all commits: `git push`
+4. Output summary report
 
 ## Batch Mode ("all")
 
@@ -238,43 +158,30 @@ When `$ARGUMENTS` is `all`:
 4. For each PR with unresolved threads, run this skill's standard workflow
 5. Verify each PR independently before moving to the next
 
-## Special Cases
+## Special Cases for Sub-Agents
 
-### Already-Addressed Comments
+Sub-agents handle these via `superpowers:receiving-code-review`, but these
+GitHub-specific edge cases need explicit attention:
 
-If a subsequent commit already fixed the reviewer's concern, reply with the
-commit reference and resolve. Do NOT re-implement the same fix.
-
-### Multi-Reviewer Threads
-
-Read ALL comments chronologically. If 2+ reviewers agree, follow consensus.
-If no consensus, decide based on project conventions and explain reasoning.
-
-### Contradictory Feedback
-
-Reply to BOTH threads acknowledging the conflict. Propose a decision with
-technical rationale. Tag HUMAN reviewers only (never AI bots) for consensus.
-
-### Outdated Comments
-
-Check git history, reply explaining what happened to the code, provide new
-location if moved, and resolve the outdated thread.
-
-### Batch Comments
-
-If one comment lists multiple issues, address ALL items with numbered
-responses. Only resolve after ALL items are addressed.
+- **Already addressed**: Check `git log --oneline -- {path}` before re-implementing.
+  Reply with commit ref if already fixed.
+- **Multi-reviewer threads**: Read ALL comments chronologically. Follow consensus
+  if 2+ reviewers agree; otherwise decide by project conventions.
+- **Contradictory feedback**: Reply to both threads acknowledging the conflict.
+  Propose a decision with technical rationale.
+- **Outdated comments**: Check git history, explain what changed, provide new
+  location if code moved.
+- **Batch comments**: Address ALL items with numbered responses. Only mark
+  `handled` after ALL items are addressed.
 
 ## Output Format
 
 ```text
 PR #{NUMBER} - Thread Resolution Summary
-
-Threads addressed: {N}
-Technical fixes: {count} (commits: {hashes})
-Explanations: {count}
-
-Verification: {0 unresolved} / {total threads}
+Groups: {G} ({N} threads total)
+Handled: {count} | Needs human: {count}
+Resolved via GraphQL: {count}
+Verification: {0 unresolved} / {total}
 Status: COMPLETE | PARTIAL ({remaining} need attention)
 ```
 
@@ -286,5 +193,5 @@ Status: COMPLETE | PARTIAL ({remaining} need attention)
 | `Resource not accessible` | Permission issue | Check `gh auth status`, need repo write access |
 | Verification shows >0 | Thread not resolved | Re-run mutation for remaining threads |
 | Empty reviewThreads | No reviews yet | Nothing to resolve, exit cleanly |
-| `addPullRequestReviewComment` fails | Token lacks review permissions | Fall back to `gh pr comment` (loses threading) |
 | Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
+| REST reply fails | See rest-api-patterns.md troubleshooting | Check databaseId format, permissions |

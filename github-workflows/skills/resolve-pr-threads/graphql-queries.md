@@ -110,39 +110,5 @@ gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: 
 more than 100 threads, older unresolved threads may exist outside the query
 window. Re-run verification after each batch to ensure no threads remain.
 
-## Reply to Review Thread
-
-Use GitHub REST API to add a threaded reply to a review comment.
-
-```bash
-gh api repos/{OWNER}/{REPO}/pulls/{NUMBER}/comments/{COMMENT_ID}/replies -f body="{REPLY_TEXT}"
-```
-
-**Where to get COMMENT_ID:**
-
-From the Fetch Unresolved Threads query above, use the first comment in the thread:
-
-```bash
-COMMENT_ID=$(echo "$THREADS_JSON" | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "PRRT_xxx") | .comments.nodes[0].databaseId')
-```
-
-**Example with placeholder substitution:**
-
-```bash
-OWNER=$(gh repo view --json owner --jq .owner.login)
-REPO=$(gh repo view --json name --jq .name)
-NUMBER=$(gh pr view --json number --jq .number)
-COMMENT_ID=123456  # From fetch query: comments.nodes[0].databaseId
-
-gh api repos/${OWNER}/${REPO}/pulls/${NUMBER}/comments/${COMMENT_ID}/replies \
-  -f body="**Re: reviewer's feedback on path:line**
-
-Detailed response here."
-```
-
-**Requirements:**
-
-- Must use numeric `databaseId` (not GraphQL node ID like `PRRT_*`)
-- Reply is automatically threaded under the original comment
-- Maintains GitHub's native review conversation structure
-- Body can be multi-line markdown
+**Note**: For REST API patterns (replying to review threads), see
+[rest-api-patterns.md](rest-api-patterns.md).
