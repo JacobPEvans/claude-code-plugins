@@ -25,6 +25,21 @@ GitHub's GraphQL API so the PR becomes mergeable.
 /resolve-pr-threads all          # All open PRs with unresolved threads (parallel)
 ```
 
+## CRITICAL: GraphQL Query Format Requirements
+
+**ALL GraphQL queries MUST use single-line format with `--raw-field`.**
+
+**NEVER use multi-line GraphQL queries.** Multi-line queries cause:
+
+- Shell encoding issues with newlines
+- Variable type coercion errors (e.g., "Variable $prNumber of type Int! was provided invalid value")
+- Parsing failures in Claude Code
+- Inconsistent behavior across invocations
+
+**If you see or are tempted to write a multi-line GraphQL query, STOP. It is WRONG.**
+
+All GraphQL patterns are documented in [graphql-queries.md](graphql-queries.md) in correct single-line format.
+
 ## Determine PR Context
 
 Current PR info from branch context:
@@ -119,34 +134,44 @@ descriptive message.
 
 ### Step 6: Reply to Each Thread
 
-Reply within the specific review thread using the comment ID from Step 1.
-This ensures the reply is threaded correctly, not posted as a standalone comment.
+Reply within the specific review thread to maintain conversation structure.
 
-Use `printf` to safely handle multi-line content:
+#### Step 6a: Extract comment database ID
+
+From Step 1's GraphQL response, get the first comment's `databaseId`:
 
 ```bash
-printf "**Re: %s's feedback on %s:%s**\n\n%s" \
-  "{reviewer}" "{path}" "{line}" "{detailed response}" | \
-gh api graphql \
-  -f query='mutation($threadId: ID!, $body: String!) {
-    addPullRequestReviewComment(input: {
-      pullRequestReviewThreadId: $threadId,
-      body: $body
-    }) {
-      comment { id url }
-    }
-  }' \
-  -f threadId="{THREAD_ID}" \
-  -F body=-
+COMMENT_ID=$(echo "$THREADS_JSON" | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "PRRT_xxx") | .comments.nodes[0].databaseId')
 ```
 
-Where `{THREAD_ID}` is the thread's `PRRT_*` node ID from Step 1.
+#### Step 6b: Post threaded reply via REST API
 
-**Fallback**: If the mutation fails with permission errors, fall back to a
-top-level PR comment. This loses threading but still documents the response:
+Use GitHub's REST API to maintain native threading:
 
 ```bash
-gh pr comment {PR_NUMBER} --body "**Re: {reviewer}'s feedback on {path}:{line}**
+OWNER=$(gh repo view --json owner --jq .owner.login)
+REPO=$(gh repo view --json name --jq .name)
+NUMBER=$(gh pr view --json number --jq .number)
+
+gh api repos/${OWNER}/${REPO}/pulls/${NUMBER}/comments/${COMMENT_ID}/replies \
+  -f body="**Re: {reviewer}'s feedback on {path}:{line}**
+
+{detailed response}
+
+{commit_reference_if_applicable}"
+```
+
+**Key points:**
+
+- `COMMENT_ID` must be numeric `databaseId` (e.g., `123456`), not GraphQL node ID (not `PRRT_*`)
+- Reply appears in the review thread UI on GitHub
+- Automatically links to the parent comment
+- Body can be multi-line markdown
+
+**Fallback**: If REST API fails (permissions), use top-level comment:
+
+```bash
+gh pr comment ${NUMBER} --body "**Re: {reviewer}'s feedback on {path}:{line}**
 
 {detailed response}"
 ```
