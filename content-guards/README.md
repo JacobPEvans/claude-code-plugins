@@ -88,13 +88,71 @@ Binary files (`.png`, `.jpg`, `.pdf`, `.bin`, `.zip`) are automatically skipped.
 
 Validates markdown files using `markdownlint-cli2` and `cspell` on `Write` and `Edit` operations.
 
+### Markdown Validator - How It Works
+
+- Runs only on files that appear to be Markdown (typically `*.md`, `*.markdown`)
+- Invokes `markdownlint-cli2` with the repository's markdownlint configuration (if present)
+- Invokes `cspell` to spell‑check prose and code blocks using the repo's cspell configuration (if present)
+- Both tools run against the *post‑edit* content so you see issues from the current change
+
+The exact rule set and dictionaries are controlled by your local markdownlint/cspell config files;
+the hook does not alter those rules, it only enforces them on every write/edit.
+
+### Markdown Validator - Behavior
+
+- **Success** (no lint/spell errors): Silent pass (exit 0)
+- **Failure** (lint/spell errors found): Operation blocked, tool output shown (non‑zero exit)
+- **Unavailable** (tools not found): Fail open, allow operation to proceed (exit 0)
+
+Binary and non‑markdown files are automatically skipped by this validator.
+
 ## WebFetch Guard
 
-Blocks `WebFetch` and `WebSearch` operations that contain outdated year references (e.g., "2024" when current year is 2026).
+Blocks `WebFetch` and `WebSearch` operations that contain outdated year references
+(e.g., requesting "2024" data when the current year is 2026).
+
+### WebFetch Guard - How It Works
+
+- Intercepts `WebFetch` and `WebSearch` tools before the request is sent
+- Scans the query text/URL for explicit Gregorian years (e.g., `2023`, `2024`, `2025`)
+- Compares any detected years against the current calendar year
+- If the query targets a year older than the current year, treats it as a stale‑data request
+- A hard‑coded grace period around New Year allows queries for the just‑previous year
+  (e.g., early in January) to reduce false positives
+
+The exact grace‑period duration and comparison rules are currently hard‑coded in the hook
+implementation and are not user‑configurable; refer to the hook source for precise values.
+
+### WebFetch Guard - Behavior
+
+- **Allowed**: Queries without explicit year literals, or that target the current year
+- **Blocked**: Queries with only outdated years outside the grace period; guard explains
+  why blocked and suggests updating or generalizing the query
+- **Unavailable** (tooling/environment not available): Fails open, allows request (exit 0)
 
 ## Issue Limiter
 
-Prevents creating GitHub issues when the backlog exceeds the configured threshold (blocks issue overflow).
+Prevents creating GitHub issues when the backlog exceeds a hard‑coded threshold
+(to avoid unbounded issue growth).
+
+### Issue Limiter - How It Works
+
+- Intercepts commands that create new GitHub issues (typically `gh issue create`)
+- Uses the `gh` CLI to query the current backlog of open issues for the target repository
+- Compares the number of open issues against a backlog limit
+- The backlog limit is currently a fixed, hard‑coded value inside the hook
+  (not configurable via settings file yet); consult the hook implementation for the exact threshold
+
+Behavior is deterministic across runs: once the open‑issue count reaches or exceeds
+the built‑in threshold, additional issue‑creation attempts through the guarded path
+will be blocked until the backlog is reduced.
+
+### Issue Limiter - Behavior
+
+- **Below threshold**: New issues allowed to be created normally (exit 0)
+- **At/above threshold**: Issue creation blocked with message indicating backlog limit reached
+  and suggesting triage/cleanup before adding more issues (non‑zero exit)
+- **Unavailable** (`gh` not found, or unable to query issues): Fails open, allows creation (exit 0)
 
 ## Installation
 
@@ -104,9 +162,11 @@ claude plugins add jacobpevans-cc-plugins/content-guards
 
 ## Dependencies
 
+- `jq` - JSON processing (used by validation hooks)
 - `atc` - Token counting tool (for token-validator)
 - `markdownlint-cli2` - Markdown linting (for markdown-validator)
 - `cspell` - Spell checking (for markdown-validator)
 - `gh` - GitHub CLI (for issue-limiter)
 
-All hooks fail open when their dependencies are unavailable, allowing the operation to proceed.
+Hooks rely on these external tools; if a dependency is unavailable, the affected hook
+may be skipped or may surface an error, and behavior is not guaranteed to fail open.
