@@ -10,6 +10,11 @@
 
 set -euo pipefail
 
+# Fail open if jq is unavailable
+if ! command -v jq &>/dev/null; then
+  exit 0
+fi
+
 # Extract the file path from stdin, which contains the hook input JSON
 file_path=$(jq -r '.tool_input.file_path // empty')
 
@@ -50,27 +55,15 @@ if command -v markdownlint-cli2 &>/dev/null; then
   config_flag=()
   has_project_config=false
 
-  # Walk up from the file's directory looking for project-level config
+  # Check for project-level markdownlint config (walk up from file's directory)
   search_dir="$(dirname -- "$file_path")"
   while true; do
-    if [[ -f "$search_dir/.markdownlint-cli2.yaml" ]] ||
-       [[ -f "$search_dir/.markdownlint-cli2.jsonc" ]] ||
-       [[ -f "$search_dir/.markdownlint-cli2.cjs" ]] ||
-       [[ -f "$search_dir/.markdownlint-cli2.mjs" ]] ||
-       [[ -f "$search_dir/.markdownlint.json" ]] ||
-       [[ -f "$search_dir/.markdownlint.jsonc" ]] ||
-       [[ -f "$search_dir/.markdownlint.yaml" ]] ||
-       [[ -f "$search_dir/.markdownlint.yml" ]] ||
-       [[ -f "$search_dir/.markdownlint.cjs" ]] ||
-       [[ -f "$search_dir/.markdownlint.mjs" ]]; then
+    if compgen -G "$search_dir/.markdownlint*" > /dev/null 2>&1; then
       has_project_config=true
       break
     fi
-
     parent_dir="$(dirname -- "$search_dir")"
-    if [[ "$parent_dir" == "$search_dir" ]]; then
-      break
-    fi
+    [[ "$parent_dir" == "$search_dir" ]] && break
     search_dir="$parent_dir"
   done
 
@@ -108,7 +101,7 @@ EOF
     fi
   fi
 
-  if ! markdownlint_output=$(markdownlint-cli2 "${config_flag[@]}" "$file_path" 2>&1); then
+  if ! markdownlint_output=$(markdownlint-cli2 "${config_flag[@]+"${config_flag[@]}"}" "$file_path" 2>&1); then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
   fi
