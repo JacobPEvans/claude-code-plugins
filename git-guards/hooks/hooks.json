@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/main-branch-guard.py",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/main-branch-guard.sh",
             "timeout": 5
           }
         ]

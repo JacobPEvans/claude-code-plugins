@@ -62,10 +62,12 @@ plugin-name/
 **Forbidden fields**: `bugs` (unrecognized by Claude Code runtime)
 
 **Common mistakes**:
+
 - `author` as string instead of object
 - `skills`/`commands`/`agents` as arrays of objects with name/description instead of string paths
 
 **Example**:
+
 ```json
 {
   "name": "plugin-name",
@@ -113,6 +115,40 @@ plugin-name/
 - Fail open when external tools unavailable
 - Provide actionable error messages
 - Follow `noun-verb` naming pattern
+
+### Hook Implementation Language Selection
+
+Choose the implementation language based on complexity:
+
+**Use Shell (bash/zsh) for**:
+
+- Simple git command checks (10-30 lines)
+- File existence/path validation
+- Basic string matching and JSON field extraction
+- Exit code based logic
+- Repository-aware file checks
+
+**Use Python for**:
+
+- Complex JSON manipulation beyond simple field extraction
+- Multi-step conditional logic (>50 lines)
+- Cross-platform compatibility requirements
+- Integration with Python-specific tools
+
+**Dependencies**:
+
+- Shell scripts may use: `jq`, `git`, standard Unix tools
+- Prefer fewer dependencies when possible
+- Always fail-open when dependencies unavailable
+
+**Examples**:
+
+- ✅ Shell: main-branch-guard (~60 lines, extracts JSON field, runs git commands from file's directory)
+- ✅ Python: git-permission-guard (command pattern matching and blocking)
+- ✅ Python: Complex AST parsing or multi-stage file transformation
+- ❌ Python: Simple branch checks (overkill, harder to maintain)
+
+**Key principle**: Simplicity beats sophistication. Use the simplest tool that solves the problem correctly.
 
 ## CI/CD
 
