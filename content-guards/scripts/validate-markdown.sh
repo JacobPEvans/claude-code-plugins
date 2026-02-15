@@ -58,7 +58,10 @@ if command -v markdownlint-cli2 &>/dev/null; then
   # Check for project-level markdownlint config (walk up from file's directory)
   search_dir="$(dirname -- "$file_path")"
   while true; do
-    if compgen -G "$search_dir/.markdownlint*" > /dev/null 2>&1; then
+    shopt -s nullglob
+    config_files=("$search_dir"/.markdownlint*)
+    shopt -u nullglob
+    if ((${#config_files[@]} > 0)); then
       has_project_config=true
       break
     fi
