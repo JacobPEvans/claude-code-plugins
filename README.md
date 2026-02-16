@@ -122,6 +122,7 @@ See individual plugin READMEs for specific details. General contribution guideli
 
 - Claude Code CLI
 - Python 3.10+ (for hook scripts)
+- bats-core (for running tests)
 - Tool-specific dependencies (see individual plugin READMEs)
 
 ### Testing Plugins Locally
@@ -135,6 +136,33 @@ claude plugins list
 
 # Test functionality
 # (trigger the hook conditions for the specific plugin)
+```
+
+### Running Tests
+
+Run the shared test runner to execute all plugin tests:
+
+```bash
+# Run all tests
+./scripts/run-tests.sh
+
+# Run tests for a specific plugin
+./scripts/run-tests.sh content-guards
+
+# Alternative: run bats directly on a specific test file
+bats content-guards/tests/markdown-validator.bats
+```
+
+### Git Hooks
+
+Enable optional pre-push hooks that run tests before pushing:
+
+```bash
+# Enable git hooks
+git config core.hooksPath .githooks
+
+# Disable git hooks
+git config --unset core.hooksPath
 ```
 
 ## Repository Integration

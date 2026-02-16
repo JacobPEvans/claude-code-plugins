@@ -25,17 +25,18 @@ claude plugins add jacobpevans-cc-plugins/content-guards
 
 ## Testing
 
-The markdown-validator has automated tests using [bats-core](https://github.com/bats-core/bats-core):
+Run tests using the shared test runner:
 
 ```bash
-# Install bats-core (if not already installed)
-brew install bats-core
+# From repository root
+./scripts/run-tests.sh content-guards
 
-# Run the test suite from repo root
-bats tests/content-guards/markdown-validator/validate-markdown.bats
+# Alternative: run bats directly
+bats content-guards/tests/*.bats
 ```
 
 Test coverage includes:
+
 - File type filtering (non-markdown, missing, dotfiles)
 - Config resolution (project vs fallback)
 - Cross-repo editing scenarios

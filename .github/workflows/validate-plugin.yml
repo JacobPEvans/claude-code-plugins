@@ -102,9 +102,15 @@ jobs:
             jq empty "$json_file"
           done
 
-      - name: Run hook tests
+      - name: Install bats-core
+        run: sudo npm install -g bats
+
+      - name: Run tests
         run: |
-          echo "Running hook tests..."
+          echo "Running bats tests via shared script..."
+          ./scripts/run-tests.sh
+
+          echo "Running Python tests..."
           find . -name "test_*.py" -o -name "*_test.py" | while read -r test; do
             if [ -f "$test" ]; then
               echo "Running: $test"
