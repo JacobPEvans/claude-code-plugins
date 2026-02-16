@@ -103,7 +103,7 @@ After all agents complete:
 
    Next steps:
    1. Verify all fixes: git diff
-   2. Create PR: /manage-pr
+   2. Create PR: /finalize-pr
    ```
 
 ## Success Criteria

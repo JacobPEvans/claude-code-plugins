@@ -9,7 +9,7 @@
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "keywords": ["github", "pull-request", "issues", "pr-management", "shape-up", "workflow"],
   "skills": [
-    "./skills/manage-pr",
+    "./skills/finalize-pr",
     "./skills/finalize-prs",
     "./skills/shape-issues",
     "./skills/resolve-pr-threads"
