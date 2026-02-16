@@ -188,7 +188,6 @@ Generate comprehensive description based on full diff:
 - **Changes** section listing all major modifications
 - **Breaking Changes** section (if applicable)
 - **Test Plan** section with validation steps
-- Include link: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 Update if needed:
 
@@ -200,8 +199,6 @@ gh pr edit <PR> --body "$(cat <<'EOF'
 
 ## Changes
 ...
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
