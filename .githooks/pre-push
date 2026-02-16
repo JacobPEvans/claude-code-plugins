@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 # Pre-push hook: Run all plugin tests before pushing
 
 ./scripts/run-tests.sh

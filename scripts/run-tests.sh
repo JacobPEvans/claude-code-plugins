@@ -8,25 +8,32 @@ set -euo pipefail
 
 PLUGIN_DIR="${1:-}"
 
+find_paths=()
 if [[ -n "$PLUGIN_DIR" ]]; then
   # Validate plugin directory exists
   if [[ ! -d "$PLUGIN_DIR" ]]; then
     echo "Error: Plugin directory '$PLUGIN_DIR' does not exist" >&2
     exit 1
   fi
-
-  # Find tests for specific plugin
-  test_pattern="$PLUGIN_DIR/tests/**/*.bats"
+  if [[ -d "$PLUGIN_DIR/tests" ]]; then
+    find_paths+=("$PLUGIN_DIR/tests")
+  fi
 else
   # Find all test files
-  test_pattern="*/tests/**/*.bats"
+  for d in */; do
+    if [[ -d "${d}tests" ]]; then
+      find_paths+=("${d}tests")
+    fi
+  done
 fi
 
 # Collect test files (Bash 3.2 compatible - no mapfile)
 test_files=()
-while IFS= read -r file; do
-  test_files+=("$file")
-done < <(find . -path "$test_pattern" -type f 2>/dev/null)
+if [[ ${#find_paths[@]} -gt 0 ]]; then
+  while IFS= read -r file; do
+    test_files+=("$file")
+  done < <(find "${find_paths[@]}" -name '*.bats' -type f 2>/dev/null)
+fi
 
 # Exit gracefully if no tests found
 if [[ ${#test_files[@]} -eq 0 ]]; then
