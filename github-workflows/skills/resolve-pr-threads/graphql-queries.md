@@ -22,38 +22,53 @@
 - Always use `last: 100` (not `first`)
 - Pagination is capped at 100 per request
 
+## Placeholder Convention
+
+All queries use **camelCase placeholders** for string substitution — matching GitHub's own `gh api` convention.
+
+| Placeholder | Type | Example Value | Source |
+|-------------|------|---------------|--------|
+| `{owner}` | string | `"JacobPEvans"` | `gh repo view --json owner --jq '.owner.login'` |
+| `{repo}` | string | `"claude-code-plugins"` | `gh repo view --json name --jq '.name'` |
+| `{number}` | integer | `123` | `gh pr view --json number --jq '.number'` |
+| `{threadId}` | string | `"PRRT_kwDOABCDEF"` | From GraphQL fetch query response |
+
+### CRITICAL: Direct String Substitution Only
+
+❌ **WRONG** — Using GraphQL `$variable` syntax with `--raw-field`:
+
+```bash
+# This will FAIL with variable type coercion errors
+gh api graphql --raw-field 'query=mutation($threadId: ID!) {
+  resolveReviewThread(input: {threadId: $threadId}) {
+    thread { id isResolved }
+  }
+}'
+```
+
+✅ **CORRECT** — Direct string substitution into the query string:
+
+```bash
+# Substitute values directly into the query template
+THREAD_ID="PRRT_kwDOABCDEF"
+gh api graphql --raw-field "query=mutation { resolveReviewThread(input: {threadId: \"${THREAD_ID}\"}) { thread { id isResolved } } }"
+```
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Do NOT use GraphQL `$variable` syntax with `--raw-field`.** The `--raw-field` flag sends the query as-is without variable processing. Always substitute placeholder values directly into the query string before execution.
+
 ## Fetch Unresolved Threads
 
 ```bash
 <!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field 'query=query { repository(owner: "{OWNER}", name: "{REPO}") { pullRequest(number: {NUMBER}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
 ```
 
 Fields: `id` (`PRRT_*` node ID), `isResolved`, `path`, `line`/`startLine`,
 `comments.nodes[].body`, `comments.nodes[].author.login`, `comments.nodes[].databaseId`
 
-**Placeholder substitution**: Replace `{OWNER}`, `{REPO}`, `{NUMBER}` with actual values before running.
-
-**Context inference**: When no arguments provided, infer from current git/PR context:
-
-```bash
-# Smart context inference - tries current context first, then conversation context
-OWNER=${OWNER:-$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)}
-REPO=${REPO:-$(gh repo view --json name --jq -r '.name' 2>/dev/null)}
-NUMBER=${NUMBER:-$(gh pr view --json number --jq -r '.number' 2>/dev/null)}
-
-# Only error if about to execute with empty values (rare - means not in repo/PR context)
-if [[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]]; then
-  echo "Error: Could not infer repo/PR context. Either:"
-  echo "  1. Run from a git repo with GitHub remote, OR"
-  echo "  2. Provide explicit values: OWNER=user REPO=repo NUMBER=123"
-  exit 1
-fi
-
-# Run query with inferred or provided values
 <!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: \"${REPO}\") { pullRequest(number: ${NUMBER}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }"
-```
+**Placeholder substitution**: Replace `{owner}`, `{repo}`, `{number}` with actual values before running.
 
 **WARNING**: This query fetches only the last 100 threads. PRs with more than
 100 review threads will silently miss older threads. Run the query multiple
@@ -63,48 +78,23 @@ times after resolving visible threads, or implement pagination with
 ## Resolve Thread Mutation
 
 ```bash
-gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{THREAD_ID}"}) { thread { id isResolved } } }'
+gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
 ```
 
-`{THREAD_ID}` is the `PRRT_*` node ID from the fetch query.
+`{threadId}` is the `PRRT_*` node ID from the fetch query.
 
-**Placeholder substitution**: Replace `{THREAD_ID}` with the actual thread ID from fetch query.
-
-Example:
-
-```bash
-THREAD_ID="PRRT_kwDO..."  # From fetch query response
-[[ -z "$THREAD_ID" ]] && { echo "Error: THREAD_ID required from fetch query"; exit 1; }
-
-gh api graphql --raw-field "query=mutation { resolveReviewThread(input: {threadId: \"${THREAD_ID}\"}) { thread { id isResolved } } }"
-```
+**Placeholder substitution**: Replace `{threadId}` with the actual thread ID from fetch query.
 
 ## Verify Zero Unresolved
 
 ```bash
 <!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field 'query=query { repository(owner: "{OWNER}", name: "{REPO}") { pullRequest(number: {NUMBER}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' | jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' | jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
 ```
 
 Must return `0`. Any non-zero value means threads remain unresolved.
 
-**Placeholder substitution**: Replace `{OWNER}`, `{REPO}`, `{NUMBER}` with actual values.
-
-**Context inference**: Automatically infer from current context when not provided:
-
-```bash
-# Infer from current context (works when run from git repo/PR branch)
-OWNER=${OWNER:-$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)}
-REPO=${REPO:-$(gh repo view --json name --jq -r '.name' 2>/dev/null)}
-NUMBER=${NUMBER:-$(gh pr view --json number --jq -r '.number' 2>/dev/null)}
-
-# Final check before query execution (prevents GraphQL parse errors)
-[[ -z "$OWNER" || -z "$REPO" || -z "$NUMBER" ]] && { echo "Error: Could not infer repo/PR context"; exit 1; }
-
-# Run query
-<!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field "query=query { repository(owner: \"${OWNER}\", name: \"${REPO}\") { pullRequest(number: ${NUMBER}) { reviewThreads(last: 100) { nodes { isResolved } } } } }" | jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
-```
+**Placeholder substitution**: Replace `{owner}`, `{repo}`, `{number}` with actual values.
 
 **WARNING**: This verification only checks the last 100 threads. If a PR has
 more than 100 threads, older unresolved threads may exist outside the query

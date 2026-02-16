@@ -56,7 +56,7 @@ Use `gh repo list` and `gh pr list` to enumerate all open PRs across repos.
 
 ### Step 6: Display Summary
 
-Report: repos scanned, PRs ready, PRs blocked with reasons. Save JSON to `/tmp/ready-player-one-{TIMESTAMP}.json`.
+Report: repos scanned, PRs ready, PRs blocked with reasons. Save JSON to `/tmp/ready-player-one-{timestamp}.json`.
 
 ## Blocking Reasons
 
