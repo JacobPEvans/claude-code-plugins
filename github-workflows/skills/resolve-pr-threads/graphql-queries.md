@@ -50,8 +50,8 @@ gh api graphql --raw-field 'query=mutation($threadId: ID!) {
 
 ```bash
 # Substitute values directly into the query template
-THREAD_ID="PRRT_kwDOABCDEF"
-gh api graphql --raw-field "query=mutation { resolveReviewThread(input: {threadId: \"${THREAD_ID}\"}) { thread { id isResolved } } }"
+threadId="PRRT_kwDOABCDEF"
+gh api graphql --raw-field "query=mutation { resolveReviewThread(input: {threadId: \"${threadId}\"}) { thread { id isResolved } } }"
 ```
 
 <!-- markdownlint-disable-next-line MD013 -->

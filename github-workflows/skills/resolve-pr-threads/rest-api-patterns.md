@@ -118,20 +118,20 @@ number=$(gh pr view --json number --jq -r '.number' 2>/dev/null)
 threads_json=$(gh api graphql --raw-field "query=query { repository(owner: \"${owner}\", name: \"${repo}\") { pullRequest(number: ${number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }")
 
 # 2. Extract database ID for the thread you want to reply to
-thread_id="PRRT_kwDO..."  # The thread's GraphQL node ID
-comment_id=$(echo "$threads_json" | jq -r \
+threadId="PRRT_kwDO..."  # The thread's GraphQL node ID
+commentId=$(echo "$threads_json" | jq -r \
   ".data.repository.pullRequest.reviewThreads.nodes[] |
-   select(.id == \"${thread_id}\") |
+   select(.id == \"${threadId}\") |
    .comments.nodes[0].databaseId")
 
 # 3. Verify we have a valid numeric ID
-if [[ ! "$comment_id" =~ ^[0-9]+$ ]]; then
-  echo "Error: Could not extract valid databaseId for thread $thread_id"
+if [[ ! "$commentId" =~ ^[0-9]+$ ]]; then
+  echo "Error: Could not extract valid databaseId for thread $threadId"
   exit 1
 fi
 
 # 4. Post the threaded reply
-gh api repos/${owner}/${repo}/pulls/${number}/comments/${comment_id}/replies \
+gh api repos/${owner}/${repo}/pulls/${number}/comments/${commentId}/replies \
   -f body="**Re: feedback on file.ts:42**
 
 Thanks for the review! I've addressed this by:
@@ -149,7 +149,7 @@ The REST API supports multi-line markdown in the `body` parameter.
 ### Using Here-Document
 
 ```bash
-gh api repos/${owner}/${repo}/pulls/${number}/comments/${comment_id}/replies \
+gh api repos/${owner}/${repo}/pulls/${number}/comments/${commentId}/replies \
   -f body="$(cat <<'EOF'
 **Re: reviewer's feedback on path:line**
 
@@ -169,7 +169,7 @@ EOF
 reply=$(printf "**Re: %s's feedback on %s:%s**\n\n%s\n\nFixed in commit %s." \
   "reviewer" "src/auth.ts" "45" "Detailed explanation here" "abc1234")
 
-gh api repos/${owner}/${repo}/pulls/${number}/comments/${comment_id}/replies \
+gh api repos/${owner}/${repo}/pulls/${number}/comments/${commentId}/replies \
   -f body="$reply"
 ```
 
