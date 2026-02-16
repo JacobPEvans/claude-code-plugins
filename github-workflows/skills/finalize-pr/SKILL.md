@@ -34,8 +34,8 @@ If code-simplifier is not available, the skill will continue but skip simplifica
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Create PR immediately** - Push and open PR as soon as work completes
 8. **Check CI last** - Monitor GitHub Actions after other checks (longest running)
-9. **Review PR metadata** - Update title and description to match final diff before merge
-10. **Take direct action** - Identify issues and fix them automatically
+9. **Report ready and pause** - Instruct user to invoke `/squash-merge-pr` when ready
+10. **Take direct action** - Identify issues and fix them automatically (except merge decisions)
 
 ## Phase 1: Create PR
 
@@ -156,17 +156,34 @@ Verify ALL conditions automatically and proceed directly:
 5. ✅ **All checks pass**: `gh pr checks <PR>` all green
 6. ✅ **Local validation**: Project linters pass
 
-**Only if ALL six pass**: Proceed to Phase 4 for final PR metadata review.
+**Only if ALL six pass**: Proceed to Phase 4 to report ready status.
 
-## Phase 4: PR Metadata Review and Merge Strategy
+## Phase 4: Report Ready Status
 
-Automatically invoke `/squash-merge-pr` to:
-- Review and update PR title/description to match final changes
-- Analyze changeset and recommend merge strategy (squash vs rebase)
+After verifying all conditions pass, report to user:
+
+```
+✅ PR #XX is ready for final review!
+
+All checks have passed:
+- CodeQL clean
+- Review threads resolved
+- No merge conflicts
+- Code simplified
+- All CI checks pass
+- Local validation pass
+
+Next step: When ready to merge, invoke:
+  /squash-merge-pr
+
+This will:
+- Update PR title/description to match final changes
+- Recommend merge strategy (squash vs rebase)
 - Generate release-note-friendly commit message
-- Report ready status with merge command
+- Provide final merge command
+```
 
-This skill analyzes the full diff (origin/main...HEAD) and ensures PR metadata accurately reflects all changes before merge.
+**CRITICAL**: Wait for explicit user invocation of `/squash-merge-pr`. Never automatically invoke merge-related skills.
 
 ## Automation Philosophy
 
@@ -185,11 +202,14 @@ This skill analyzes the full diff (origin/main...HEAD) and ensures PR metadata a
 ## Workflow
 
 ```
-/init-worktree → /resolve-issues → /finalize-pr → user merges
+/init-worktree → /resolve-issues → /finalize-pr
                                           ↓
                     Phase 1: Create PR
                     Phase 2: Resolution Loop (automatic fixes)
                     Phase 3: Pre-Handoff Verification
-                    Phase 4: /squash-merge-pr (metadata review + merge strategy)
-                    → user executes merge command
+                    Phase 4: Report ready (wait for user)
+                                          ↓
+                    User invokes: /squash-merge-pr
+                                          ↓
+                    User executes: gh pr merge
 ```
