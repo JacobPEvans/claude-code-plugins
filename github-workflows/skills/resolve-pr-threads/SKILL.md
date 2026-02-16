@@ -38,6 +38,9 @@ explanations, then resolving threads via GitHub's GraphQL API.
 
 **If you see or are tempted to write a multi-line GraphQL query, STOP. It is WRONG.**
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Use direct string substitution for `{placeholder}` values — never GraphQL `$variable` syntax.** The `--raw-field` flag sends queries as-is without variable processing. Always substitute values directly into the query string before execution.
+
 **Context inference**: When no arguments provided, automatically infer owner/repo/PR from current git context:
 
 ```bash
@@ -116,7 +119,7 @@ Review threads to address:
 {end for}
 
 Reply to threads using:
-gh api repos/{OWNER}/{REPO}/pulls/{NUMBER}/comments/{databaseId}/replies -f body="..."
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="..."
 
 For REST API details: read rest-api-patterns.md in the resolve-pr-threads skill directory.
 
@@ -177,8 +180,8 @@ GitHub-specific edge cases need explicit attention:
 ## Output Format
 
 ```text
-PR #{NUMBER} - Thread Resolution Summary
-Groups: {G} ({N} threads total)
+PR #{number} - Thread Resolution Summary
+Groups: {groupCount} ({threadCount} threads total)
 Handled: {count} | Needs human: {count}
 Resolved via GraphQL: {count}
 Verification: {0 unresolved} / {total}
