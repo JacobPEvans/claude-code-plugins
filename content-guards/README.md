@@ -36,10 +36,12 @@ bats content-guards/tests/*.bats
 ```
 
 Test coverage includes:
+
 - File type filtering (non-markdown, missing, dotfiles)
 - Config resolution (project vs fallback)
 - Cross-repo editing scenarios
 - Unbound variable regression prevention (PR #39, #40)
+
 ## License
 
 Apache-2.0
