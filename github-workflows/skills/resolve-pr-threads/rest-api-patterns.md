@@ -1,210 +1,61 @@
-<!-- cspell:words PRRT databaseId -->
+<!-- cspell:words PRRT PRRC DOABCDEF databaseId -->
+<!-- markdownlint-disable MD013 -->
 
-# GitHub REST API Patterns for PR Review Threads
+# REST API Patterns for PR Review Thread Replies
 
-REST API commands for replying to GitHub pull request review threads.
-Complements the GraphQL operations in [graphql-queries.md](graphql-queries.md).
+## When to Use REST vs GraphQL
 
-<!-- markdownlint-disable-next-line MD013 -->
-**Placeholder convention**: All placeholders use camelCase (e.g., `{owner}`, `{repo}`, `{number}`). See [graphql-queries.md](graphql-queries.md#placeholder-convention) for details.
+| Operation | Use | Why |
+|-----------|-----|-----|
+| Fetch threads | GraphQL | Only way to access `reviewThreads` |
+| Reply (simple text) | Either | GraphQL `addPullRequestReviewThreadReply` works for plain text |
+| Reply (special chars) | REST | `-f body=` handles encoding automatically |
+| Resolve thread | GraphQL | Only way to resolve |
 
-## Why REST API for Replies?
+REST is recommended for replies with complex body text (newlines, markdown, quotes) because `-f body=` handles encoding automatically. For simple plain-text replies, the GraphQL `addPullRequestReviewThreadReply` mutation also works — see [graphql-queries.md](graphql-queries.md).
 
-GitHub's GraphQL API for review threads is **read-only**. To reply to review
-comments while maintaining native threading, you must use the REST API.
-
-**Key distinction**:
-
-- **GraphQL**: Fetch threads, resolve threads (read + state changes)
-- **REST API**: Reply to threads (write operations within threads)
-
-## Reply to Review Thread
-
-Use GitHub REST API to add a threaded reply to a review comment.
+## Reply Command
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{commentId}/replies \
-  -f body="{replyText}"
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{commentId}/replies -f body="your reply text here"
 ```
-
-### Required Parameters
 
 | Parameter | Type | Source | Notes |
 |-----------|------|--------|-------|
-| `{owner}` | string | `gh repo view --json owner` | Repository owner |
-| `{repo}` | string | `gh repo view --json name` | Repository name |
-| `{number}` | integer | `gh pr view --json number` | PR number |
-| `{commentId}` | integer | GraphQL `databaseId` | **Must be numeric** |
-| `{replyText}` | string | Your reply text | Multi-line markdown supported |
+| `{owner}` | string | `gh repo view --json owner --jq '.owner.login'` | Repository owner |
+| `{repo}` | string | `gh repo view --json name --jq '.name'` | Repository name |
+| `{number}` | integer | `gh pr view --json number --jq '.number'` | PR number |
+| `{commentId}` | integer | GraphQL `databaseId` field | **Must be numeric** |
 
-### Critical: Use databaseId, NOT Node ID
+## Critical: databaseId NOT Node ID
 
-The `{commentId}` parameter **MUST** be the numeric `databaseId` from GraphQL,
-**NOT** the node ID (like `PRRT_*` or `PRRC_*`).
-
-**Wrong**:
+The `{commentId}` parameter **MUST** be the numeric `databaseId` from the GraphQL response, **NOT** the node ID (like `PRRT_*` or `PRRC_*`).
 
 ```bash
-# ❌ This will fail - node IDs don't work with REST API
-COMMENT_ID="PRRT_kwDOABCDEF"  # GraphQL node ID
-gh api repos/owner/repo/pulls/123/comments/$COMMENT_ID/replies -f body="..."
+# WRONG - node IDs don't work with REST API
+gh api repos/owner/repo/pulls/123/comments/PRRT_kwDOABCDEF/replies -f body="..."
+
+# CORRECT - numeric databaseId from GraphQL response
+gh api repos/owner/repo/pulls/123/comments/987654321/replies -f body="..."
 ```
 
-**Correct**:
+## Extract databaseId from GraphQL Response
+
+After fetching threads via the GraphQL query in [graphql-queries.md](graphql-queries.md), extract the numeric `databaseId` for the first comment in the target thread:
 
 ```bash
-# ✅ This works - numeric databaseId from GraphQL response
-COMMENT_ID=987654321  # From comments.nodes[0].databaseId
-gh api repos/owner/repo/pulls/123/comments/$COMMENT_ID/replies -f body="..."
+commentId=$(echo "$THREADS_JSON" | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "PRRT_xxx") | .comments.nodes[0].databaseId')
 ```
 
-## Extract Comment Database ID from GraphQL
-
-When you fetch threads via GraphQL (see [graphql-queries.md](graphql-queries.md)),
-each comment has both a node ID and a databaseId.
-
-### GraphQL Response Structure
-
-```json
-{
-  "data": {
-    "repository": {
-      "pullRequest": {
-        "reviewThreads": {
-          "nodes": [
-            {
-              "id": "PRRT_kwDOABCDEF",
-              "comments": {
-                "nodes": [
-                  {
-                    "id": "PRRC_kwDOABCDEF",
-                    "databaseId": 987654321,
-                    "body": "Original review comment",
-                    "author": {"login": "reviewer"}
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
-}
-```
-
-### Extract databaseId with jq
-
-```bash
-# Extract database ID for a specific thread
-COMMENT_ID=$(echo "$THREADS_JSON" | jq -r \
-  '.data.repository.pullRequest.reviewThreads.nodes[] |
-   select(.id == "PRRT_xxx") |
-   .comments.nodes[0].databaseId')
-
-# Verify it's numeric
-[[ "$COMMENT_ID" =~ ^[0-9]+$ ]] || { echo "Error: Invalid COMMENT_ID"; exit 1; }
-```
-
-## Complete Example
-
-```bash
-# 1. Fetch threads via GraphQL (see graphql-queries.md)
-owner=$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)
-repo=$(gh repo view --json name --jq -r '.name' 2>/dev/null)
-number=$(gh pr view --json number --jq -r '.number' 2>/dev/null)
-
-<!-- markdownlint-disable-next-line MD013 -->
-threads_json=$(gh api graphql --raw-field "query=query { repository(owner: \"${owner}\", name: \"${repo}\") { pullRequest(number: ${number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }")
-
-# 2. Extract database ID for the thread you want to reply to
-threadId="PRRT_kwDO..."  # The thread's GraphQL node ID
-commentId=$(echo "$threads_json" | jq -r \
-  ".data.repository.pullRequest.reviewThreads.nodes[] |
-   select(.id == \"${threadId}\") |
-   .comments.nodes[0].databaseId")
-
-# 3. Verify we have a valid numeric ID
-if [[ ! "$commentId" =~ ^[0-9]+$ ]]; then
-  echo "Error: Could not extract valid databaseId for thread $threadId"
-  exit 1
-fi
-
-# 4. Post the threaded reply
-gh api repos/${owner}/${repo}/pulls/${number}/comments/${commentId}/replies \
-  -f body="**Re: feedback on file.ts:42**
-
-Thanks for the review! I've addressed this by:
-- Refactoring the function for clarity
-- Adding input validation
-- Including unit tests
-
-Fixed in commit abc1234."
-```
-
-## Multi-Line Reply Formatting
-
-The REST API supports multi-line markdown in the `body` parameter.
-
-### Using Here-Document
-
-```bash
-gh api repos/${owner}/${repo}/pulls/${number}/comments/${commentId}/replies \
-  -f body="$(cat <<'EOF'
-**Re: reviewer's feedback on path:line**
-
-Detailed response here with:
-- Bullet points
-- Code blocks
-- Multiple paragraphs
-
-Fixed in commit abc1234.
-EOF
-)"
-```
-
-### Using printf
-
-```bash
-reply=$(printf "**Re: %s's feedback on %s:%s**\n\n%s\n\nFixed in commit %s." \
-  "reviewer" "src/auth.ts" "45" "Detailed explanation here" "abc1234")
-
-gh api repos/${owner}/${repo}/pulls/${number}/comments/${commentId}/replies \
-  -f body="$reply"
-```
-
-## Reply Behavior
-
-When you use this REST endpoint:
-
-✅ **Reply appears threaded** under the original review comment in GitHub UI
-✅ **Preserves conversation context** - readers see the full thread
-✅ **Notifies the reviewer** - they receive a notification
-✅ **Supports markdown** - formatting, code blocks, lists all work
-✅ **Counted as engagement** - PR shows activity
-
-❌ **Does NOT resolve the thread** - you must still call the GraphQL resolve mutation
-❌ **Does NOT trigger review re-request** - resolution + approval required for that
+The `databaseId` is always an integer (e.g., `987654321`). If you get `null` or a non-numeric value, the thread ID is wrong or the comment was deleted.
 
 ## Fallback: Top-Level PR Comment
 
-If the REST API fails (permission issues, invalid IDs), fall back to a
-top-level PR comment. This loses threading but still documents your response.
+If the REST reply endpoint fails (invalid IDs, permissions), fall back to a top-level PR comment. This loses threading but still documents your response.
 
 ```bash
-gh pr comment ${number} --body "**Re: reviewer's feedback on path:line**
-
-Detailed response here.
-
-Note: Posted as top-level comment due to threading API limitation."
+gh pr comment {number} --body "Re: reviewer feedback on path:line - your response here"
 ```
-
-**Use cases for fallback**:
-
-- Token lacks `write:discussion` permission
-- Invalid or stale comment database ID
-- Comment was deleted after GraphQL fetch
-- Network/API errors
 
 ## Troubleshooting
 
@@ -216,15 +67,4 @@ Note: Posted as top-level comment due to threading API limitation."
 | `Resource not accessible` | Token lacks permissions | Use fallback to top-level comment |
 | Empty body error | Missing `-f body=` | Ensure `-f body="text"` is included |
 
-## Integration with GraphQL Workflow
-
-Typical workflow combining GraphQL and REST:
-
-1. **Fetch threads** (GraphQL) → Get `id` (PRRT_*) and `databaseId` for each comment
-2. **Read and analyze** → Understand reviewer feedback
-3. **Implement changes** → Fix code, commit
-4. **Reply to thread** (REST) → Post explanation using `databaseId`
-5. **Resolve thread** (GraphQL) → Mark resolved using `id` (PRRT_*)
-6. **Verify** (GraphQL) → Confirm zero unresolved threads
-
-See [SKILL.md](SKILL.md) for the complete orchestration pattern.
+See [graphql-queries.md](graphql-queries.md) for the full GraphQL query reference.
