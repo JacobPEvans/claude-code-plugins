@@ -1,23 +1,17 @@
 ---
 name: squash-merge-pr
-description: Review PR metadata and recommend merge strategy with release-note-friendly commit message
+description: >-
+  Review and update PR title/description to match final changes, recommend merge
+  strategy (squash vs rebase), and generate release-note-friendly commit message.
+  Use after /finalize-pr reports ready, when preparing any PR for merge, or when
+  you want to clean up PR metadata before merging. Handles single PR from argument
+  or current branch.
+argument-hint: "[PR_NUMBER]"
 ---
 
 # Squash Merge PR
 
 Reviews PR metadata after all checks pass, updates title/description to match final changes, and recommends merge strategy with release-note-friendly commit message.
-
-## Scope
-
-**SINGLE PR** - One PR at a time, from argument or current branch.
-
-## When to Use
-
-Invoke after all PR checks pass and before final merge:
-- All CI checks green
-- CodeQL clean
-- Review threads resolved
-- Code simplified
 
 ## Workflow
 
@@ -96,13 +90,6 @@ Provide release-note-friendly commit message:
 <type>: <concise description>
 
 <2-3 line explanation of what changed and why>
-
-Example:
-feat: add dark mode support
-
-Implements dark mode with automatic theme switching based on system
-preferences. Includes color scheme updates for all components and
-persistent user preference storage.
 ```
 
 **Recommend `/rebase-pr`** when:
@@ -132,34 +119,9 @@ Command: gh pr merge <PR> --squash
 
 The merge command requires explicit user execution. Pause and wait after reporting recommendation.
 
-## Output Format
-
-```
-✅ PR #{NUMBER} Ready to Merge
-
-Metadata Review:
-- Title: {updated/unchanged}
-- Description: {updated/unchanged}
-
-Merge Strategy: {Squash merge | Rebase merge}
-
-Reasoning: {why this strategy was chosen}
-
-Release-Note-Friendly Commit:
----
-{type}: {description}
-
-{explanation}
----
-
-Execute: gh pr merge {NUMBER} --{squash|rebase}
-```
-
 ## Integration
 
-This skill is automatically invoked by `/finalize-pr` after all checks pass (Phase 4).
-
-Can also be invoked manually:
+Invoke manually after `/finalize-pr` reports ready:
 ```
 /squash-merge-pr          # Current branch PR
 /squash-merge-pr 42       # Specific PR number

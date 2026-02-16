@@ -1,28 +1,16 @@
 ---
 name: finalize-pr
-description: Automatically finalize pull requests for merge - no human intervention needed until ready
+description: >-
+  Automatically finalize pull requests for merge by resolving CodeQL violations,
+  review threads, merge conflicts, and CI failures. Use when a PR is ready for
+  final checks, when you want to prepare a PR for merge, or after completing
+  feature work on a branch. Handles single PR from argument or current branch.
+argument-hint: "[PR_NUMBER]"
 ---
 
 # Finalize PR
 
 **FULLY AUTOMATIC** - Finalizes YOUR PRs as author: create, monitor, fix, prepare for merge. No manual intervention required. For reviewing others' PRs, use `/review-pr`.
-
-## Scope
-
-**SINGLE PR** - One PR at a time, from argument or current branch.
-
-## Prerequisites
-
-**Required plugins:**
-- **code-simplifier** (official Anthropic plugin) - Automatically simplifies code after changes
-
-Install code-simplifier:
-```bash
-# The code-simplifier is an official Anthropic plugin
-# It is invoked via Task tool with subagent_type: code-simplifier
-```
-
-If code-simplifier is not available, the skill will continue but skip simplification steps (fail-open philosophy).
 
 ## Critical Rules
 
@@ -62,7 +50,7 @@ gh api repos/${OWNER}/${REPO}/code-scanning/alerts \
 
 **If violations found**:
 1. Automatically invoke `/resolve-codeql fix` and wait for completion
-2. **ALWAYS invoke code-simplifier agent** to simplify any fixes
+2. **ALWAYS invoke code-simplifier agent** to simplify any fixes (if code-simplifier is unavailable, continue with fail-open philosophy)
 3. Validate locally before committing
 
 ### 2.2 Review Threads (SECOND)
@@ -121,30 +109,6 @@ gh pr checks <PR> --watch
 
 Wait for all checks to complete. If any fail, go to 2.5.
 
-### 2.7 Code Simplification (ALWAYS - After Any Changes)
-
-**CRITICAL**: After ANY code modifications in phases 2.1-2.6 (including fixes triggered by 2.6 failures that loop back through 2.5), invoke code-simplifier:
-
-```text
-Task tool with subagent_type: code-simplifier
-Prompt: "Simplify all code changes made during PR finalization.
-Focus on recently modified files. Remove unnecessary complexity
-while preserving all functionality."
-```
-
-Why this matters:
-- AI agents tend to over-engineer solutions
-- Fixes often introduce more code than necessary
-- Simpler code = easier to maintain and review
-- Reduces future technical debt
-
-**When to invoke**:
-- After CodeQL fixes
-- After review thread resolution
-- After failed check fixes
-- After merge conflict resolution
-- Before final validation
-
 ## Phase 3: Pre-Handoff Verification
 
 Verify ALL conditions automatically and proceed directly:
@@ -160,44 +124,16 @@ Verify ALL conditions automatically and proceed directly:
 
 ## Phase 4: Report Ready Status
 
-After verifying all conditions pass, report to user:
+After verifying all conditions pass, report:
 
 ```
-✅ PR #XX is ready for final review!
+✅ PR #{NUMBER} ready for final review!
 
-All checks have passed:
-- CodeQL clean
-- Review threads resolved
-- No merge conflicts
-- Code simplified
-- All CI checks pass
-- Local validation pass
-
-Next step: When ready to merge, invoke:
+All checks passed. To prepare for merge, invoke:
   /squash-merge-pr
-
-This will:
-- Update PR title/description to match final changes
-- Recommend merge strategy (squash vs rebase)
-- Generate release-note-friendly commit message
-- Provide final merge command
 ```
 
-**CRITICAL**: Wait for explicit user invocation of `/squash-merge-pr`. Never automatically invoke merge-related skills.
-
-## Automation Philosophy
-
-**Take direct action** - This skill operates autonomously:
-- Fix issues immediately when detected
-- Resolve review threads automatically using `/resolve-pr-threads`
-- Check and fix CodeQL violations using `/resolve-codeql`
-- Simplify code after every change using code-simplifier
-- Continue to next check after completing each step
-
-**Report to user** in these specific cases:
-1. PR is fully ready to merge (all checks pass) - pause for merge approval
-2. User intervention required (e.g., merge conflicts needing manual resolution)
-3. Unrecoverable error occurs requiring human decision
+Wait for explicit user invocation of `/squash-merge-pr`.
 
 ## Workflow
 
