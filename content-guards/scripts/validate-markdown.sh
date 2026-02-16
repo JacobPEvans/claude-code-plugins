@@ -104,7 +104,12 @@ EOF
     fi
   fi
 
-  if ! markdownlint_output=$(markdownlint-cli2 "${config_flag[@]+"${config_flag[@]}"}" "$file_path" 2>&1); then
+  if [[ ${#config_flag[@]} -gt 0 ]]; then
+    markdownlint_output=$(markdownlint-cli2 "${config_flag[@]}" "$file_path" 2>&1)
+  else
+    markdownlint_output=$(markdownlint-cli2 "$file_path" 2>&1)
+  fi
+  if [[ $? -ne 0 ]]; then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
   fi
