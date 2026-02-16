@@ -103,7 +103,7 @@ jobs:
           done
 
       - name: Install bats-core
-        run: npm install -g bats
+        run: sudo npm install -g bats
 
       - name: Run tests
         run: |
