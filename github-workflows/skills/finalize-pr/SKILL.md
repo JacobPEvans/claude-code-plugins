@@ -11,6 +11,19 @@ description: Automatically finalize pull requests for merge - no human intervent
 
 **SINGLE PR** - One PR at a time, from argument or current branch.
 
+## Prerequisites
+
+**Required plugins:**
+- **code-simplifier** (official Anthropic plugin) - Automatically simplifies code after changes
+
+Install code-simplifier:
+```bash
+# The code-simplifier is an official Anthropic plugin
+# It is invoked via Task tool with subagent_type: code-simplifier
+```
+
+If code-simplifier is not available, the skill will continue but skip simplification steps (fail-open philosophy).
+
 ## Critical Rules
 
 1. **Wait for user approval to merge** - Report ready status, then pause for user merge command
@@ -39,8 +52,12 @@ description: Automatically finalize pull requests for merge - no human intervent
 Check for CodeQL violations in the repository itself (not just GitHub Actions):
 
 ```bash
-gh api repos/{OWNER}/{REPO}/code-scanning/alerts \
-  --jq '.[] | select(.state == "open" and .number > 0) | .number' | wc -l
+# Infer OWNER and REPO from the current git context if not already set
+OWNER=${OWNER:-$(gh repo view --json owner --jq '.owner.login')}
+REPO=${REPO:-$(gh repo view --json name --jq '.name')}
+
+gh api repos/${OWNER}/${REPO}/code-scanning/alerts \
+  --jq '[.[] | select(.state == "open")] | length'
 ```
 
 **If violations found**:
@@ -53,7 +70,7 @@ gh api repos/{OWNER}/{REPO}/code-scanning/alerts \
 Check for unresolved review comments:
 
 ```bash
-gh pr view <PR> --json reviews,reviewThreads
+gh pr view <PR> --json reviewThreads --jq '[.reviewThreads[] | select(.isResolved | not)] | length'
 ```
 
 **If unresolved threads exist**:
@@ -73,7 +90,8 @@ gh pr view <PR> --json mergeable
 1. Fetch latest main: `git fetch origin main`
 2. Attempt merge: `git merge origin/main`
 3. If conflicts exist, identify files and report for user resolution
-4. After user resolves, commit and push automatically
+4. After user resolves, **ALWAYS invoke code-simplifier agent** on updated files
+5. Validate locally, then commit and push automatically
 
 ### 2.4 Health Check (CONTINUOUS)
 
@@ -105,7 +123,7 @@ Wait for all checks to complete. If any fail, go to 2.5.
 
 ### 2.7 Code Simplification (ALWAYS - After Any Changes)
 
-**CRITICAL**: After ANY code modifications in phases 2.1-2.5, invoke code-simplifier:
+**CRITICAL**: After ANY code modifications in phases 2.1-2.6 (including fixes triggered by 2.6 failures that loop back through 2.5), invoke code-simplifier:
 
 ```text
 Task tool with subagent_type: code-simplifier
