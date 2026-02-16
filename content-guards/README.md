@@ -23,6 +23,18 @@ claude plugins add jacobpevans-cc-plugins/content-guards
 - `cspell` - Spell checking
 - `gh` - GitHub CLI
 
+## Testing
+
+Run tests using the shared test runner:
+
+```bash
+# From repository root
+./scripts/run-tests.sh content-guards
+
+# Alternative: run bats directly
+bats content-guards/tests/*.bats
+```
+
 ## License
 
 Apache-2.0

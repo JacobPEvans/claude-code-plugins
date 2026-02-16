@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Pre-push hook: Run all plugin tests before pushing
+
+./scripts/run-tests.sh
