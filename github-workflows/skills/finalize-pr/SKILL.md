@@ -21,7 +21,8 @@ description: Automatically finalize pull requests for merge - no human intervent
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Create PR immediately** - Push and open PR as soon as work completes
 8. **Check CI last** - Monitor GitHub Actions after other checks (longest running)
-9. **Take direct action** - Identify issues and fix them automatically
+9. **Review PR metadata** - Update title and description to match final diff before merge
+10. **Take direct action** - Identify issues and fix them automatically
 
 ## Phase 1: Create PR
 
@@ -137,15 +138,125 @@ Verify ALL conditions automatically and proceed directly:
 5. ✅ **All checks pass**: `gh pr checks <PR>` all green
 6. ✅ **Local validation**: Project linters pass
 
-**Only if ALL six pass**: Report "PR #XX is fully ready to merge. All checks passed."
+**Only if ALL six pass**: Proceed to Phase 4 for final PR metadata review.
 
-## Phase 4: Merge (User Action Only)
+## Phase 4: PR Metadata Review and Merge Strategy
 
-Report ready status and wait for user to execute merge command:
-- `gh pr merge <PR> --squash` (for small changes, single logical commit)
-- `gh pr merge <PR> --rebase` (for larger features, multiple meaningful commits)
+After all checks pass, review and update PR metadata to accurately reflect final changes.
 
-The merge command requires explicit user execution. Pause and wait after reporting ready.
+### 4.1 Generate Full Diff
+
+Compare PR branch to origin/main (ignore individual commit history):
+
+```bash
+git fetch origin main
+git diff origin/main...HEAD
+```
+
+Analyze the complete changeset (not back-and-forth commits).
+
+### 4.2 Update PR Title
+
+Review current PR title:
+
+```bash
+gh pr view <PR> --json title --jq '.title'
+```
+
+Generate accurate title based on full diff:
+- Use conventional commit format: `<type>: <description>`
+- Types: feat, fix, refactor, docs, test, chore
+- Keep concise (under 70 characters)
+- Reflect the actual final changes
+
+Update if needed:
+
+```bash
+gh pr edit <PR> --title "new title"
+```
+
+### 4.3 Update PR Description
+
+Review current PR body:
+
+```bash
+gh pr view <PR> --json body --jq '.body'
+```
+
+Generate comprehensive description based on full diff:
+- **Summary** section with 2-5 bullet points of key changes
+- **Changes** section listing all major modifications
+- **Breaking Changes** section (if applicable)
+- **Test Plan** section with validation steps
+- Include link: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+
+Update if needed:
+
+```bash
+gh pr edit <PR> --body "$(cat <<'EOF'
+## Summary
+- Key change 1
+- Key change 2
+
+## Changes
+...
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+### 4.4 Recommend Merge Strategy
+
+Analyze the changeset and recommend:
+
+**Recommend squash merge** when:
+- Single logical change (even if multiple commits)
+- Commits contain back-and-forth fixes
+- Work-in-progress commit messages
+- Experimental changes that were refined
+
+Provide release-note-friendly commit message:
+
+```
+<type>: <concise description>
+
+<2-3 line explanation of what changed and why>
+
+Example:
+feat: add dark mode support
+
+Implements dark mode with automatic theme switching based on system
+preferences. Includes color scheme updates for all components and
+persistent user preference storage.
+```
+
+**Recommend `/rebase-pr`** when:
+- Multiple distinct logical changes
+- Clean, meaningful commit messages
+- Each commit is independently valuable
+- Preserving commit history adds context
+
+## Phase 5: Merge (User Action Only)
+
+Report final status with merge recommendation:
+
+```
+PR #XX is ready to merge!
+
+Recommendation: Squash merge
+Suggested commit message:
+---
+feat: add authentication system
+
+Implements JWT-based authentication with refresh tokens,
+secure password hashing, and role-based access control.
+---
+
+Command: gh pr merge <PR> --squash
+```
+
+The merge command requires explicit user execution. Pause and wait after reporting recommendation.
 
 ## Automation Philosophy
 
@@ -163,4 +274,12 @@ The merge command requires explicit user execution. Pause and wait after reporti
 
 ## Workflow
 
-`/init-worktree` → `/resolve-issues` → `/finalize-pr` → user merges
+```
+/init-worktree → /resolve-issues → /finalize-pr → user merges
+                                          ↓
+                    Phase 1: Create PR
+                    Phase 2: Resolution Loop (automatic fixes)
+                    Phase 3: Pre-Handoff Verification
+                    Phase 4: PR Metadata Review (update title/description)
+                    Phase 5: Merge Recommendation → user executes
+```
