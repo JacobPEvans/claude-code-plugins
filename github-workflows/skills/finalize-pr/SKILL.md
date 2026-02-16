@@ -13,15 +13,15 @@ description: Automatically finalize pull requests for merge - no human intervent
 
 ## Critical Rules
 
-1. **NEVER auto-merge** - Wait for explicit user approval to merge
-2. **ALL checks must pass** - Never report ready with failures
-3. **ALL conversations RESOLVED** - Automatically resolve using `/resolve-pr-threads`
-4. **ALL CodeQL violations fixed** - Check repo and fix automatically
-5. **ALWAYS simplify code** - Invoke code-simplifier after ANY code changes
-6. **Run validation locally** before pushing
-7. **Create PR immediately** when work complete - kicks off reviews
-8. **Watch CI last** - GitHub Actions checked last (longest running)
-9. **AUTOMATIC OPERATION** - Don't ask what to do, just do it
+1. **Wait for user approval to merge** - Report ready status, then pause for user merge command
+2. **Verify all checks pass** - Report ready only when ALL conditions meet requirements
+3. **Resolve all conversations** - Automatically invoke `/resolve-pr-threads` for review threads
+4. **Fix all CodeQL violations** - Check repository and automatically fix using `/resolve-codeql`
+5. **Simplify all code changes** - Invoke code-simplifier after ANY code modifications
+6. **Validate locally before pushing** - Run project linters and tests
+7. **Create PR immediately** - Push and open PR as soon as work completes
+8. **Check CI last** - Monitor GitHub Actions after other checks (longest running)
+9. **Take direct action** - Identify issues and fix them automatically
 
 ## Phase 1: Create PR
 
@@ -29,7 +29,7 @@ description: Automatically finalize pull requests for merge - no human intervent
 2. Verify clean: `git status`
 3. Push: `git push -u origin $(git branch --show-current)`
 4. Create PR: `gh pr create --title "<type>: <description>" --body "..."`
-5. Begin Resolution Loop immediately (don't wait for user input)
+5. Begin Resolution Loop immediately and proceed automatically
 
 ## Phase 2: Resolution Loop (AUTOMATIC)
 
@@ -128,7 +128,7 @@ Why this matters:
 
 ## Phase 3: Pre-Handoff Verification
 
-Verify ALL conditions automatically (no user prompts):
+Verify ALL conditions automatically and proceed directly:
 
 1. ✅ **CodeQL clean**: No open alerts in repository
 2. ✅ **All threads resolved**: All review conversations addressed
@@ -141,23 +141,25 @@ Verify ALL conditions automatically (no user prompts):
 
 ## Phase 4: Merge (User Action Only)
 
-**NEVER auto-merge**. Report ready status and wait for user to execute:
+Report ready status and wait for user to execute merge command:
 - `gh pr merge <PR> --squash` (for small changes, single logical commit)
 - `gh pr merge <PR> --rebase` (for larger features, multiple meaningful commits)
 
+The merge command requires explicit user execution. Pause and wait after reporting ready.
+
 ## Automation Philosophy
 
-**DO NOT ASK** - This skill knows what to do:
-- Don't ask "should I fix this?" - fix it
-- Don't ask "should I resolve threads?" - resolve them
-- Don't ask "should I check CodeQL?" - check it
-- Don't ask "should I simplify code?" - simplify it (ALWAYS)
-- Don't report status and wait - take action
+**Take direct action** - This skill operates autonomously:
+- Fix issues immediately when detected
+- Resolve review threads automatically using `/resolve-pr-threads`
+- Check and fix CodeQL violations using `/resolve-codeql`
+- Simplify code after every change using code-simplifier
+- Continue to next check after completing each step
 
-**ONLY REPORT** when:
-1. PR is fully ready to merge (all checks pass)
+**Report to user** in these specific cases:
+1. PR is fully ready to merge (all checks pass) - pause for merge approval
 2. User intervention required (e.g., merge conflicts needing manual resolution)
-3. Unrecoverable error occurs
+3. Unrecoverable error occurs requiring human decision
 
 ## Workflow
 
