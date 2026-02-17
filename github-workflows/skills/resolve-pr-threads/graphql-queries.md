@@ -1,30 +1,27 @@
-<!-- cspell:words PRRT -->
+<!-- cspell:words PRRT DOABCDEF databaseId -->
+<!-- markdownlint-disable MD013 -->
 
 # GraphQL Queries for PR Review Threads
 
-## CRITICAL: Single-Line Format REQUIRED
+## Golden Rules
 
-**ALL GraphQL queries in this file MUST be single-line format with `--raw-field`.**
+1. **Single-line only** — no backslash `\` continuations in any `gh api` command
+2. **`--raw-field` with direct substitution** — no GraphQL `$variable` syntax, no `-f`/`-F` variable flags
+3. **`--jq` over `| jq`** — avoids shell pipe issues in Claude Code
 
-**NEVER use multi-line GraphQL queries.** Multi-line queries cause:
+## Get Context
 
-- Shell encoding issues with newlines
-- Variable type coercion errors
-- Parsing failures in Claude Code
-- Inconsistent behavior
+Run these three commands to get substitution values:
 
-**If you see a multi-line query anywhere, it is WRONG and must be converted to single-line.**
-
-## Additional Requirements
-
-- GitHub's `gh pr view --json` does NOT support `reviewThreads`
-- These GraphQL queries via `gh api graphql` are the only way to manage review threads
-- Always use `last: 100` (not `first`)
-- Pagination is capped at 100 per request
+```bash
+owner=$(gh repo view --json owner --jq '.owner.login')
+repo=$(gh repo view --json name --jq '.name')
+number=$(gh pr view --json number --jq '.number')
+```
 
 ## Placeholder Convention
 
-All queries use **camelCase placeholders** for string substitution — matching GitHub's own `gh api` convention.
+All queries use **camelCase placeholders** for string substitution.
 
 | Placeholder | Type | Example Value | Source |
 |-------------|------|---------------|--------|
@@ -33,49 +30,28 @@ All queries use **camelCase placeholders** for string substitution — matching 
 | `{number}` | integer | `123` | `gh pr view --json number --jq '.number'` |
 | `{threadId}` | string | `"PRRT_kwDOABCDEF"` | From GraphQL fetch query response |
 
-### CRITICAL: Direct String Substitution Only
-
-❌ **WRONG** — Using GraphQL `$variable` syntax with `--raw-field`:
-
-```bash
-# This will FAIL with variable type coercion errors
-gh api graphql --raw-field 'query=mutation($threadId: ID!) {
-  resolveReviewThread(input: {threadId: $threadId}) {
-    thread { id isResolved }
-  }
-}'
-```
-
-✅ **CORRECT** — Direct string substitution into the query string:
-
-```bash
-# Substitute values directly into the query template
-threadId="PRRT_kwDOABCDEF"
-gh api graphql --raw-field "query=mutation { resolveReviewThread(input: {threadId: \"${threadId}\"}) { thread { id isResolved } } }"
-```
-
-<!-- markdownlint-disable-next-line MD013 -->
-**Do NOT use GraphQL `$variable` syntax with `--raw-field`.** The `--raw-field` flag sends the query as-is without variable processing. Always substitute placeholder values directly into the query string before execution.
+Replace placeholders with actual values before running any command.
 
 ## Fetch Unresolved Threads
 
 ```bash
-<!-- markdownlint-disable-next-line MD013 -->
 gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
 ```
 
-Fields: `id` (`PRRT_*` node ID), `isResolved`, `path`, `line`/`startLine`,
+Fields returned: `id` (`PRRT_*` node ID), `isResolved`, `path`, `line`/`startLine`,
 `comments.nodes[].body`, `comments.nodes[].author.login`, `comments.nodes[].databaseId`
 
-<!-- markdownlint-disable-next-line MD013 -->
-**Placeholder substitution**: Replace `{owner}`, `{repo}`, `{number}` with actual values before running.
+**WARNING**: Fetches only the last 100 threads. Re-run after resolving visible threads if the PR has more.
 
-**WARNING**: This query fetches only the last 100 threads. PRs with more than
-100 review threads will silently miss older threads. Run the query multiple
-times after resolving visible threads, or implement pagination with
-`pageInfo { hasNextPage endCursor }` and `after:` parameter.
+## Reply to Thread (GraphQL)
 
-## Resolve Thread Mutation
+```bash
+gh api graphql --raw-field 'query=mutation { addPullRequestReviewThreadReply(input: {pullRequestReviewThreadId: "{threadId}", body: "reply text here"}) { comment { id body } } }'
+```
+
+For replies with special characters, newlines, or complex markdown, use the REST API instead — see [rest-api-patterns.md](rest-api-patterns.md).
+
+## Resolve Thread
 
 ```bash
 gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
@@ -83,22 +59,29 @@ gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadI
 
 `{threadId}` is the `PRRT_*` node ID from the fetch query.
 
-**Placeholder substitution**: Replace `{threadId}` with the actual thread ID from fetch query.
-
 ## Verify Zero Unresolved
 
 ```bash
-<!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' | jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
 ```
 
 Must return `0`. Any non-zero value means threads remain unresolved.
 
-**Placeholder substitution**: Replace `{owner}`, `{repo}`, `{number}` with actual values.
+## Mutation Reference Table
 
-**WARNING**: This verification only checks the last 100 threads. If a PR has
-more than 100 threads, older unresolved threads may exist outside the query
-window. Re-run verification after each batch to ensure no threads remain.
+| Operation | Correct Mutation | WRONG (do NOT use) |
+|-----------|------------------|--------------------|
+| Reply to thread | `addPullRequestReviewThreadReply` | `addPullRequestReviewComment` |
+| Resolve thread | `resolveReviewThread` | `resolvePullRequestReviewThread` |
 
-**Note**: For REST API patterns (replying to review threads), see
-[rest-api-patterns.md](rest-api-patterns.md).
+## Common Errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Could not resolve to a node` | Invalid thread ID | Re-fetch threads, IDs may have changed |
+| `Variable $x was provided invalid value` | Used GraphQL `$variable` syntax | Remove all `$variables`, substitute values directly |
+| `Parse error on ... near $` | Shell corrupted `$` sign | Use single quotes around `--raw-field` value |
+| `Resource not accessible` | Permission issue | Check `gh auth status`, need repo write access |
+| Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
+
+See [rest-api-patterns.md](rest-api-patterns.md) for REST API reply patterns.

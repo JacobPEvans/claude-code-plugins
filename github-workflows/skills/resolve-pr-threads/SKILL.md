@@ -10,6 +10,7 @@ allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh:*), Bash(git:*), Task
 ---
 
 <!-- cspell:words PRRT oneline databaseId -->
+<!-- markdownlint-disable MD013 -->
 
 # Resolve PR Review Threads (Orchestrator)
 
@@ -25,6 +26,16 @@ explanations, then resolving threads via GitHub's GraphQL API.
 /resolve-pr-threads all          # All open PRs with unresolved threads (parallel)
 ```
 
+## DO NOT List (for sub-agents and all GraphQL operations)
+
+- DO NOT use `addPullRequestReviewComment` — wrong mutation, creates new comments not replies
+- DO NOT use `resolvePullRequestReviewThread` — wrong name, does not exist
+- DO NOT use `gh pr comment` for thread replies — creates top-level comments, not threaded replies
+- DO NOT use multi-line queries with backslash `\` continuations
+- DO NOT use GraphQL `$variable` syntax (e.g., `$owner`, `$threadId`)
+- DO NOT use `-f query=` with separate `-f owner=`/`-F number=` variable flags
+- DO NOT use printf piping or heredoc for GraphQL queries
+
 ## CRITICAL: GraphQL Query Format Requirements
 
 **ALL GraphQL queries MUST use single-line format with `--raw-field`.**
@@ -38,16 +49,14 @@ explanations, then resolving threads via GitHub's GraphQL API.
 
 **If you see or are tempted to write a multi-line GraphQL query, STOP. It is WRONG.**
 
-<!-- markdownlint-disable-next-line MD013 -->
 **Use direct string substitution for `{placeholder}` values — never GraphQL `$variable` syntax.** The `--raw-field` flag sends queries as-is without variable processing. Always substitute values directly into the query string before execution.
 
 **Context inference**: When no arguments provided, automatically infer owner/repo/PR from current git context:
 
 ```bash
-# Smart inference - uses current context when available
-OWNER=${OWNER:-$(gh repo view --json owner --jq -r '.owner.login' 2>/dev/null)}
-REPO=${REPO:-$(gh repo view --json name --jq -r '.name' 2>/dev/null)}
-NUMBER=${NUMBER:-$(gh pr view --json number --jq -r '.number' 2>/dev/null)}
+owner=$(gh repo view --json owner --jq '.owner.login')
+repo=$(gh repo view --json name --jq '.name')
+number=$(gh pr view --json number --jq '.number')
 ```
 
 All GraphQL patterns are documented in [graphql-queries.md](graphql-queries.md) in correct single-line format.
@@ -68,7 +77,13 @@ Branch: !`git branch --show-current 2>/dev/null || echo "detached"`
 
 ### Step 1: Fetch Unresolved Threads
 
-Use the **Fetch Unresolved Threads** query from [graphql-queries.md](graphql-queries.md).
+Run the fetch query directly:
+
+```bash
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
+```
+
+Replace `{owner}`, `{repo}`, `{number}` with actual values from context inference above.
 
 Filter to threads where `isResolved == false`. Extract from each:
 
@@ -76,7 +91,7 @@ Filter to threads where `isResolved == false`. Extract from each:
 - `path` - file being reviewed
 - `line`/`startLine` - location in file
 - `comments.nodes[].id` - comment node ID
-- `comments.nodes[].databaseId` - REST API ID for replies
+- `comments.nodes[].databaseId` - numeric REST API ID for replies
 - `comments.nodes[].body` - comment text
 - `comments.nodes[].author.login` - who commented
 
@@ -84,8 +99,8 @@ Filter to threads where `isResolved == false`. Extract from each:
 
 Analyze threads and group by proximity:
 
-- **Same file + within 30 lines** → group together (max 5 threads per group)
-- **Different file or >30 lines apart** → singleton groups
+- **Same file + within 30 lines** -> group together (max 5 threads per group)
+- **Different file or >30 lines apart** -> singleton groups
 - **Output numbered group list** before dispatching
 
 Example:
@@ -118,8 +133,14 @@ Review threads to address:
 - Database ID: {databaseId}
 {end for}
 
-Reply to threads using:
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="..."
+Reply to threads using REST API:
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="your reply"
+
+Where {databaseId} is the NUMERIC databaseId from the fetch response (NOT the PRRT_ node ID).
+
+DO NOT use addPullRequestReviewComment — it is the WRONG mutation.
+DO NOT use gh pr comment — it creates top-level comments, not threaded replies.
+DO NOT use multi-line GraphQL queries or backslash continuations.
 
 For REST API details: read rest-api-patterns.md in the resolve-pr-threads skill directory.
 
@@ -139,14 +160,22 @@ Sub-agents commit their own changes but do NOT push.
 After all sub-agents complete:
 
 1. Parse each sub-agent's output for `handled` vs `needs-human` status
-2. For each `handled` thread, run the **Resolve Thread Mutation** from
-   [graphql-queries.md](graphql-queries.md) using the `PRRT_*` node ID
+2. For each `handled` thread, run the resolve mutation (replace `{threadId}` with the `PRRT_*` node ID):
+
+   ```bash
+   gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
+   ```
+
 3. For `needs-human` threads, skip resolution and flag for manual attention
 
 ### Step 5: Verify and Push
 
-1. Run the **Verify Zero Unresolved** query from
-   [graphql-queries.md](graphql-queries.md)
+1. Run the verify query:
+
+   ```bash
+   gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+   ```
+
 2. **Must return `0`**. If not, identify remaining threads and report
 3. Push all commits: `git push`
 4. Output summary report
