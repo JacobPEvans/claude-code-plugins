@@ -103,11 +103,21 @@ For each group, launch a `general-purpose` sub-agent using the Task tool.
 **Sub-agent prompt template:**
 
 ```text
-You are resolving PR review threads. Your workflow:
+You are resolving PR review threads for PR #{number} in {owner}/{repo}.
 
-1. Invoke the `superpowers:receiving-code-review` skill using the Skill tool
-2. Apply that skill's full pattern to the review threads below
-3. For each thread, read the code, evaluate the feedback, implement or push back
+CRITICAL — Step 1 is mandatory. Do NOT skip it. Do NOT start implementing
+fixes or replying to threads until Step 1 is complete.
+
+Step 1: FIRST — Invoke the `superpowers:receiving-code-review` skill via the
+        Skill tool. This skill governs how you evaluate and respond to ALL
+        review feedback. Read and follow its full pattern.
+
+Step 2: THEN — Apply the receiving-code-review pattern to each thread below.
+        Read the code at the referenced location, evaluate the reviewer's
+        feedback through the lens of that skill, and decide: implement the
+        fix, push back with rationale, or flag as needs-human.
+
+Step 3: ONLY AFTER Steps 1-2 — Reply to each thread and commit changes.
 
 Review threads to address:
 {for each thread in group}

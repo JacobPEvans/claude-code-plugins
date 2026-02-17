@@ -14,8 +14,8 @@ are ready to merge versus blocked.
 
 What this command DOES:
 
-- Execute `/fix-pr-ci all` to resolve CI failures
-- Execute `/resolve-pr-review-thread all` to resolve review threads
+- Execute `/finalize-pr` per PR to resolve CI failures, review threads, and conflicts
+- Execute `/resolve-pr-threads all` to batch-resolve review threads across PRs
 - Scan all repos for open PRs
 - Determine merge-readiness status for each PR
 - Generate JSON report of ready vs blocked PRs
@@ -28,13 +28,14 @@ What this command DOES NOT:
 
 ## Execution Steps
 
-### Step 1: Fix CI Failures
+### Step 1: Resolve Review Threads
 
-Execute `/fix-pr-ci all`. Wait for completion.
+Execute `/resolve-pr-threads all`. Wait for completion.
 
-### Step 2: Resolve Review Threads
+### Step 2: Finalize Each PR
 
-Execute `/resolve-pr-review-thread all`. Wait for completion.
+For each PR with remaining issues, execute `/finalize-pr <PR>` to handle CI
+failures, CodeQL violations, merge conflicts, and code simplification.
 
 ### Step 3: Scan All Open PRs
 
