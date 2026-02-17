@@ -23,7 +23,7 @@ argument-hint: "[PR_NUMBER]"
 5. **Simplify all code changes** - Invoke code-simplifier after ANY code modifications
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Create PR immediately** - Push and open PR as soon as work completes
-8. **Check CI last** - Monitor GitHub Actions after other checks (longest running)
+8. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
 9. **Report ready and pause** - Instruct user to invoke `/squash-merge-pr` when ready
 10. **Take direct action** - Identify issues and fix them automatically (except merge decisions)
 
@@ -43,13 +43,15 @@ Never block on CI when other work is available.
 
 ### 2.1 Start CI Monitoring (BACKGROUND)
 
-Immediately start CI monitoring using `run_in_background: true`:
+Launch CI monitoring in a background Task agent (`run_in_background: true` on
+the Task tool). The agent runs this blocking command in its own context:
 
 ```bash
 gh pr checks <PR> --watch
 ```
 
-Do NOT wait for completion — proceed to 2.2 immediately.
+Do NOT wait for the Task to complete — proceed to 2.2 immediately. Check the
+background task's output after completing other fixes in 2.2.
 
 ### 2.2 Parallel Fixes
 
@@ -62,7 +64,7 @@ Task agents when they touch different files.
 OWNER=${OWNER:-$(gh repo view --json owner --jq '.owner.login')}
 REPO=${REPO:-$(gh repo view --json name --jq '.name')}
 
-gh api repos/${OWNER}/${REPO}/code-scanning/alerts \
+gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
   --jq '[.[] | select(.state == "open")] | length'
 ```
 
@@ -71,15 +73,12 @@ validate locally.
 
 #### Review Threads
 
-```bash
-gh pr view <PR> --json reviewThreads \
-  --jq '[.reviewThreads[] | select(.isResolved | not)] | length'
-```
-
-**If unresolved threads exist**: Invoke `/resolve-pr-threads` to batch-resolve
-all threads. This skill groups related threads, dispatches sub-agents that
-follow `superpowers:receiving-code-review`, and resolves via GraphQL. Wait for
-it to complete, then invoke code-simplifier and validate locally.
+Invoke `/resolve-pr-threads` to check for and batch-resolve all unresolved
+threads. This skill fetches threads via GraphQL (since `gh pr view --json`
+does not support `reviewThreads`), groups related threads, dispatches
+sub-agents that follow `superpowers:receiving-code-review`, and resolves via
+GraphQL. It exits cleanly when no threads exist. After completion, invoke
+code-simplifier and validate locally.
 
 #### Merge Conflicts
 
