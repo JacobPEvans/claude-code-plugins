@@ -10,17 +10,22 @@ import json
 import re
 import sys
 
-# Patterns that are NEVER allowed (bypass safety mechanisms)
-DENY_PATTERNS = [
+# Patterns checked against ALL commands (not git-specific)
+DENY_ALWAYS = [
+    (r"pre-commit\s+uninstall", "removes pre-commit hooks"),
+    (r"rm\s+.*\.git/hooks", "deletes git hooks"),
+    (r"chmod\s+.*-x\s+\.git/hooks", "disables git hooks"),
+]
+
+# Patterns checked ONLY when command starts with 'git ' to avoid false
+# positives from matching substrings in gh api body text or other commands
+DENY_GIT_ONLY = [
     (r"commit\s+.*(-n|--no-verify)", "bypasses pre-commit hooks"),
     (r"merge\s+.*--no-verify", "bypasses merge hooks"),
     (r"cherry-pick\s+.*--no-verify", "bypasses commit hooks"),
     (r"rebase\s+.*--no-verify", "bypasses commit hooks"),
     (r"config\s+.*core\.hooksPath", "changes hook directory"),
     (r"-c\s+core\.hooksPath", "bypasses configured hooks"),
-    (r"pre-commit\s+uninstall", "removes pre-commit hooks"),
-    (r"rm\s+.*\.git/hooks", "deletes git hooks"),
-    (r"chmod\s+.*-x\s+\.git/hooks", "disables git hooks"),
 ]
 
 # Commands requiring explicit user confirmation
@@ -90,8 +95,8 @@ def main():
     if not command:
         sys.exit(0)
 
-    # Check DENY patterns first (includes non-git commands like rm .git/hooks)
-    for pattern, reason in DENY_PATTERNS:
+    # Check universal DENY patterns (non-git-specific)
+    for pattern, reason in DENY_ALWAYS:
         if re.search(pattern, command, re.IGNORECASE):
             deny(f"This command {reason}. Fix the underlying issue instead.")
 
@@ -100,6 +105,13 @@ def main():
     is_gh = command.startswith("gh ") or command == "gh"
     if not is_git and not is_gh:
         sys.exit(0)
+
+    # Check git-specific DENY patterns (after early exit to avoid false
+    # positives from matching substrings in non-git commands like gh api)
+    if is_git:
+        for pattern, reason in DENY_GIT_ONLY:
+            if re.search(pattern, command, re.IGNORECASE):
+                deny(f"This command {reason}. Fix the underlying issue instead.")
 
     # Extract subcommand for git (handle -C <path>, -c <key=value>)
     if is_git:
