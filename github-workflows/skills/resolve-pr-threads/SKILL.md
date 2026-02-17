@@ -160,13 +160,13 @@ Sub-agents commit their own changes but do NOT push.
 After all sub-agents complete:
 
 1. Parse each sub-agent's output for `handled` vs `needs-human` status
-1. For each `handled` thread, run the resolve mutation (replace `{threadId}` with the `PRRT_*` node ID):
+2. For each `handled` thread, run the resolve mutation (replace `{threadId}` with the `PRRT_*` node ID):
 
    ```bash
    gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
    ```
 
-1. For `needs-human` threads, skip resolution and flag for manual attention
+3. For `needs-human` threads, skip resolution and flag for manual attention
 
 ### Step 5: Verify and Push
 
@@ -176,9 +176,9 @@ After all sub-agents complete:
    gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
    ```
 
-1. **Must return `0`**. If not, identify remaining threads and report
-1. Push all commits: `git push`
-1. Output summary report
+2. **Must return `0`**. If not, identify remaining threads and report
+3. Push all commits: `git push`
+4. Output summary report
 
 ## Batch Mode ("all")
 
