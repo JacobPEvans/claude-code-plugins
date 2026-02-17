@@ -8,6 +8,8 @@ description: >-
 argument-hint: "[PR_NUMBER]"
 ---
 
+<!-- cspell:words worktree -->
+
 # Finalize PR
 
 **FULLY AUTOMATIC** - Finalizes YOUR PRs as author: create, monitor, fix, prepare for merge. No manual intervention required. For reviewing others' PRs, use `/review-pr`.
@@ -21,7 +23,7 @@ argument-hint: "[PR_NUMBER]"
 5. **Simplify all code changes** - Invoke code-simplifier after ANY code modifications
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Create PR immediately** - Push and open PR as soon as work completes
-8. **Check CI last** - Monitor GitHub Actions after other checks (longest running)
+8. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
 9. **Report ready and pause** - Instruct user to invoke `/squash-merge-pr` when ready
 10. **Take direct action** - Identify issues and fix them automatically (except merge decisions)
 
@@ -33,81 +35,78 @@ argument-hint: "[PR_NUMBER]"
 4. Create PR: `gh pr create --title "<type>: <description>" --body "..."`
 5. Begin Resolution Loop immediately and proceed automatically
 
-## Phase 2: Resolution Loop (AUTOMATIC)
+## Phase 2: Resolution Loop (AUTOMATIC — PARALLEL)
 
-### 2.1 CodeQL Check (FIRST - Local Repo)
+**Execution strategy**: CI checks take 10+ minutes. Start monitoring them in
+the background FIRST, then fix all other issues in parallel while CI runs.
+Never block on CI when other work is available.
 
-Check for CodeQL violations in the repository itself (not just GitHub Actions):
+### 2.1 Start CI Monitoring (BACKGROUND)
 
-```bash
-# Infer OWNER and REPO from the current git context if not already set
-OWNER=${OWNER:-$(gh repo view --json owner --jq '.owner.login')}
-REPO=${REPO:-$(gh repo view --json name --jq '.name')}
-
-gh api repos/${OWNER}/${REPO}/code-scanning/alerts \
-  --jq '[.[] | select(.state == "open")] | length'
-```
-
-**If violations found**:
-1. Automatically invoke `/resolve-codeql fix` and wait for completion
-2. **ALWAYS invoke code-simplifier agent** to simplify any fixes (if code-simplifier is unavailable, continue with fail-open philosophy)
-3. Validate locally before committing
-
-### 2.2 Review Threads (SECOND)
-
-Check for unresolved review comments:
-
-```bash
-gh pr view <PR> --json reviewThreads --jq '[.reviewThreads[] | select(.isResolved | not)] | length'
-```
-
-**If unresolved threads exist**:
-1. Automatically invoke `/resolve-pr-threads` to batch-resolve all threads
-2. **ALWAYS invoke code-simplifier agent** after implementing review feedback
-3. Validate locally before committing
-
-### 2.3 Merge Conflicts (THIRD)
-
-Check mergeable status:
-
-```bash
-gh pr view <PR> --json mergeable
-```
-
-**If merge conflicts**: Report conflict details and files, then automatically:
-1. Fetch latest main: `git fetch origin main`
-2. Attempt merge: `git merge origin/main`
-3. If conflicts exist, identify files and report for user resolution
-4. After user resolves, **ALWAYS invoke code-simplifier agent** on updated files
-5. Validate locally, then commit and push automatically
-
-### 2.4 Health Check (CONTINUOUS)
-
-Monitor PR status continuously:
-
-```bash
-gh pr view <PR> --json state,mergeable,statusCheckRollup
-```
-
-### 2.5 Fix Failed Checks (AUTOMATIC)
-
-When checks fail:
-1. Identify failure from logs: `gh run view <RUN_ID> --log-failed`
-2. Fix locally (invoke appropriate agent/skill)
-3. **ALWAYS invoke code-simplifier agent** to simplify the fix
-4. Validate before pushing
-5. Commit and push: `git add . && git commit -m "fix: <description>" && git push`
-6. Loop back to Health Check
-
-### 2.6 GitHub Actions (LAST - Longest Running)
-
-Only after ALL other checks pass, monitor GitHub Actions:
+Launch CI monitoring in a background Task agent (`run_in_background: true` on
+the Task tool). The agent runs this blocking command in its own context:
 
 ```bash
 gh pr checks <PR> --watch
 ```
 
-Wait for all checks to complete. If any fail, go to 2.5.
+Do NOT wait for the Task to complete — proceed to 2.2 immediately. Check the
+background task's output after completing other fixes in 2.2.
+
+### 2.2 Parallel Fixes
+
+Run these checks simultaneously. Launch independent fixes in parallel via
+Task agents when they touch different files.
+
+#### CodeQL Violations
+
+```bash
+OWNER=${OWNER:-$(gh repo view --json owner --jq '.owner.login')}
+REPO=${REPO:-$(gh repo view --json name --jq '.name')}
+
+gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
+  --jq '[.[] | select(.state == "open")] | length'
+```
+
+**If violations found**: Invoke `/resolve-codeql fix`, then code-simplifier,
+validate locally.
+
+#### Review Threads
+
+Invoke `/resolve-pr-threads` to check for and batch-resolve all unresolved
+threads. This skill fetches threads via GraphQL (since `gh pr view --json`
+does not support `reviewThreads`), groups related threads, dispatches
+sub-agents that follow `superpowers:receiving-code-review`, and resolves via
+GraphQL. It exits cleanly when no threads exist. After completion, invoke
+code-simplifier and validate locally.
+
+#### Merge Conflicts
+
+```bash
+gh pr view <PR> --json mergeable
+```
+
+**If conflicts**: Fetch main, attempt merge, report unresolvable conflicts for
+user. After resolution, invoke code-simplifier and validate locally.
+
+### 2.3 CI Failure Fixes
+
+Check background CI results from 2.1:
+
+- **All passing**: Proceed to Phase 3
+- **Failures**: Get logs via `gh run view <RUN_ID> --log-failed`, fix locally,
+  invoke code-simplifier, validate, commit and push. Restart background CI
+  monitoring and loop back to 2.2 if new issues emerged.
+
+### 2.4 Health Check
+
+Verify final PR status after all fixes:
+
+```bash
+gh pr view <PR> --json state,mergeable,statusCheckRollup
+```
+
+If fixes introduced new issues, loop back to 2.2.
 
 ## Phase 3: Pre-Handoff Verification
 
@@ -126,7 +125,7 @@ Verify ALL conditions automatically and proceed directly:
 
 After verifying all conditions pass, report:
 
-```
+```text
 ✅ PR #{NUMBER} ready for final review!
 
 All checks passed. To prepare for merge, invoke:
@@ -137,7 +136,7 @@ Wait for explicit user invocation of `/squash-merge-pr`.
 
 ## Workflow
 
-```
+```text
 /init-worktree → /resolve-issues → /finalize-pr
                                           ↓
                     Phase 1: Create PR
