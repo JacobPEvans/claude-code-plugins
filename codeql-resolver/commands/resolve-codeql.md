@@ -72,7 +72,7 @@ Other alerts (0-N)
   └─> Batch 1 (max 5) → codeql-generic-resolver agent
 ```
 
-Use `subagent-batching` skill for parallel execution (max 5 agents concurrent).
+Invoke `superpowers:dispatching-parallel-agents` for parallel execution patterns.
 
 Each agent receives:
 - Alert numbers (array)
