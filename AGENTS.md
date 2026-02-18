@@ -154,7 +154,10 @@ Choose the implementation language based on complexity:
 
 ### `@` File Imports
 
-When linking to other files in CLAUDE.md or any rules file, **always use `@path/to/file` syntax** — never markdown links `[text](path)`. The `@` syntax is the official Claude Code import: it actually loads the file's content into context. Markdown links are inert text.
+When linking to other files in plugin documentation or any rules file,
+**always use `@path/to/file` syntax** — never markdown links `[text](path)`.
+The `@` syntax is the official Claude Code import: it actually loads the
+file's content into context. Markdown links are inert text.
 
 ```md
 # ✅ Correct — imports the file's content
@@ -166,7 +169,9 @@ See [Setup](docs/setup.md) for environment setup.
 
 ### `.claude/rules/` for Always-Active Rules
 
-Place rules that should always be loaded into `.claude/rules/` — Claude Code auto-loads all `.md` files there with the same priority as CLAUDE.md. No `@` import needed.
+Place rules that should always be loaded into `.claude/rules/` — Claude Code
+auto-loads all `.md` files there with the same priority as the project's primary
+documentation. No `@` import needed.
 
 Rules files support YAML frontmatter to scope them to specific file patterns:
 
@@ -179,7 +184,10 @@ paths:
 - All hooks must exit 0 (allow) or 2 (block)
 ```
 
-Rules without `paths` frontmatter apply unconditionally. Use `.claude/rules/` over `@` imports when rules should always be active, not just when a specific file is referenced. Symlinks in `.claude/rules/` are supported — use them to share rules across repos.
+Rules without `paths` frontmatter apply unconditionally. Use `.claude/rules/`
+over `@` imports when rules should always be active, not just when a specific
+file is referenced. Symlinks in `.claude/rules/` are supported — use them to
+share rules across repos.
 
 ## CI/CD
 
