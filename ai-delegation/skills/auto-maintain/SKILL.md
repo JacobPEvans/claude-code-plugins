@@ -34,7 +34,7 @@ gh pr list --author @me --state open --json number | jq length
    4. PRs ready to merge (/git-refresh) - Report readiness, do NOT merge
    --- BLOCKED IN PR-FOCUS MODE ---
    5-10. Bugs, issues, code analysis, docs, tests, deps
-3. DISPATCH - Use subagents (parallel in PR-focus, sequential otherwise)
+3. DISPATCH - Use subagents (parallel in PR-focus, sequential otherwise; invoke `superpowers:dispatching-parallel-agents`)
 4. AWAIT completion
 5. CAPTURE results, emit JSON events
 6. LOOP to step 0
