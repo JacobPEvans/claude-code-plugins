@@ -13,6 +13,7 @@
     "./skills/finalize-prs",
     "./skills/squash-merge-pr",
     "./skills/shape-issues",
-    "./skills/resolve-pr-threads"
+    "./skills/resolve-pr-threads",
+    "./skills/trigger-ai-reviews"
   ]
 }

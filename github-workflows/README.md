@@ -9,6 +9,7 @@ Claude Code plugin for PR management, multi-repo PR finalization, and issue shap
 - **`/ready-player-one`** - Orchestrate PR finalization across all repositories and report merge-readiness
 - **`/resolve-pr-threads`** - Orchestrate resolution of PR review threads (requires superpowers plugin)
 - **`/shape-issues`** - Shape raw ideas into actionable GitHub Issues using Shape Up methodology
+- **`/trigger-ai-reviews`** - Trigger Claude, Gemini, and Copilot reviews on a PR
 
 ## Installation
 
@@ -24,6 +25,7 @@ claude plugins add jacobpevans-cc-plugins/github-workflows
 /ready-player-one         # Multi-repo PR finalization
 /resolve-pr-threads       # Batch resolve review threads
 /shape-issues             # Shape ideas into GitHub issues
+/trigger-ai-reviews       # Trigger Claude, Gemini, Copilot reviews
 ```
 
 ## Dependencies
