@@ -1,6 +1,6 @@
 {
   "name": "content-guards",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Combined content validation and guard plugin that merges token-validator, markdown-validator, webfetch-guard, and issue-limiter functionality",
   "author": {
     "name": "JacobPEvans"
