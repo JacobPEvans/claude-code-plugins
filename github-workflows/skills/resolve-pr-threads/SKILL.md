@@ -128,7 +128,7 @@ Extract from each comment:
 #### Step 1d: Fetch Review Body Comments Since Last Commit
 
 ```bash
-gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "")] | .[] | {id, body, user: .user.login, submitted_at}'
+gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "")] | .[] | {id, body, author: .user.login, submitted_at}'
 ```
 
 Extract review body comments (not inline threads) submitted after the last commit.
