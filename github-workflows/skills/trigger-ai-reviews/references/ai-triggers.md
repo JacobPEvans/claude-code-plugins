@@ -81,6 +81,6 @@ gh auth login         # re-authenticate
 The slug `copilot-pull-request-reviewer[bot]` must be passed as a reviewer, not a team. Use the `-f` flag with `gh api`:
 
 ```bash
-gh api --method POST /repos/OWNER/REPO/pulls/NUMBER/requested_reviewers \
+gh api --method POST /repos/{OWNER}/{REPO}/pulls/{NUMBER}/requested_reviewers \
   -f "reviewers[]=copilot-pull-request-reviewer[bot]"
 ```
