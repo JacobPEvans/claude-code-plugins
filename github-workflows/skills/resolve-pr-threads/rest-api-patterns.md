@@ -57,6 +57,48 @@ If the REST reply endpoint fails (invalid IDs, permissions), fall back to a top-
 gh pr comment {number} --body "Re: reviewer feedback on path:line - your response here"
 ```
 
+## Read Non-Thread Comments
+
+Fetch top-level PR comments and review body summaries that aren't part of inline review threads.
+
+### Get Last Commit Date
+
+```bash
+gh pr view {number} --json commits --jq '.commits[-1].committedDate'
+```
+
+Returns ISO 8601 timestamp (e.g., `2026-02-17T12:34:56Z`). Used to filter comments since the last code push.
+
+### Fetch Top-Level PR Comments Since Last Commit
+
+```bash
+gh api "repos/{owner}/{repo}/issues/{number}/comments?since={lastCommitDate}"
+```
+
+Returns array of comments posted after the specified timestamp. Extract:
+
+- `id` - comment ID
+- `body` - comment text
+- `user.login` - author
+- `created_at` - timestamp
+
+### Fetch Review Body Comments Since Last Commit
+
+```bash
+gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "") | {id, body, author: .user.login, submitted_at}]'
+```
+
+Returns review summaries (the body text of reviews, not inline comments) submitted after the last commit. The `--jq` filter is required because the reviews endpoint does not support server-side `?since=` filtering.
+
+### Parameters
+
+| Parameter | Type | Source | Notes |
+|-----------|------|--------|-------|
+| `{owner}` | string | `gh repo view --json owner --jq '.owner.login'` | Repository owner |
+| `{repo}` | string | `gh repo view --json name --jq '.name'` | Repository name |
+| `{number}` | integer | `gh pr view --json number --jq '.number'` | PR number |
+| `{lastCommitDate}` | string | Last commit timestamp (ISO 8601) | From `gh pr view --json commits` |
+
 ## Troubleshooting
 
 | Error | Cause | Fix |
