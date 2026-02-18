@@ -128,14 +128,14 @@ Extract from each comment:
 #### Step 1d: Fetch Review Body Comments Since Last Commit
 
 ```bash
-gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "")] | .[] | {id, body, author: .user.login, submitted_at}'
+gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "") | {id, body, author: .user.login, submitted_at}]'
 ```
 
 Extract review body comments (not inline threads) submitted after the last commit.
 
 **Execute 1c and 1d in parallel** after 1b completes.
 
-### Step 2: Group Related Threads
+### Step 2a: Group Related Threads
 
 Analyze threads and group by proximity:
 
@@ -170,9 +170,9 @@ Comment Groups:
 
 **Skip entirely** when Steps 1c and 1d both returned zero comments.
 
-### Step 3: Dispatch Sub-Agents
+### Step 3a: Dispatch Thread Group Sub-Agents
 
-For each group, launch a `general-purpose` sub-agent using the Task tool.
+For each thread group, launch a `general-purpose` sub-agent using the Task tool.
 
 **Sub-agent prompt template:**
 
