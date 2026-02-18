@@ -20,6 +20,7 @@ Trigger Claude, Gemini, and/or Copilot reviews on a PR with a single invocation.
 /trigger-ai-reviews 42 claude    # Trigger only Claude
 /trigger-ai-reviews 42 gemini    # Trigger only Gemini
 /trigger-ai-reviews 42 copilot   # Trigger only Copilot
+/trigger-ai-reviews 42 all       # Explicitly trigger all 3 AIs
 ```
 
 ## Step 1: Resolve PR Context
