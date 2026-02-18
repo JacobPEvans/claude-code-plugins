@@ -105,15 +105,19 @@ EOF
   fi
 
   # markdownlint-cli2 requires the target file to be within its working directory.
-  # Run from the project root (when config found) or the file's own directory.
+  # Run from the config directory (when config found) or the file's own directory.
   if [[ "$has_project_config" == "true" ]]; then
     lint_dir="$search_dir"
   else
     lint_dir="$(dirname -- "$file_path")"
   fi
-  lint_file="${file_path#${lint_dir}/}"
+  if [[ "$lint_dir" == "/" ]]; then
+    lint_file="${file_path#/}"
+  else
+    lint_file="${file_path#${lint_dir}/}"
+  fi
 
-  if ! markdownlint_output=$(cd "$lint_dir" && markdownlint-cli2 "${config_flag[@]}" "$lint_file" 2>&1); then
+  if ! markdownlint_output=$( { cd "$lint_dir" && markdownlint-cli2 "${config_flag[@]}" "$lint_file"; } 2>&1 ); then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
   fi
