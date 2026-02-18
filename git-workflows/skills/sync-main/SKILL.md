@@ -44,7 +44,7 @@ Report sync status for all open PR branches.
 1. **Get repo**: `gh repo view --json nameWithOwner`
 2. **Update main**: CRITICAL - must happen first
 3. **List open PRs**: `gh pr list --state open --json number,headRefName,title`
-4. **Check each PR**: Launch subagents in parallel. Each checks if behind main. Do NOT merge or push.
+4. **Check each PR**: Launch subagents in parallel (invoke `superpowers:dispatching-parallel-agents`). Each checks if behind main. Do NOT merge or push.
 5. **Report**: repo, main SHA, merge-readiness for each PR (current/behind/conflict)
 6. **Prompt user**: Ask which PRs should be synced with main
 7. **Sync only confirmed**: Only merge confirmed branches after user approval

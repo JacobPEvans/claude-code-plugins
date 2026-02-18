@@ -222,7 +222,8 @@ PRRT_xxx: needs-human [reason]
 Commit changes but DO NOT push.
 ```
 
-**Launch groups in parallel** - use a single message with multiple Task calls.
+**Launch groups in parallel** - use a single message with multiple Task calls. Invoke
+`superpowers:dispatching-parallel-agents` for agent prompt structure and verification.
 
 Sub-agents commit their own changes but do NOT push.
 

@@ -56,7 +56,7 @@ background task's output after completing other fixes in 2.2.
 ### 2.2 Parallel Fixes
 
 Run these checks simultaneously. Launch independent fixes in parallel via
-Task agents when they touch different files.
+Task agents when they touch different files. Invoke `superpowers:dispatching-parallel-agents` for dispatch patterns.
 
 #### CodeQL Violations
 
