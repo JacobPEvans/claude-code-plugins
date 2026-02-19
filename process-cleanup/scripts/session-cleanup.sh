@@ -15,7 +15,7 @@
 #
 # Logs to: ~/Library/Logs/claude-process-cleanup/
 
-set -uo pipefail
+set -euo pipefail
 
 LOG_DIR="$HOME/Library/Logs/claude-process-cleanup"
 mkdir -p "$LOG_DIR"
@@ -45,20 +45,25 @@ declare -a mcp_patterns=(
   "context7-mcp"
 )
 
+declare -A seen_pids=()
 declare -a all_pids=()
 
-# Collect orphans by process name pattern
+# Collect orphans by process name pattern (deduplicate via seen_pids)
 for pattern in "${mcp_patterns[@]}"; do
   while IFS= read -r pid; do
     [[ -n "$pid" ]] || continue
+    [[ -n "${seen_pids[$pid]:-}" ]] && continue
+    seen_pids[$pid]=1
     all_pids+=("$pid")
     log_info "Found orphaned ${pattern} (pid=${pid}, ppid=1)"
   done < <(find_orphans_by_pattern "$pattern")
 done
 
-# Collect orphaned node MCP processes
+# Collect orphaned node MCP processes (deduplicate)
 while IFS= read -r pid; do
   [[ -n "$pid" ]] || continue
+  [[ -n "${seen_pids[$pid]:-}" ]] && continue
+  seen_pids[$pid]=1
   all_pids+=("$pid")
   log_info "Found orphaned node MCP process (pid=${pid}, ppid=1)"
 done < <(find_orphan_node_mcp)
@@ -70,17 +75,21 @@ total_killed=0
 # SIGTERM (graceful shutdown)
 for pid in "${all_pids[@]}"; do
   if kill -TERM "$pid" 2>/dev/null; then
-    ((total_killed++))
+    total_killed=$((total_killed + 1))
   fi
 done
 
 sleep 2
 
-# SIGKILL survivors
+# SIGKILL survivors — re-validate PID identity before escalating
 for pid in "${all_pids[@]}"; do
   if kill -0 "$pid" 2>/dev/null; then
-    log_warn "SIGKILL to surviving process (pid=${pid})"
-    kill -KILL "$pid" 2>/dev/null || true
+    # Confirm PID still belongs to a target process (guards against PID reuse)
+    pid_cmd=$(ps -p "$pid" -o command= 2>/dev/null || true)
+    if [[ "$pid_cmd" =~ terraform-mcp|context7-mcp|node ]]; then
+      log_warn "SIGKILL to surviving process (pid=${pid}, cmd=${pid_cmd})"
+      kill -KILL "$pid" 2>/dev/null || true
+    fi
   fi
 done
 

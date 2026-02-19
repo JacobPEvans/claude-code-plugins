@@ -16,7 +16,8 @@ launchd because their parent terminal died without cleanup.
 - **Only kills ppid=1 processes** — cannot affect processes with a living parent
 - **Cannot affect other Claude sessions** — active sessions have a living parent terminal
 - **SIGTERM first, SIGKILL only for survivors** — 2-second grace period
-- **Never kills arbitrary node processes** — only targets node processes with MCP-related arguments
+- **Targets node processes by substring match** — matches orphaned `node` processes whose command
+  line contains `mcp` or `context7`; unrelated node processes with those substrings could be affected
 
 ## Targets
 
@@ -29,7 +30,8 @@ launchd because their parent terminal died without cleanup.
 ## Logs
 
 Cleanup activity is logged to:
-```
+
+```text
 ~/Library/Logs/claude-process-cleanup/cleanup-YYYY-MM-DD.log
 ```
 

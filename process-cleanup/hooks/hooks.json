@@ -1,5 +1,4 @@
 {
-  "description": "Sweep for orphaned MCP processes when a Claude session ends",
   "hooks": {
     "Stop": [
       {
