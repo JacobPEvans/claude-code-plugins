@@ -11,8 +11,6 @@
 
 ## Get Context
 
-Run these three commands to get substitution values:
-
 ```bash
 owner=$(gh repo view --json owner --jq '.owner.login')
 repo=$(gh repo view --json name --jq '.name')
@@ -20,8 +18,6 @@ number=$(gh pr view --json number --jq '.number')
 ```
 
 ## Placeholder Convention
-
-All queries use **camelCase placeholders** for string substitution.
 
 | Placeholder | Type | Example Value | Source |
 |-------------|------|---------------|--------|
@@ -73,15 +69,3 @@ Must return `0`. Any non-zero value means threads remain unresolved.
 |-----------|------------------|--------------------|
 | Reply to thread | `addPullRequestReviewThreadReply` | `addPullRequestReviewComment` |
 | Resolve thread | `resolveReviewThread` | `resolvePullRequestReviewThread` |
-
-## Common Errors
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `Could not resolve to a node` | Invalid thread ID | Re-fetch threads, IDs may have changed |
-| `Variable $x was provided invalid value` | Used GraphQL `$variable` syntax | Remove all `$variables`, substitute values directly |
-| `Parse error on ... near $` | Shell corrupted `$` sign | Use single quotes around `--raw-field` value |
-| `Resource not accessible` | Permission issue | Check `gh auth status`, need repo write access |
-| Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
-
-See [rest-api-patterns.md](rest-api-patterns.md) for REST API reply patterns.

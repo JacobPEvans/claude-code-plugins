@@ -3,15 +3,6 @@
 
 # REST API Patterns for PR Review Thread Replies
 
-## When to Use REST vs GraphQL
-
-| Operation | Use | Why |
-|-----------|-----|-----|
-| Fetch threads | GraphQL | Only way to access `reviewThreads` |
-| Reply (simple text) | Either | GraphQL `addPullRequestReviewThreadReply` works for plain text |
-| Reply (special chars) | REST | `-f body=` handles encoding automatically |
-| Resolve thread | GraphQL | Only way to resolve |
-
 REST is recommended for replies with complex body text (newlines, markdown, quotes) because `-f body=` handles encoding automatically. For simple plain-text replies, the GraphQL `addPullRequestReviewThreadReply` mutation also works — see [graphql-queries.md](graphql-queries.md).
 
 ## Reply Command
@@ -41,7 +32,7 @@ gh api repos/owner/repo/pulls/123/comments/987654321/replies -f body="..."
 
 ## Extract databaseId from GraphQL Response
 
-After fetching threads via the GraphQL query in [graphql-queries.md](graphql-queries.md), extract the numeric `databaseId` for the first comment in the target thread:
+After fetching threads via GraphQL, extract the numeric `databaseId` for the first comment in the target thread:
 
 ```bash
 commentId=$(echo "$THREADS_JSON" | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "PRRT_xxx") | .comments.nodes[0].databaseId')
@@ -59,8 +50,6 @@ gh pr comment {number} --body "Re: reviewer feedback on path:line - your respons
 
 ## Read Non-Thread Comments
 
-Fetch top-level PR comments and review body summaries that aren't part of inline review threads.
-
 ### Get Last Commit Date
 
 ```bash
@@ -75,12 +64,7 @@ Returns ISO 8601 timestamp (e.g., `2026-02-17T12:34:56Z`). Used to filter commen
 gh api "repos/{owner}/{repo}/issues/{number}/comments?since={lastCommitDate}"
 ```
 
-Returns array of comments posted after the specified timestamp. Extract:
-
-- `id` - comment ID
-- `body` - comment text
-- `user.login` - author
-- `created_at` - timestamp
+Returns array of comments posted after the specified timestamp.
 
 ### Fetch Review Body Comments Since Last Commit
 
@@ -88,16 +72,7 @@ Returns array of comments posted after the specified timestamp. Extract:
 gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "") | {id, body, author: .user.login, submitted_at}]'
 ```
 
-Returns review summaries (the body text of reviews, not inline comments) submitted after the last commit. The `--jq` filter is required because the reviews endpoint does not support server-side `?since=` filtering.
-
-### Parameters
-
-| Parameter | Type | Source | Notes |
-|-----------|------|--------|-------|
-| `{owner}` | string | `gh repo view --json owner --jq '.owner.login'` | Repository owner |
-| `{repo}` | string | `gh repo view --json name --jq '.name'` | Repository name |
-| `{number}` | integer | `gh pr view --json number --jq '.number'` | PR number |
-| `{lastCommitDate}` | string | Last commit timestamp (ISO 8601) | From `gh pr view --json commits` |
+The `--jq` filter is required because the reviews endpoint does not support server-side `?since=` filtering.
 
 ## Troubleshooting
 
@@ -108,5 +83,3 @@ Returns review summaries (the body text of reviews, not inline comments) submitt
 | `403 Forbidden` | Permission issue | Check `gh auth status`, need repo write access |
 | `Resource not accessible` | Token lacks permissions | Use fallback to top-level comment |
 | Empty body error | Missing `-f body=` | Ensure `-f body="text"` is included |
-
-See [graphql-queries.md](graphql-queries.md) for the full GraphQL query reference.
