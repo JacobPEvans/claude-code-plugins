@@ -8,7 +8,7 @@ REST is recommended for replies with complex body text (newlines, markdown, quot
 ## Reply Command
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{commentId}/replies -f body="your reply text here"
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="your reply text here"
 ```
 
 | Parameter | Type | Source | Notes |
@@ -16,11 +16,11 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments/{commentId}/replies -f body=
 | `{owner}` | string | `gh repo view --json owner --jq '.owner.login'` | Repository owner |
 | `{repo}` | string | `gh repo view --json name --jq '.name'` | Repository name |
 | `{number}` | integer | `gh pr view --json number --jq '.number'` | PR number |
-| `{commentId}` | integer | GraphQL `databaseId` field | **Must be numeric** |
+| `{databaseId}` | integer | GraphQL `databaseId` field | **Must be numeric** |
 
 ## Critical: databaseId NOT Node ID
 
-The `{commentId}` parameter **MUST** be the numeric `databaseId` from the GraphQL response, **NOT** the node ID (like `PRRT_*` or `PRRC_*`).
+The `{databaseId}` parameter **MUST** be the numeric `databaseId` from the GraphQL response, **NOT** the node ID (like `PRRT_*` or `PRRC_*`).
 
 ```bash
 # WRONG - node IDs don't work with REST API
@@ -78,7 +78,7 @@ The `--jq` filter is required because the reviews endpoint does not support serv
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `404 Not Found` | Invalid `{commentId}` | Verify you're using `databaseId` (numeric), not node ID |
+| `404 Not Found` | Invalid `{databaseId}` | Verify you're using `databaseId` (numeric), not node ID |
 | `422 Validation Failed` | Comment doesn't exist | Re-fetch threads, comment may have been deleted |
 | `403 Forbidden` | Permission issue | Check `gh auth status`, need repo write access |
 | `Resource not accessible` | Token lacks permissions | Use fallback to top-level comment |

@@ -38,7 +38,8 @@ explanations, then resolving threads via GitHub's GraphQL API.
 - DO NOT use printf piping or heredoc for GraphQL queries
 - DO NOT write Python/shell scripts to /tmp/ or anywhere. Run gh/git/jq commands directly via Bash.
 
-**Context inference**: Infer owner/repo/PR from current git context:
+**Context inference**: Infer owner/repo/PR from current git context, then substitute
+these values for `{owner}`, `{repo}`, and `{number}` placeholders in all commands below:
 
 ```bash
 owner=$(gh repo view --json owner --jq '.owner.login')
@@ -207,6 +208,6 @@ Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
 | Verification shows >0 | Thread not resolved | Re-run mutation for remaining threads |
 | Empty reviewThreads | No reviews yet | Exit cleanly |
 | Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
-| REST reply fails | Invalid `databaseId` | Verify numeric databaseId, not node ID |
+| REST reply fails | Invalid `databaseId` or permissions | Verify numeric databaseId (not node ID) and ensure token has required repo permissions (403 = permission issue) |
 | `since` filter returns all comments | Invalid date format | Verify ISO 8601 format |
 | Reviews endpoint returns empty | No reviews submitted | Proceed with threads only |
