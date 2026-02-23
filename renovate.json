@@ -10,7 +10,7 @@
       "matchPackagePrefixes": ["actions/"],
       "automerge": true,
       "automergeType": "squash",
-      "minimumReleaseAge": null
+      "minimumReleaseAge": "1 day"
     }
   ]
 }
