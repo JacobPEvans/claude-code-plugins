@@ -35,6 +35,8 @@ ASK_GIT = [
     ("push --force-with-lease", "Overwrites remote history"),
     ("push --force", "Overwrites remote history"),
     ("push -f", "Overwrites remote history"),
+    ("worktree remove --force", "Removes worktree directory, discarding uncommitted changes"),
+    ("worktree remove -f", "Removes worktree directory, discarding uncommitted changes"),
     ("cherry-pick", "Rewrites commit history"),
     ("merge", "Can create merge commits or conflicts"),
     ("reset", "Can lose uncommitted work permanently"),
