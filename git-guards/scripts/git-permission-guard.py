@@ -58,20 +58,16 @@ ASK_GH = [
 
 DENY_GH = [
     ("pr comment", (
-        "BLOCKED: gh pr comment creates top-level issue comments that cannot be resolved or tracked.\n"
+        "gh pr comment creates top-level issue comments that cannot be resolved or tracked.\n"
         "\n"
-        "For code review comments, you MUST use GitHub GraphQL API to create proper review threads:\n"
+        "For code review feedback, you MUST use review threads (line-specific, resolvable comments) instead.\n"
         "\n"
-        "  1. Create a review with inline comments (file + line references):\n"
-        "     gh api graphql -f query='mutation { addPullRequestReview(input: { pullRequestId: \"PR_NODE_ID\", event: COMMENT, threads: [{ path: \"file.py\", line: 10, body: \"comment\" }] }) { pullRequestReview { id } } }'\n"
+        "Use the documented thread workflows for creating review comments, replying, and resolving threads:\n"
+        "  - github-workflows/skills/resolve-pr-threads/graphql-queries.md\n"
+        "  - github-workflows/skills/resolve-pr-threads/rest-api-patterns.md\n"
         "\n"
-        "  2. Reply to an existing review thread:\n"
-        "     gh api graphql -f query='mutation { addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: \"PRRT_xxx\", body: \"reply\" }) { comment { id } } }'\n"
-        "\n"
-        "  3. Resolve a thread after addressing it:\n"
-        "     gh api graphql -f query='mutation { resolveReviewThread(input: { threadId: \"PRRT_xxx\" }) { thread { isResolved } } }'\n"
-        "\n"
-        "These create resolvable, line-specific review threads — the only acceptable way to post review feedback on PRs."
+        "These workflows create resolvable, line-specific review threads — the only acceptable way to post review\n"
+        "feedback on PRs."
     )),
 ]
 
@@ -159,7 +155,7 @@ def main():
     if is_gh:
         for pattern, reason in DENY_GH:
             tokens = pattern.split()
-            if sub_tokens[:len(tokens)] == tokens:
+            if tokens and sub_tokens[:len(tokens)] == tokens:
                 deny(reason)
 
     # Check ASK patterns - use word boundaries to avoid false matches
