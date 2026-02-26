@@ -56,6 +56,25 @@ ASK_GH = [
     ("pr merge", "Merges PR - ONLY do when user EXPLICITLY requests"),
 ]
 
+DENY_GH = [
+    ("pr comment", (
+        "BLOCKED: gh pr comment creates top-level issue comments that cannot be resolved or tracked.\n"
+        "\n"
+        "For code review comments, you MUST use GitHub GraphQL API to create proper review threads:\n"
+        "\n"
+        "  1. Create a review with inline comments (file + line references):\n"
+        "     gh api graphql -f query='mutation { addPullRequestReview(input: { pullRequestId: \"PR_NODE_ID\", event: COMMENT, threads: [{ path: \"file.py\", line: 10, body: \"comment\" }] }) { pullRequestReview { id } } }'\n"
+        "\n"
+        "  2. Reply to an existing review thread:\n"
+        "     gh api graphql -f query='mutation { addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: \"PRRT_xxx\", body: \"reply\" }) { comment { id } } }'\n"
+        "\n"
+        "  3. Resolve a thread after addressing it:\n"
+        "     gh api graphql -f query='mutation { resolveReviewThread(input: { threadId: \"PRRT_xxx\" }) { thread { isResolved } } }'\n"
+        "\n"
+        "These create resolvable, line-specific review threads — the only acceptable way to post review feedback on PRs."
+    )),
+]
+
 
 def deny(reason: str) -> None:
     """Output deny decision and exit."""
@@ -134,13 +153,21 @@ def main():
     else:
         subcommand = command[3:] if command.startswith("gh ") else ""
 
+    sub_tokens = subcommand.split()
+
+    # Check DENY_GH patterns (token prefix match on gh subcommand)
+    if is_gh:
+        for pattern, reason in DENY_GH:
+            tokens = pattern.split()
+            if sub_tokens[:len(tokens)] == tokens:
+                deny(reason)
+
     # Check ASK patterns - use word boundaries to avoid false matches
     # (e.g., "merge" shouldn't match "emergency")
     patterns = ASK_GIT if is_git else ASK_GH
     for cmd, risk in patterns:
         # Match as exact token sequence at start of subcommand
         cmd_tokens = cmd.split()
-        sub_tokens = subcommand.split()
         if len(sub_tokens) >= len(cmd_tokens) and sub_tokens[:len(cmd_tokens)] == cmd_tokens:
             ask(command, risk)
 
