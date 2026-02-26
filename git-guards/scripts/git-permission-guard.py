@@ -71,6 +71,30 @@ DENY_GH = [
     )),
 ]
 
+# Maps incorrect GraphQL mutation names to (correct_name, example_command).
+# Based on log analysis: addPullRequestReviewComment (711 failures),
+# resolvePullRequestReviewThread (162 failures).
+WRONG_MUTATIONS = {
+    "addPullRequestReviewComment": (
+        "addPullRequestReviewThreadReply",
+        (
+            "gh api graphql --raw-field query='"
+            "mutation { addPullRequestReviewThreadReply(input: {"
+            "pullRequestReviewThreadId: \"THREAD_ID\", body: \"reply text\""
+            "}) { comment { id } } }'"
+        ),
+    ),
+    "resolvePullRequestReviewThread": (
+        "resolveReviewThread",
+        (
+            "gh api graphql --raw-field query='"
+            "mutation { resolveReviewThread(input: {"
+            "threadId: \"THREAD_ID\""
+            "}) { thread { id isResolved } } }'"
+        ),
+    ),
+}
+
 
 def deny(reason: str) -> None:
     """Output deny decision and exit."""
@@ -94,6 +118,83 @@ def ask(command: str, risk: str) -> None:
         }
     }))
     sys.exit(0)
+
+
+def allow_with_guidance(reason: str) -> None:
+    """Allow command but show guidance for self-correction."""
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "allow",
+            "permissionDecisionReason": reason,
+        }
+    }))
+    sys.exit(0)
+
+
+def _strip_jq_content(command: str) -> str:
+    """Remove --jq '...' and --jq "..." content to avoid false positives."""
+    command = re.sub(r"--jq\s+'[^']*'", "", command)
+    command = re.sub(r'--jq\s+"[^"]*"', "", command)
+    command = re.sub(r"--jq\s+\S+", "", command)
+    return command
+
+
+def check_graphql_guidance(command: str) -> None:
+    """Detect known gh api graphql failure patterns and emit corrective guidance.
+
+    Allows the command to proceed (it will fail naturally) while showing the
+    correct pattern inline so Claude can self-correct immediately.
+    """
+    warnings = []
+
+    # Detection 1 - Shell $variable expansion (excluding --jq content)
+    command_no_jq = _strip_jq_content(command)
+    if re.search(r"\$[a-zA-Z]", command_no_jq):
+        warnings.append(
+            "SHELL VARIABLE EXPANSION: $variable in GraphQL queries is expanded by the shell before\n"
+            "gh receives it, causing syntax errors. Use --raw-field with inline values instead:\n"
+            "\n"
+            "  WRONG:  gh api graphql -f query='mutation { ... threadId: $threadId }'\n"
+            "  CORRECT: gh api graphql --raw-field query='mutation { ... threadId: \"ACTUAL_ID\" }'"
+        )
+
+    # Detection 2 - Wrong mutation names
+    for wrong_name, (correct_name, example) in WRONG_MUTATIONS.items():
+        if wrong_name in command:
+            warnings.append(
+                f"WRONG MUTATION NAME: '{wrong_name}' does not exist in the GitHub GraphQL API.\n"
+                f"Use '{correct_name}' instead.\n"
+                f"\n"
+                f"  Example: {example}"
+            )
+
+    # Detection 3 - -f query= or -F query= flags (Go template processing)
+    if re.search(r"\s-[fF]\s+query=", command):
+        warnings.append(
+            "WRONG FLAG: -f/-F applies Go template processing which causes variable expansion.\n"
+            "Use --raw-field for GraphQL queries:\n"
+            "\n"
+            "  WRONG:  gh api graphql -f query='...'\n"
+            "  CORRECT: gh api graphql --raw-field query='...'"
+        )
+
+    # Detection 4 - Multi-line indicators (trailing backslash or literal \n,
+    # excluding false positives like \node, \name, \null, \number)
+    if command.endswith("\\") or re.search(r"\\n(?![aouei])", command):
+        warnings.append(
+            "MULTI-LINE QUERY: GraphQL queries must be on a single line.\n"
+            "Trailing backslashes and \\n sequences break gh api graphql.\n"
+            "\n"
+            "  WRONG:  gh api graphql --raw-field query=' \\\n"
+            "            mutation { ... }'\n"
+            "  CORRECT: gh api graphql --raw-field query='mutation { ... }'"
+        )
+
+    if warnings:
+        header = "GRAPHQL GUIDANCE: This command has known failure patterns. Correct before retrying:\n\n"
+        body = "\n\n".join(f"[{i + 1}] {w}" for i, w in enumerate(warnings))
+        allow_with_guidance(header + body)
 
 
 def main():
@@ -157,6 +258,10 @@ def main():
             tokens = pattern.split()
             if tokens and sub_tokens[:len(tokens)] == tokens:
                 deny(reason)
+
+    # Check GraphQL guidance (allow with corrective warnings)
+    if is_gh and sub_tokens[:2] == ["api", "graphql"]:
+        check_graphql_guidance(command)
 
     # Check ASK patterns - use word boundaries to avoid false matches
     # (e.g., "merge" shouldn't match "emergency")
