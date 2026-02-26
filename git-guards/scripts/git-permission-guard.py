@@ -161,7 +161,7 @@ def check_graphql_guidance(command: str) -> None:
 
     # Detection 2 - Wrong mutation names
     for wrong_name, (correct_name, example) in WRONG_MUTATIONS.items():
-        if wrong_name in command:
+        if re.search(fr"\b{re.escape(wrong_name)}\b\s*\(", command):
             warnings.append(
                 f"WRONG MUTATION NAME: '{wrong_name}' does not exist in the GitHub GraphQL API.\n"
                 f"Use '{correct_name}' instead.\n"
