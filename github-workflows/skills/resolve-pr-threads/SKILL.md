@@ -35,7 +35,7 @@ explanations, then resolving threads via GitHub's GraphQL API.
 - **Run gh/git/jq commands directly** via Bash — no scripts, no temp files
 - **Diagnose and fix errors** when a reply fails — the reply must land in the thread
 - **When a reply fails**: re-fetch thread IDs, verify the databaseId is numeric, check `gh auth status` — then retry
-- Do not reply to threads with top-level comments (e.g., `gh pr comment`), as they are unresolvable and blocked by git-guards.
+- Do not reply to review threads by posting top-level PR comments (e.g., via `gh pr comment` or the Issues comments API) as a fallback; top-level comments are fine for general PR feedback but cannot be used to resolve specific review threads and are blocked by git-guards for that purpose.
 - Wrong mutation names: `addPullRequestReviewComment` (creates new comments, not replies) and `resolvePullRequestReviewThread` (does not exist)
 
 **Context inference**: Infer owner/repo/PR from current git context, then substitute
@@ -144,7 +144,8 @@ Read and follow its full pattern before proceeding. Skipping this is a skill vio
 Step 2: Apply receiving-code-review to each comment below. Determine if each is:
 actionable feedback, a question needing response, or general acknowledgment.
 
-Step 3: Implement fixes and commit, or reply via `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="..."`.
+Step 3: For each **non-thread** PR comment (top-level issue comment or review body), either implement fixes and commit, or reply via `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="..."`.
+Do **not** use this Issues comments endpoint as a fallback for review-thread replies; threaded review comments must be handled only via the dedicated thread-resolution flow and must **not** create new top-level PR comments.
 Do NOT write scripts — run gh commands directly via Bash.
 
 Comments:
