@@ -69,3 +69,15 @@ Must return `0`. Any non-zero value means threads remain unresolved.
 |-----------|------------------|--------------------|
 | Reply to thread | `addPullRequestReviewThreadReply` | `addPullRequestReviewComment` |
 | Resolve thread | `resolveReviewThread` | `resolvePullRequestReviewThread` |
+
+## When a Mutation Fails
+
+If `addPullRequestReviewThreadReply` returns an error, follow this diagnosis flow:
+
+1. **`doesn't accept argument`** → The mutation exists, but the argument name or `input:` shape is wrong. Use `addPullRequestReviewThreadReply` exactly as shown above, with `input: {pullRequestReviewThreadId: "...", body: "..."}`
+2. **`Could not resolve to a node`** → The thread ID is stale. Re-fetch threads with the fetch query above
+3. **`Resource not accessible`** → Token permissions. Run `gh auth status` and verify repo write access
+
+The reply must always land inside the review thread. Top-level PR comments are unresolvable and break the workflow.
+
+> **Note:** An error like `Cannot query field "addPullRequestReviewThreadReply" on type "Mutation"` usually means the mutation name itself is wrong (for example, using `addPullRequestReviewComment` instead of `addPullRequestReviewThreadReply`).

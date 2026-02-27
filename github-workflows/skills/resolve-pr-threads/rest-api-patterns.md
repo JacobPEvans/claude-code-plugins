@@ -40,13 +40,17 @@ commentId=$(echo "$THREADS_JSON" | jq -r '.data.repository.pullRequest.reviewThr
 
 The `databaseId` is always an integer (e.g., `987654321`). If you get `null` or a non-numeric value, the thread ID is wrong or the comment was deleted.
 
-## Fallback: Top-Level PR Comment
+## When REST Reply Fails
 
-If the REST reply endpoint fails (invalid IDs, permissions), fall back to a top-level PR comment. This loses threading but still documents your response.
+If the REST reply endpoint returns an error, diagnose and fix the root cause:
 
-```bash
-gh pr comment {number} --body "Re: reviewer feedback on path:line - your response here"
-```
+| Error | Diagnosis | Resolution |
+|-------|-----------|------------|
+| `404 Not Found` | The `{databaseId}` is wrong | Re-fetch threads, use the numeric `databaseId` field |
+| `422 Validation Failed` | Comment was deleted | Re-fetch threads to get current IDs |
+| `403 Forbidden` | Token lacks permissions | Run `gh auth status` and verify repo write access |
+
+Always reply within the thread. Top-level PR comments are unresolvable and break the review workflow.
 
 ## Read Non-Thread Comments
 
@@ -81,5 +85,5 @@ The `--jq` filter is required because the reviews endpoint does not support serv
 | `404 Not Found` | Invalid `{databaseId}` | Verify you're using `databaseId` (numeric), not node ID |
 | `422 Validation Failed` | Comment doesn't exist | Re-fetch threads, comment may have been deleted |
 | `403 Forbidden` | Permission issue | Check `gh auth status`, need repo write access |
-| `Resource not accessible` | Token lacks permissions | Use fallback to top-level comment |
+| `Resource not accessible` | Token lacks permissions | Run `gh auth status` and verify repo write access |
 | Empty body error | Missing `-f body=` | Ensure `-f body="text"` is included |
