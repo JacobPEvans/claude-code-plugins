@@ -27,16 +27,16 @@ explanations, then resolving threads via GitHub's GraphQL API.
 /resolve-pr-threads all          # All open PRs with unresolved threads (parallel)
 ```
 
-## DO NOT
+## Rules
 
-- DO NOT use `addPullRequestReviewComment` — wrong mutation, creates new comments not replies
-- DO NOT use `resolvePullRequestReviewThread` — wrong name, does not exist
-- DO NOT use `gh pr comment` for thread replies — creates top-level comments, not threaded replies
-- DO NOT use multi-line queries with backslash `\` continuations
-- DO NOT use GraphQL `$variable` syntax (e.g., `$owner`, `$threadId`)
-- DO NOT use `-f query=` with separate variable flags
-- DO NOT use printf piping or heredoc for GraphQL queries
-- DO NOT write Python/shell scripts to /tmp/ or anywhere. Run gh/git/jq commands directly via Bash.
+- **Reply to threads** using `gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies` (REST) or `addPullRequestReviewThreadReply` (GraphQL)
+- **Resolve threads** using `resolveReviewThread` (GraphQL)
+- **Use single-line `--raw-field` queries** with literal value substitution (see graphql-queries.md)
+- **Run gh/git/jq commands directly** via Bash — no scripts, no temp files
+- **Diagnose and fix errors** when a reply fails — the reply must land in the thread
+- **When a reply fails**: re-fetch thread IDs, verify the databaseId is numeric, check `gh auth status` — then retry
+- Top-level PR comments (`gh pr comment`) are unresolvable and blocked by git-guards
+- Wrong mutation names: `addPullRequestReviewComment` (creates new comments, not replies) and `resolvePullRequestReviewThread` (does not exist)
 
 **Context inference**: Infer owner/repo/PR from current git context, then substitute
 these values for `{owner}`, `{repo}`, and `{number}` placeholders in all commands below:
@@ -144,7 +144,7 @@ Read and follow its full pattern before proceeding. Skipping this is a skill vio
 Step 2: Apply receiving-code-review to each comment below. Determine if each is:
 actionable feedback, a question needing response, or general acknowledgment.
 
-Step 3: Implement fixes and commit, or reply via `gh pr comment {number} --body "..."`.
+Step 3: Implement fixes and commit, or reply via `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="..."`.
 Do NOT write scripts — run gh commands directly via Bash.
 
 Comments:
