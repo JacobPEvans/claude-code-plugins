@@ -35,7 +35,7 @@ explanations, then resolving threads via GitHub's GraphQL API.
 - **Run gh/git/jq commands directly** via Bash — no scripts, no temp files
 - **Diagnose and fix errors** when a reply fails — the reply must land in the thread
 - **When a reply fails**: re-fetch thread IDs, verify the databaseId is numeric, check `gh auth status` — then retry
-- Top-level PR comments (`gh pr comment`) are unresolvable and blocked by git-guards
+- Do not reply to threads with top-level comments (e.g., `gh pr comment`), as they are unresolvable and blocked by git-guards.
 - Wrong mutation names: `addPullRequestReviewComment` (creates new comments, not replies) and `resolvePullRequestReviewThread` (does not exist)
 
 **Context inference**: Infer owner/repo/PR from current git context, then substitute

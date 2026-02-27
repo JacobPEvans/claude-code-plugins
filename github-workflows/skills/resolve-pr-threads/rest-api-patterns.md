@@ -85,5 +85,5 @@ The `--jq` filter is required because the reviews endpoint does not support serv
 | `404 Not Found` | Invalid `{databaseId}` | Verify you're using `databaseId` (numeric), not node ID |
 | `422 Validation Failed` | Comment doesn't exist | Re-fetch threads, comment may have been deleted |
 | `403 Forbidden` | Permission issue | Check `gh auth status`, need repo write access |
-| `Resource not accessible` | Token lacks permissions | Run `gh auth status`, verify repo write access, re-fetch thread IDs |
+| `Resource not accessible` | Token lacks permissions | Run `gh auth status` and verify repo write access |
 | Empty body error | Missing `-f body=` | Ensure `-f body="text"` is included |
