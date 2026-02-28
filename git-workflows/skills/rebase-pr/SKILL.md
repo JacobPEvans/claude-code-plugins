@@ -168,9 +168,9 @@ git rebase main
 
 **Three possible outcomes**:
 
-1. **Success** - Continue to Phase 5
+1. **Success** - Continue to Phase 4
 2. **Conflicts** - See Conflict Resolution below
-3. **Already up-to-date** - Continue to Phase 5
+3. **Already up-to-date** - Continue to Phase 4
 
 ### 3.2 Handle Rebase Conflicts
 
@@ -559,8 +559,7 @@ Method: Local rebase + fast-forward push
 3. ✅ Rebased branch: <commits> commit(s)
 4. ✅ Pushed branch, CI passed on rebased commits
 5. ✅ Fast-forward merged to main
-6. ✅ Pushed to origin/main
-7. ✅ PR auto-closed by GitHub
+6. ✅ Pushed to origin/main — PR auto-closed by GitHub
 
 ### Cleanup
 
