@@ -116,6 +116,30 @@ plugin-name/
 - Provide actionable error messages
 - Follow `noun-verb` naming pattern
 
+### Phase and Step Numbering Convention
+
+All **top-level** numbered phases, steps, and similar sequential sections must use **integers only**
+(1, 2, 3, ...). Never use partial/decimal numbers for top-level phases or steps (e.g., "Phase 3.5" is
+forbidden). Sub-steps under a parent phase use X.Y notation (e.g., 3.1, 3.2) and are explicitly permitted.
+
+Use sub-numbering (X.Y) only for subdivisions under a parent phase:
+
+```text
+1   Phase 1
+1.1 Phase 1.1 - Part 1
+1.2 Phase 1.2 - Part 2
+
+2   Phase 2
+
+3   Phase 3
+3.1 Phase 3.1 - Part 1
+3.2 Phase 3.2 - Part 2
+```
+
+It must always be clear whether child phases/steps can run in parallel or not. By default,
+sub-steps are assumed to be sequential. If they can run in parallel, this should be explicitly
+stated (e.g., "Steps 3.1 and 3.2 can be run in parallel.").
+
 ### Hook Implementation Language Selection
 
 Choose the implementation language based on complexity:
