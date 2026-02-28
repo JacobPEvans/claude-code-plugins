@@ -43,6 +43,9 @@ ASK_GIT = [
     ("restore", "Can discard local changes"),
     ("rebase", "Rewrites commit history"),
     ("clean", "Removes untracked files permanently"),
+    ("rm -f", "Force-removes files, discarding uncommitted changes permanently"),
+    ("rm --force", "Force-removes files, discarding uncommitted changes permanently"),
+    ("rm -r", "Recursively removes files from working tree and index"),
     ("prune", "Removes unreferenced objects"),
     ("gc", "May remove unreferenced objects"),
 ]
