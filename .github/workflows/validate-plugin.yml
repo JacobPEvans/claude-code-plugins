@@ -34,6 +34,13 @@ jobs:
           for plugin_dir in */; do
             plugin_name="${plugin_dir%/}"
             if [ -f "$plugin_dir.claude-plugin/plugin.json" ]; then
+              # Skip plugins with no skills/commands/agents (hooks-only plugins have nothing for cclint to lint)
+              plugin_json="$plugin_dir.claude-plugin/plugin.json"
+              has_lintable=$(jq -r '(.skills//[])+(.commands//[])+(.agents//[])|length' "$plugin_json" 2>/dev/null || echo "0")
+              if [ "$has_lintable" -eq 0 ]; then
+                echo "Skipping $plugin_name plugin (hooks-only, no skills/commands/agents to lint)"
+                continue
+              fi
               echo "Validating $plugin_name plugin..."
               $HOME/go/bin/cclint "$plugin_name"
             fi
