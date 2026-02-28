@@ -168,9 +168,9 @@ git rebase main
 
 **Three possible outcomes**:
 
-1. **Success** - Continue to Phase 4
+1. **Success** - Continue to Phase 5
 2. **Conflicts** - See Conflict Resolution below
-3. **Already up-to-date** - Continue to Phase 4
+3. **Already up-to-date** - Continue to Phase 5
 
 ### 3.2 Handle Rebase Conflicts
 
@@ -240,12 +240,12 @@ echo "Branch is $COMMITS_AHEAD commits ahead of main"
 
 ---
 
-## Phase 3.5: Push Rebased Branch and Wait for CI
+## Phase 4: Push Rebased Branch and Wait for CI
 
 After rebase, the branch has new commit SHAs that CodeQL hasn't scanned.
 Push the branch to origin so CI runs on the rebased commits before merging.
 
-### 3.5.1 Force-Push Rebased Branch
+### 4.1 Force-Push Rebased Branch
 
 ```bash
 git push --force-with-lease origin "$BRANCH"
@@ -261,7 +261,7 @@ git branch --set-upstream-to="origin/$BRANCH" "$BRANCH"
 git push --force-with-lease origin "$BRANCH"
 ```
 
-### 3.5.2 Wait for CI on Rebased Commits
+### 4.2 Wait for CI on Rebased Commits
 
 ```bash
 gh pr checks "$PR_NUMBER" --watch --interval 15
@@ -270,19 +270,19 @@ gh pr checks "$PR_NUMBER" --watch --interval 15
 **If CI fails after rebase**: ABORT with "CI failed on rebased commits. Fix
 issues before merging."
 
-Do NOT proceed to Phase 4 until all checks pass on the rebased branch.
+Do NOT proceed to Phase 5 until all checks pass on the rebased branch.
 
 ---
 
-## Phase 4: Fast-Forward Merge to Main
+## Phase 5: Fast-Forward Merge to Main
 
-### 4.1 Switch to Main Worktree
+### 5.1 Switch to Main Worktree
 
 ```bash
 cd "$MAIN_WORKTREE"
 ```
 
-### 4.2 Verify Fast-Forward Is Possible
+### 5.2 Verify Fast-Forward Is Possible
 
 ```bash
 # Check if feature branch is directly ahead of main
@@ -293,7 +293,7 @@ if [ $? -ne 0 ]; then
 fi
 ```
 
-### 4.3 Perform Fast-Forward Merge
+### 5.3 Perform Fast-Forward Merge
 
 ```bash
 git merge --ff-only "$BRANCH"
@@ -311,7 +311,7 @@ This usually means:
 4. Try /rebase-merge again
 ```
 
-### 4.4 Verify Merge
+### 5.4 Verify Merge
 
 ```bash
 git log -3 --oneline
@@ -320,9 +320,9 @@ echo "Main now includes: $(git log -1 --format='%s')"
 
 ---
 
-## Phase 5: Push to Origin/Main
+## Phase 6: Push to Origin/Main
 
-### 5.1 Push Main to Origin
+### 6.1 Push Main to Origin
 
 ```bash
 git push origin main
@@ -345,7 +345,7 @@ exists specifically because `gh pr merge` doesn't sign commits.
 **Note on Commit Signing**: All commits retain their signatures through the rebase process.
 This is critical for repositories with signing requirements and is why we use this local workflow instead of `gh pr merge`.
 
-### 5.2 Verify Push Success
+### 6.2 Verify Push Success
 
 ```bash
 git fetch origin main
@@ -360,7 +360,7 @@ else
 fi
 ```
 
-### 5.3 Verify Pull Request Closed
+### 6.3 Verify Pull Request Closed
 
 ```bash
 PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
@@ -371,9 +371,9 @@ echo "Pull request state: $PR_STATE"
 
 ---
 
-## Phase 6: Cleanup
+## Phase 7: Cleanup
 
-### 6.1 Return to Original Worktree
+### 7.1 Return to Original Worktree
 
 ```bash
 # Get back to the feature worktree before deletion
@@ -381,7 +381,7 @@ SAFE_BRANCH=$(printf '%s' "$BRANCH" | tr -c 'A-Za-z0-9._-/' '_')
 FEATURE_WORKTREE="$HOME/git/$REPO_NAME/$SAFE_BRANCH"
 ```
 
-### 6.2 Delete Local Feature Branch
+### 7.2 Delete Local Feature Branch
 
 From main worktree:
 
@@ -398,13 +398,13 @@ if [ "$PR_STATE" = "MERGED" ]; then
 fi
 ```
 
-### 6.3 Delete Remote Feature Branch
+### 7.3 Delete Remote Feature Branch
 
 ```bash
 git push origin --delete "$BRANCH" 2>/dev/null || echo "Remote branch already deleted"
 ```
 
-### 6.4 Remove Worktree
+### 7.4 Remove Worktree
 
 Pattern from **[Sync Main](../../../../commands/sync-main.md)** lines 183-188:
 
@@ -417,7 +417,7 @@ fi
 git worktree prune
 ```
 
-### 6.5 Final Status
+### 7.5 Final Status
 
 ```bash
 git status
@@ -470,13 +470,13 @@ git log -5 --oneline origin/main
 
 **Action**: Skip gracefully with "Pull request already merged. Cleaning up local and remote branches..."
 
-Then proceed to Phase 6 cleanup only.
+Then proceed to Phase 7 cleanup only.
 
 ### Non-Fast-Forward After Rebase
 
 **Detection**: `git merge --ff-only` fails
 
-**Action**: ABORT with instructions (see Phase 4.3)
+**Action**: ABORT with instructions (see Phase 5.3)
 
 ### Worktree In Use
 
@@ -557,10 +557,10 @@ Method: Local rebase + fast-forward push
 1. ✅ Validated PR: OPEN, MERGEABLE, CI SUCCESS, APPROVED
 2. ✅ Synced main: <old-sha> → <new-sha>
 3. ✅ Rebased branch: <commits> commit(s)
-3.5. ✅ Pushed branch, CI passed on rebased commits
-4. ✅ Fast-forward merged to main
-5. ✅ Pushed to origin/main
-6. ✅ PR auto-closed by GitHub
+4. ✅ Pushed branch, CI passed on rebased commits
+5. ✅ Fast-forward merged to main
+6. ✅ Pushed to origin/main
+7. ✅ PR auto-closed by GitHub
 
 ### Cleanup
 
