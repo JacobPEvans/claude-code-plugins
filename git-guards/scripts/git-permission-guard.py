@@ -44,7 +44,6 @@ ASK_GIT = [
     ("rebase", "Rewrites commit history"),
     ("clean", "Removes untracked files permanently"),
     ("prune", "Removes unreferenced objects"),
-    ("rm", "Removes files from working tree and index"),
     ("gc", "May remove unreferenced objects"),
 ]
 
