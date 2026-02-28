@@ -54,6 +54,9 @@ all_pass &= check("git rm --force", "git rm --force some/file.txt", "ask")
 # git rm -r - must ask: recursive deletion
 all_pass &= check("git rm -r", "git rm -r some/directory/", "ask")
 
+# git rm -rf - must ask: combined short flags, force-removes recursively
+all_pass &= check("git rm -rf", "git rm -rf some/directory/", "ask")
+
 # git rm -r -f - must ask: matches -r first (more specific would need ordering)
 all_pass &= check("git rm -r -f", "git rm -r -f some/directory/", "ask")
 
