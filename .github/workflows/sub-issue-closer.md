@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  issues: read
+  issues: write
 strict: true
 network:
   allowed:
@@ -18,7 +18,6 @@ tools:
       - issues
 safe-outputs:
   update-issue:
-    status:
     target: "*"
     max: 20
   add-comment:
@@ -75,16 +74,16 @@ After closing a parent issue:
 
 For each parent issue that is 100% complete:
 
-1. **Close the issue** using the `update_issue` safe output:
+1. **Close the issue** using the `update-issue` safe output:
 
    ```json
-   {"type": "update_issue", "issue_number": 123, "state": "closed", "state_reason": "completed"}
+   {"type": "update-issue", "issue_number": 123, "state": "closed", "state_reason": "completed"}
    ```
 
-2. **Add a comment** explaining the closure using the `add_comment` safe output:
+2. **Add a comment** explaining the closure using the `add-comment` safe output:
 
    ```json
-   {"type": "add_comment", "issue_number": 123, "body": "Automatically closed - all sub-issues complete."}
+   {"type": "add-comment", "issue_number": 123, "body": "Automatically closed - all sub-issues complete."}
    ```
 
 ### Step 5: Report Summary

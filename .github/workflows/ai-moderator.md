@@ -23,12 +23,12 @@ concurrency:
 tools:
   github:
     mode: local
-    read-only: true
+    read-only: false
     toolsets: [default]
 permissions:
   contents: read
-  issues: read
-  pull-requests: read
+  issues: write
+  pull-requests: write
 safe-outputs:
   add-labels:
     allowed: [spam, ai-generated, link-spam, ai-inspected]
@@ -81,7 +81,7 @@ Analyze for link spam indicators:
 
 Analyze for AI-generated content indicators:
 
-- Use of em-dashes ( - ) in casual contexts
+- Use of em-dashes (—) in casual contexts
 - Excessive use of emoji, especially in technical discussions
 - Perfect grammar and punctuation in informal settings
 - Constructions like "it's not X - it's Y" or "X isn't just Y - it's Z"

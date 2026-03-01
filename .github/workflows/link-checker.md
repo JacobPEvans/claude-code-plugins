@@ -3,7 +3,9 @@ description: Daily automated link checker that finds and fixes broken links in d
 engine: copilot
 on:
   schedule: daily on weekdays
-permissions: read-all
+permissions:
+  contents: write
+  pull-requests: write
 timeout-minutes: 60
 network:
   allowed:
@@ -25,7 +27,7 @@ steps:
 
       # Find all markdown files in docs directory and README
       echo "Finding all markdown files..."
-      MARKDOWN_FILES=$(find docs README.md -type f -name "*.md" 2>/dev/null || echo "")
+      MARKDOWN_FILES=$(find docs -type f -name "*.md" 2>/dev/null; [ -f README.md ] && echo "README.md")
 
       if [ -z "$MARKDOWN_FILES" ]; then
         echo "No markdown files found"
@@ -66,6 +68,14 @@ steps:
 
       while IFS= read -r url; do
         if [[ "$url" == "#"* ]] || [[ "$url" != "http"* ]]; then
+          continue
+        fi
+
+        # SSRF protection: skip private/loopback IP ranges
+        HOST=$(echo "$url" | grep -oP '(?<=://)[^/:]+')
+        if [[ "$HOST" =~ ^(localhost|127\.|10\.|192\.168\.|169\.254\.|::1)$ ]] || \
+           [[ "$HOST" =~ ^172\.(1[6-9]|2[0-9]|3[01])\. ]]; then
+          echo "SKIPPED $url (private address)" >> /tmp/link-check-results.md
           continue
         fi
 

@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
   actions: read
-  security-events: read
+  security-events: write
 tracker-id: malicious-code-scan
 tools:
   github:
@@ -16,6 +16,7 @@ tools:
 safe-outputs:
   create-code-scanning-alert:
     driver: "Malicious Code Scanner"
+  noop:
   threat-detection: false
 timeout-minutes: 15
 strict: true
@@ -196,7 +197,7 @@ When suspicious patterns are found, create code-scanning alerts with this struct
 
 ```json
 {
-  "create_code_scanning_alert": [
+  "create-code-scanning-alert": [
     {
       "rule_id": "malicious-code-scanner/[CATEGORY]",
       "message": "[Brief description of the threat]",
@@ -270,7 +271,7 @@ A successful malicious code scan:
 Your output MUST:
 
 1. **If suspicious patterns are found**:
-   - **CALL** the `create_code_scanning_alert` tool for each finding
+   - **CALL** the `create-code-scanning-alert` tool for each finding
    - Each alert must include: `rule_id`, `message`, `severity`, `file_path`, `start_line`, `description`
    - Provide detailed descriptions explaining the threat and recommended remediation
 
