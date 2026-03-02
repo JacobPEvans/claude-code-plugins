@@ -8,6 +8,10 @@
     "unshallow",
     "exfiltration",
     "unsanitized",
-    "tinyurl"
+    "tinyurl",
+    "gpgsign",
+    "oneline",
+    "worktree",
+    "worktrees"
   ]
 }

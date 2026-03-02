@@ -1,609 +1,179 @@
 ---
 name: rebase-pr
-description: Local rebase-merge workflow for pull requests with linear git history and signed commits
-version: "1.1.0"
-author: "JacobPEvans"
+description: Local rebase-merge workflow for pull requests with signed commits
+version: 2.0.0
 ---
 
-<!-- cspell:words worktree worktrees oneline subshell -->
+# rebase-pr
 
-# Rebase PR
+Merge a PR using local `git rebase` + signed commits + `git push origin main`.
 
-Local rebase workflow for merging pull requests that maintains linear history with signed commits by rebasing PR branches onto main and
-pushing directly to origin/main (auto-closing the pull request).
+`gh pr merge --rebase` cannot sign commits. Local rebase with `commit.gpgsign=true`
+signs every rebased commit. Pushing main directly auto-closes the PR.
 
-## Why This Workflow?
+## Prerequisite: Validate Rulesets
 
-GitHub's `gh pr merge` command **does not sign commits**, making it incompatible with repositories requiring commit signatures.
-This workflow uses local git operations to preserve commit signing throughout the entire merge process.
-
-## When to Use
-
-Use this workflow when:
-
-- You want linear git history for your pull request (no merge commits)
-- Your pull request is approved and CI passes
-- You need signed commits (required for most repositories)
-- You prefer local control over GitHub's merge buttons
-
-Do NOT use when:
-
-- You need to preserve merge commits for audit trail
-- Multiple contributors are pushing to your PR branch
-- Pull request doesn't require commit signatures
-
-## Critical Requirements for Pull Request Merging
-
-1. **All PR checks must pass** - Never merge a pull request with failed CI
-2. **All review threads must be resolved** - Not just addressed, RESOLVED
-3. **Pull request must be approved** (unless review not required)
-4. **Local main must be synced** - Stale main causes non-fast-forward errors
-5. **Commits must be signed** - Required for repositories with signing policies (this is why we can't use `gh pr merge`)
-6. **CodeQL must scan rebased commits** - After rebase creates new SHAs, push branch to origin and wait for CI before pushing to main
-
----
-
-## Pull Request Merge-Readiness Criteria
-
-**This is the canonical source of truth for pull request merge-readiness validation.**
-
-A pull request is **READY TO MERGE** when ALL of:
-
-1. `state == "OPEN"` - Pull request is open
-2. `mergeable == "MERGEABLE"` - No merge conflicts with base branch
-3. `statusCheckRollup.state == "SUCCESS"` - All CI checks pass on the pull request
-4. All `reviewThreads` have `isResolved == true` - All pull request review conversations resolved
-5. `reviewDecision == "APPROVED"` or `null` - Pull request approved or review not required
-
-A pull request is **BLOCKED** when ANY of:
-
-- `mergeable == "CONFLICTING"` → "pull request has merge conflicts"
-- `statusCheckRollup.state != "SUCCESS"` → "pull request CI failing: {checks}"
-- Unresolved review threads exist → "pull request has unresolved review comments"
-- `reviewDecision == "CHANGES_REQUESTED"` → "pull request reviewer requested changes"
-
----
-
-## Phase 1: Validate Pull Request Is Ready
-
-### 1.1 Get Current Branch and Pull Request Number
+Before anything else, check the all-branches ruleset:
 
 ```bash
-# Get current branch
-BRANCH=$(git branch --show-current)
-
-# Get pull request number for current branch
-PR_NUMBER=$(gh pr view --json number --jq '.number')
+gh api repos/{owner}/{repo}/rulesets \
+  --jq '.[] | select(.conditions.ref_name.include[] == "~ALL") | .rules[].type'
 ```
 
-**If no pull request exists**: ABORT with message "No pull request found for branch. Create a pull request first: gh pr create"
+**If any of these appear → ABORT with the message shown:**
 
-### 1.2 Get Repository Information
+| Rule type | Message |
+|-----------|---------|
+| `non_fast_forward` | "Remove from all-branches ruleset. Feature branches need force-push after rebase. Keep on main-only." |
+| `required_linear_history` | "Remove from all-branches ruleset. Keep on main-only." |
+| `pull_request` | "Remove from all-branches ruleset. Keep on main-only." |
+| `required_status_checks` | "Remove from all-branches ruleset. Keep on main-only." |
+| `code_scanning` | "Remove from all-branches ruleset. Keep on main-only." |
+
+Only `required_signatures` belongs on all-branches.
+
+## Step 1: Validate PR Ready
+
+```graphql
+query {
+  repository(owner: "{owner}", name: "{repo}") {
+    pullRequest(number: {PR}) {
+      state
+      mergeable
+      mergeStateStatus
+      isDraft
+      reviewDecision
+      commits(last: 1) {
+        nodes { commit { statusCheckRollup { state } } }
+      }
+      reviewThreads(first: 25) {
+        nodes { isResolved }
+      }
+    }
+  }
+}
+```
+
+**Required values — abort if any fail:**
+
+| Field | Must be | Abort message |
+|-------|---------|---------------|
+| `state` | `OPEN` | "PR is not open" |
+| `mergeable` | `MERGEABLE` | "PR has merge conflicts — resolve first" |
+| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | "PR merge state is {value}" |
+| `isDraft` | `false` | "PR is a draft — mark ready first" |
+| `reviewDecision` | `APPROVED` or `null` | "PR needs approval" |
+| `statusCheckRollup.state` | `SUCCESS` | "CI is not passing: {state}" |
+| All `reviewThreads.isResolved` | `true` | "Unresolved review threads — resolve first" |
+
+## Step 2: Sync Main
 
 ```bash
-# Get owner and repo name
-OWNER=$(gh repo view --json owner --jq '.owner.login')
-REPO=$(gh repo view --json name --jq '.name')
-```
-
-### 1.3 Check PR Mergeable Status
-
-Use the **[GitHub GraphQL Skill](../../../../skills/github-graphql/SKILL.md)** patterns:
-
-```bash
-<!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field 'query=query { repository(owner: "'"$OWNER"'", name: "'"$REPO"'") { pullRequest(number: '"$PR_NUMBER"') { state mergeable statusCheckRollup { state } reviewDecision reviewThreads(last: 100) { nodes { isResolved } } } } }'
-```
-
-**Validation Requirements** (ALL must pass):
-
-| Field | Required Value | Abort Message |
-| ----- | -------------- | ------------- |
-| `state` | `OPEN` | "PR is not open (state: {state})" |
-| `mergeable` | `MERGEABLE` | "PR has merge conflicts. Resolve before rebasing." |
-| `statusCheckRollup.state` | `SUCCESS` | "CI checks have not passed. Wait for green CI." |
-| `reviewDecision` | `APPROVED` or `null` | "PR requires approval. Get review first." |
-| All `reviewThreads.nodes[].isResolved` | `true` | "Unresolved review threads. Resolve all conversations." |
-
-### 1.4 Verify Unresolved Threads Count
-
-```bash
-<!-- markdownlint-disable-next-line MD013 -->
-gh api graphql --raw-field 'query=query { repository(owner: "'"$OWNER"'", name: "'"$REPO"'") { pullRequest(number: '"$PR_NUMBER"') { reviewThreads(last: 100) { nodes { isResolved } } } } }' | jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
-```
-
-**If count > 0**: ABORT with "X unresolved review threads remain. Use /resolve-pr-review-thread first."
-
----
-
-## Phase 2: Sync Local Main with Origin
-
-### 2.1 Find Main Worktree
-
-From **[Worktrees](../../../../rules/worktrees.md)** structure:
-
-```bash
-# Get repo name from remote URL
-REPO_NAME=$(basename -s .git $(git config --get remote.origin.url))
-MAIN_WORKTREE="$HOME/git/$REPO_NAME/main"
-
-# Verify it exists
-if [ ! -d "$MAIN_WORKTREE" ]; then
-  echo "Main worktree not found at $MAIN_WORKTREE"
-  exit 1
-fi
-```
-
-### 2.2 Fetch and Pull Main
-
-Pattern from **[Sync Main](../../../../commands/sync-main.md)** lines 68-79:
-
-```bash
-# Use subshell to update main worktree
-(
-  cd "$MAIN_WORKTREE"
-  git fetch origin main
-  git pull origin main
-  echo "Main worktree updated. Latest commit:"
-  git log -1 --oneline
-)
-```
-
-### 2.3 Verify Main Is Current
-
-```bash
-MAIN_SHA=$(cd "$MAIN_WORKTREE" && git rev-parse --short HEAD)
-echo "Local main now at: $MAIN_SHA"
-```
-
----
-
-## Phase 3: Rebase Feature Branch onto Main
-
-### 3.1 Start Rebase
-
-```bash
-git rebase main
-```
-
-**Three possible outcomes**:
-
-1. **Success** - Continue to Phase 4
-2. **Conflicts** - See Conflict Resolution below
-3. **Already up-to-date** - Continue to Phase 4
-
-### 3.2 Handle Rebase Conflicts
-
-If conflicts occur, list them:
-
-```bash
-# List conflicted files
-git diff --name-only --diff-filter=U
-```
-
-For each conflicted file, apply intelligent resolution from
-**[Merge Conflict Resolution](../../../../rules/merge-conflict-resolution.md)**:
-
-| Scenario | Resolution |
-| -------- | ---------- |
-| Changes are additive | Keep BOTH changes |
-| Changes modify same logic | Combine the intent of both |
-| One is a bug fix | Always include the fix |
-| One is a refactor | Apply refactor, then add the other change |
-| Truly incompatible | Mark for manual resolution |
-
-**Resolution process**:
-
-```bash
-# For each conflicted file:
-# 1. Read the file to understand both sides
-# 2. Edit to resolve intelligently
-# 3. Stage the resolved file
-git add <resolved-file>
-
-# After all conflicts resolved
-git rebase --continue
-```
-
-**If conflicts are too complex**:
-
-```bash
-git rebase --abort
-```
-
-ABORT with:
-
-```text
-Rebase conflicts require manual resolution.
-
-To resolve:
-1. Run: git rebase main
-2. Review each conflict and resolve intelligently
-3. Stage resolved files: git add <file>
-4. Continue: git rebase --continue
-5. Try /rebase-merge again
-```
-
-### 3.3 Verify Rebase Success
-
-```bash
-# Check for ongoing rebase
-if [ -d "$(git rev-parse --git-dir)/rebase-merge" ] || [ -d "$(git rev-parse --git-dir)/rebase-apply" ]; then
-  echo "Rebase still in progress"
-  exit 1
-fi
-
-# Verify branch is ahead of main
-COMMITS_AHEAD=$(git log main..HEAD --oneline | wc -l)
-echo "Branch is $COMMITS_AHEAD commits ahead of main"
-```
-
----
-
-## Phase 4: Push Rebased Branch and Wait for CI
-
-After rebase, the branch has new commit SHAs that CodeQL hasn't scanned.
-Push the branch to origin so CI runs on the rebased commits before merging.
-
-### 4.1 Force-Push Rebased Branch
-
-```bash
-git push --force-with-lease origin "$BRANCH"
-```
-
-If `--force-with-lease` fails (common with bot branches like Renovate that were
-fetched via `FETCH_HEAD` without proper tracking), fix the tracking first:
-
-```bash
-git fetch origin "$BRANCH":"$BRANCH"
-git checkout "$BRANCH"
-git branch --set-upstream-to="origin/$BRANCH" "$BRANCH"
-git push --force-with-lease origin "$BRANCH"
-```
-
-### 4.2 Wait for CI on Rebased Commits
-
-```bash
-gh pr checks "$PR_NUMBER" --watch --interval 15
-```
-
-**If CI fails after rebase**: ABORT with "CI failed on rebased commits. Fix
-issues before merging."
-
-Do NOT proceed to Phase 5 until all checks pass on the rebased branch.
-
----
-
-## Phase 5: Fast-Forward Merge to Main
-
-### 5.1 Switch to Main Worktree
-
-```bash
-cd "$MAIN_WORKTREE"
-```
-
-### 5.2 Verify Fast-Forward Is Possible
-
-```bash
-# Check if feature branch is directly ahead of main
-git merge-base --is-ancestor main "$BRANCH"
-if [ $? -ne 0 ]; then
-  echo "Cannot fast-forward: main has diverged"
-  exit 1
-fi
-```
-
-### 5.3 Perform Fast-Forward Merge
-
-```bash
-git merge --ff-only "$BRANCH"
-```
-
-**If fast-forward fails**, ABORT with:
-
-```text
-Cannot fast-forward merge. Main has diverged since rebase.
-
-This usually means:
-1. Someone pushed to main during your rebase
-2. Run: git fetch origin main
-3. Return to your worktree and run: git rebase origin/main
-4. Try /rebase-merge again
-```
-
-### 5.4 Verify Merge
-
-```bash
-git log -3 --oneline
-echo "Main now includes: $(git log -1 --format='%s')"
-```
-
----
-
-## Phase 6: Push to Origin/Main
-
-### 6.1 Push Main to Origin
-
-```bash
-git push origin main
-```
-
-**If push is rejected with "Code scanning is waiting for results"**: This means
-CodeQL hasn't finished scanning the rebased commits. Wait and retry:
-
-```bash
-gh pr checks "$PR_NUMBER" --watch --interval 15
-git push origin main
-```
-
-**NEVER fall back to `gh pr merge`** - it cannot sign rebase commits, which
-violates the `required_signatures` branch protection rule. This local workflow
-exists specifically because `gh pr merge` doesn't sign commits.
-
-**This automatically closes the pull request** because the PR's commits (with signatures) are now on main.
-
-**Note on Commit Signing**: All commits retain their signatures through the rebase process.
-This is critical for repositories with signing requirements and is why we use this local workflow instead of `gh pr merge`.
-
-### 6.2 Verify Push Success
-
-```bash
+cd ~/git/{repo}/main
 git fetch origin main
-LOCAL=$(git rev-parse main)
-REMOTE=$(git rev-parse origin/main)
-
-if [ "$LOCAL" = "$REMOTE" ]; then
-  echo "Push successful. Origin/main updated."
-else
-  echo "Push failed. Local and remote differ."
-  exit 1
-fi
+git pull origin main
 ```
 
-### 6.3 Verify Pull Request Closed
+## Step 3: Fetch Branch, Create Worktree, Rebase
+
+For remote-only branches (Renovate, Dependabot, etc.):
 
 ```bash
-PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
-echo "Pull request state: $PR_STATE"
+# NEVER use FETCH_HEAD — always create from origin/{branch}
+git fetch origin {branch}
+git branch {branch} origin/{branch}
 ```
 
-**Expected**: `MERGED` (GitHub detects commits now on main and auto-closes the pull request)
-
----
-
-## Phase 7: Cleanup
-
-### 7.1 Return to Original Worktree
+Create worktree and rebase:
 
 ```bash
-# Get back to the feature worktree before deletion
-SAFE_BRANCH=$(printf '%s' "$BRANCH" | tr -c 'A-Za-z0-9._-/' '_')
-FEATURE_WORKTREE="$HOME/git/$REPO_NAME/$SAFE_BRANCH"
+git worktree add ~/git/{repo}/{worktree-path} {branch}
+cd ~/git/{repo}/{worktree-path}
+git rebase origin/main
+git log --oneline origin/main..HEAD   # verify commits are ahead
 ```
 
-### 7.2 Delete Local Feature Branch
-
-From main worktree:
+## Step 4: Force-Push and Wait for CI
 
 ```bash
-git branch -d "$BRANCH"
+git push --force-with-lease origin {branch}
+gh pr checks {PR} --watch --interval 15
 ```
 
-**If fails** (not fully merged):
+**Do NOT proceed until all checks pass.**
+
+If force-with-lease fails on a bot branch (no upstream tracking):
 
 ```bash
-# Force delete only if PR is verified merged
-if [ "$PR_STATE" = "MERGED" ]; then
-  git branch -D "$BRANCH"
-fi
+git branch --set-upstream-to=origin/{branch} {branch}
+git push --force-with-lease origin {branch}
 ```
 
-### 7.3 Delete Remote Feature Branch
+## Step 5: Fast-Forward Merge to Main
 
 ```bash
-git push origin --delete "$BRANCH" 2>/dev/null || echo "Remote branch already deleted"
+cd ~/git/{repo}/main
+git merge-base --is-ancestor origin/main {branch}  # verify FF is possible; exit 0 = yes
+git merge --ff-only {branch}
 ```
 
-### 7.4 Remove Worktree
+If `merge-base --is-ancestor` exits non-zero, main moved since rebase — go back to Step 2.
 
-Pattern from **[Sync Main](../../../../commands/sync-main.md)** lines 183-188:
+## Step 6: Push Main
 
 ```bash
-if [ -d "$FEATURE_WORKTREE" ]; then
-  git worktree remove "$FEATURE_WORKTREE"
-  echo "Removed worktree: $FEATURE_WORKTREE"
-fi
+git push origin main
+```
 
+If rejected with "Code scanning waiting":
+
+```bash
+gh pr checks {PR} --watch --interval 15
+git push origin main   # retry after checks pass
+```
+
+Verify merged:
+
+```bash
+gh pr view {PR} --json state --jq '.state'   # expect: MERGED
+```
+
+## Step 7: Cleanup
+
+```bash
+git worktree remove ~/git/{repo}/{worktree-path}
+git branch -d {branch}              # use -D only after confirming state=MERGED
+git push origin --delete {branch}
 git worktree prune
 ```
 
-### 7.5 Final Status
+## Never Do This
 
-```bash
-git status
-git log -5 --oneline origin/main
-```
-
----
+- **NEVER** use `gh pr merge` — GitHub cannot sign rebase commits
+- **NEVER** `git push --force origin main` — only force-push feature branches
+- **NEVER** create a local branch from `FETCH_HEAD` — use `origin/{branch}`
+- **NEVER** push to main before CI passes on the rebased branch
+- **NEVER** skip the GraphQL PR validation check
+- **NEVER** use `git branch -D` without first confirming `state=MERGED`
 
 ## Edge Cases
 
-### Pull Request Not Found
-
-**Detection**: `gh pr view` returns error
-
-**Action**: ABORT with "No pull request found for current branch. Create a pull request first: gh pr create"
-
-### Pull Request Not Mergeable (Conflicts)
-
-**Detection**: `mergeable == CONFLICTING`
-
-**Action**: ABORT with "Pull request has conflicts with main. Resolve conflicts in the PR first using /sync-main"
-
-### Pull Request CI Still Running
-
-**Detection**: `statusCheckRollup.state == PENDING`
-
-**Action**: ABORT with "Pull request CI checks still running. Wait for completion before merging."
-
-### Pull Request CI Failing
-
-**Detection**: `statusCheckRollup.state == FAILURE`
-
-**Action**: ABORT with "Pull request CI checks are failing. Fix CI issues first using /fix-pr-ci"
-
-### Pull Request Review Not Approved
-
-**Detection**: `reviewDecision == CHANGES_REQUESTED`
-
-**Action**: ABORT with "Pull request reviewer requested changes. Address feedback first."
-
-### Pull Request Has Unresolved Review Threads
-
-**Detection**: Any `reviewThreads[].isResolved == false`
-
-**Action**: ABORT with "Pull request has unresolved review threads. Use /resolve-pr-review-thread first."
-
-### Pull Request Already Merged
-
-**Detection**: `state == MERGED`
-
-**Action**: Skip gracefully with "Pull request already merged. Cleaning up local and remote branches..."
-
-Then proceed to Phase 7 cleanup only.
-
-### Non-Fast-Forward After Rebase
-
-**Detection**: `git merge --ff-only` fails
-
-**Action**: ABORT with instructions (see Phase 5.3)
-
-### Worktree In Use
-
-**Detection**: `git worktree remove` fails
-
-**Action**: Warn but continue:
-
-```text
-Warning: Could not remove worktree (may be in use).
-Manual cleanup required: git worktree remove <path>
-```
-
-### Main Worktree Not Found
-
-**Detection**: Main worktree directory doesn't exist
-
-**Action**: ABORT with:
-
-```text
-Main worktree not found at ~/git/<repo>/main
-
-This repository may not be using worktree structure.
-See /init-worktree to set up proper worktree structure.
-```
-
-### Push to Main Rejected: Code Scanning Pending
-
-**Detection**: `git push origin main` fails with "Code scanning is waiting for results"
-
-**Action**: Wait for CodeQL to finish, then retry:
+**Rebase conflicts:**
 
 ```bash
-gh pr checks "$PR_NUMBER" --watch --interval 15
-git push origin main
+# git rebase pauses and lists conflicted files
+git status                     # see conflicted files
+# edit files to resolve
+git add {conflicted-files}
+git rebase --continue
 ```
 
-### Remote-Only Branch (No Local Worktree)
+**Push to main rejected (code scanning):**
+Wait for CI with `gh pr checks {PR} --watch --interval 15`, then retry push.
 
-**Detection**: Bot branches (Renovate, Dependabot) exist only on the remote
+**PR already merged:**
+Skip Steps 1–6. Go directly to Step 7 cleanup.
 
-**Action**: Fetch and create a local tracking branch:
-
-```bash
-git fetch origin <branch>
-git checkout -b <branch> origin/<branch>
-```
-
-**NEVER** use `FETCH_HEAD` to create the local branch - it lacks proper tracking
-and causes `--force-with-lease` to fail. Always use `origin/<branch>` as the
-start point.
-
-### Batch Processing Multiple PRs
-
-**Detection**: Processing more than one PR in sequence
-
-**Action**: Re-sync main between each PR since HEAD changes after each merge:
-
-```bash
-# After each PR merge completes Phase 5
-cd "$MAIN_WORKTREE"
-git pull origin main
-# Then start next PR
-```
-
----
-
-## Summary Output Template
-
-```text
-## Rebase Merge Complete
-
-PR: #<number> - <title>
-Branch: <branch-name>
-Method: Local rebase + fast-forward push
-
-### Actions Taken
-
-1. ✅ Validated PR: OPEN, MERGEABLE, CI SUCCESS, APPROVED
-2. ✅ Synced main: <old-sha> → <new-sha>
-3. ✅ Rebased branch: <commits> commit(s)
-4. ✅ Pushed branch, CI passed on rebased commits
-5. ✅ Fast-forward merged to main
-6. ✅ Pushed to origin/main — PR auto-closed by GitHub
-
-### Cleanup
-
-- Deleted local branch: <branch>
-- Deleted remote branch: origin/<branch>
-- Removed worktree: <path>
-
-### Result
-
-Main branch now at: <commit-sha>
-Linear history preserved ✨
-```
-
----
-
-## Anti-Patterns
-
-| Wrong | Right |
-| ----- | ----- |
-| `git push --force origin main` | Never force push to main |
-| Merge without checking CI | Always verify all checks pass |
-| Skip thread resolution check | All threads must be marked resolved |
-| Rebase when others are pushing to branch | Coordinate with team first |
-| Delete branch before verifying merge | Confirm PR state is MERGED |
-| Use `git checkout --theirs` blindly | Analyze and combine both sides |
-| Use `gh pr merge` as fallback | Never - can't sign rebase commits |
-| Push to main without waiting for CI on rebased commits | Always push branch first, wait for CI |
-| Create local branch from `FETCH_HEAD` | Use `origin/<branch>` tracking ref |
-
----
-
-## Commands Using This Skill
-
-- `/rebase-pr` - Primary consumer
-
-## Other Commands Referencing This Skill
-
-- `/ready-player-one` - Uses merge-readiness criteria
-- `/git-refresh` - References merge-readiness criteria
-
-## Related Resources
-
-- [GitHub GraphQL Skill](../../../../skills/github-graphql/SKILL.md) - PR validation queries
-- [Merge Conflict Resolution](../../../../rules/merge-conflict-resolution.md) - Conflict handling patterns
-- [Branch Hygiene](../../../../rules/branch-hygiene.md) - Rebase vs merge guidance
-- [Worktrees](../../../../rules/worktrees.md) - Worktree structure and cleanup
-- [Sync Main](../../../../commands/sync-main.md) - Main sync patterns
+**merge-base --is-ancestor exits non-zero:**
+Main moved while you were waiting for CI. Return to Step 2, re-sync main, re-fetch branch,
+re-rebase, force-push again, wait for CI, then retry merge.
