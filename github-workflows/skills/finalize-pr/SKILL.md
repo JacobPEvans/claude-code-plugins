@@ -131,6 +131,7 @@ Sub-steps 4.1 and 4.2 can run in parallel within the agent.
 1. Run compact summary commands:
 
    ```bash
+   git fetch origin main
    git log --oneline origin/main..HEAD
    git diff --stat origin/main...HEAD
    ```
@@ -157,12 +158,16 @@ Sub-steps 4.1 and 4.2 can run in parallel within the agent.
 3. Add `Closes #X` (directly related issues) or `Related: #X` (adjacent PRs)
    to description. Only link clearly related items — no guessing.
 
-### Apply Updates
+### 4.3 Apply Updates
 
-After 4.1 and 4.2 complete, apply in one command:
+After 4.1 and 4.2 complete, apply using a multiline-safe pattern:
 
 ```bash
-gh pr edit <PR> --title "..." --body "..."
+cat <<'EOF' > /tmp/pr-body.md
+...
+EOF
+
+gh pr edit <PR> --title "..." --body-file /tmp/pr-body.md
 ```
 
 Proceed to Phase 5.
