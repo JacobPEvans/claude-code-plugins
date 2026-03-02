@@ -47,16 +47,13 @@ Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 ## Step 3: Execute Squash Merge
 
 ```bash
-gh pr merge <PR> --squash --subject "<title>" --body "<body>"
+gh pr merge {pr} --squash --delete-branch --subject "{title}" --body "{body}"
 ```
 
-## Step 4: Cleanup
-
-Delete local branch if it exists and sync main:
+## Step 4: Sync Main
 
 ```bash
-git branch -d <branch> 2>/dev/null || true
-git fetch origin main
+git switch main
 git pull origin main
 ```
 
