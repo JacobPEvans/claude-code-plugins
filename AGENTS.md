@@ -12,7 +12,7 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 |--------|------|--------|---------|
 | **git-permission-guard** | PreToolUse | Bash | Blocks dangerous git/gh commands |
 | **git-workflows** | Command/Skill | `/rebase-pr`, `/init-worktree`, `/sync-main` | Git worktree, sync, and PR merge workflows |
-| **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr` | Fix and prepare PR for merge; validate and squash merge |
+| **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues` | GitHub PR/issue management workflows |
 | **issue-limiter** | PreToolUse | Bash (gh) | Prevents GitHub issue backlog overflow |
 | **main-branch-guard** | PreToolUse | Edit, Write, NotebookEdit | Blocks file edits on main branch |
 | **markdown-validator** | PostToolUse | Write, Edit | Validates markdown with markdownlint and cspell |
