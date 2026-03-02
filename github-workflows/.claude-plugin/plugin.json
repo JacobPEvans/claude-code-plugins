@@ -10,7 +10,6 @@
   "keywords": ["github", "pull-request", "issues", "pr-management", "shape-up", "workflow"],
   "skills": [
     "./skills/finalize-pr",
-    "./skills/finalize-prs",
     "./skills/squash-merge-pr",
     "./skills/shape-issues",
     "./skills/resolve-pr-threads",

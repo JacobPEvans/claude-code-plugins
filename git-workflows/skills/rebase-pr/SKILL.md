@@ -58,13 +58,13 @@ query {
 
 | Field | Must be | Abort message |
 |-------|---------|---------------|
-| `state` | `OPEN` | "PR is not open" |
-| `mergeable` | `MERGEABLE` | "PR has merge conflicts — resolve first" |
-| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | "PR merge state is {value}" |
-| `isDraft` | `false` | "PR is a draft — mark ready first" |
-| `reviewDecision` | `APPROVED` or `null` | "PR needs approval" |
-| `statusCheckRollup.state` | `SUCCESS` | "CI is not passing: {state}" |
-| All `reviewThreads.isResolved` | `true` | "Unresolved review threads — resolve first" |
+| `state` | `OPEN` | "PR is not open — run `/finalize-pr` to fix" |
+| `mergeable` | `MERGEABLE` | "PR has merge conflicts — run `/finalize-pr` to fix" |
+| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | "PR merge state is {value} — run `/finalize-pr` to fix" |
+| `isDraft` | `false` | "PR is a draft — mark ready first, then run `/finalize-pr`" |
+| `reviewDecision` | `APPROVED` or `null` | "PR needs approval — run `/finalize-pr` to fix" |
+| `statusCheckRollup.state` | `SUCCESS` | "CI is not passing: {state} — run `/finalize-pr` to fix" |
+| All `reviewThreads.isResolved` | `true` | "Unresolved review threads — run `/finalize-pr` to fix" |
 
 ## Step 2: Sync Main
 
@@ -155,6 +155,7 @@ git worktree prune
 - **NEVER** push to main before CI passes on the rebased branch
 - **NEVER** skip the GraphQL PR validation check
 - **NEVER** use `git branch -D` without first confirming `state=MERGED`
+- **NEVER** fix issues inline — if validation fails, abort and suggest `/finalize-pr`
 
 ## Edge Cases
 
