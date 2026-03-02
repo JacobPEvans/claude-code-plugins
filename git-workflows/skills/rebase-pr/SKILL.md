@@ -4,8 +4,6 @@ description: Local rebase-merge workflow for pull requests with signed commits
 version: 2.0.0
 ---
 
-<!-- cspell:words worktree worktrees oneline gpgsign -->
-
 # rebase-pr
 
 Merge a PR using local `git rebase` + signed commits + `git push origin main`.
