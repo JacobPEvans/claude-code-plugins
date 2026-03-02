@@ -1,11 +1,11 @@
 ---
 name: rebase-pr
 description: Local rebase-merge workflow for pull requests with linear git history and signed commits
-version: "1.1.0"
+version: "1.2.0"
 author: "JacobPEvans"
 ---
 
-<!-- cspell:words worktree worktrees oneline subshell -->
+<!-- cspell:words worktree worktrees oneline subshell gpgsign signingkey openpgp -->
 
 # Rebase PR
 
@@ -14,8 +14,23 @@ pushing directly to origin/main (auto-closing the pull request).
 
 ## Why This Workflow?
 
-GitHub's `gh pr merge` command **does not sign commits**, making it incompatible with repositories requiring commit signatures.
-This workflow uses local git operations to preserve commit signing throughout the entire merge process.
+GitHub's `gh pr merge --rebase` fails with the error
+**"Rebase merges cannot be automatically signed by GitHub"** because GitHub
+has no access to your GPG key. Server-side rebase creates new commit SHAs that
+GitHub cannot sign on your behalf, violating any `required_signatures` ruleset.
+
+This workflow solves the problem with five local steps:
+
+1. **Rebase** the feature branch onto main locally (commits are auto-signed by your local GPG config)
+2. **Force-push** the rebased branch to origin so CI/CodeQL scans the new SHAs
+3. **Fast-forward merge** the rebased branch into local main
+4. **Push main** to origin
+5. **PR auto-closes** because GitHub recognizes the pushed commits as belonging to the open PR
+
+**Key insight**: When you push locally-rebased commits to main, GitHub recognizes
+those commits as belonging to the open pull request. This satisfies the
+`pull_request` ruleset rule without needing bypass actors — the commits came
+through a PR, just merged locally instead of server-side.
 
 ## When to Use
 
@@ -31,6 +46,59 @@ Do NOT use when:
 - You need to preserve merge commits for audit trail
 - Multiple contributors are pushing to your PR branch
 - Pull request doesn't require commit signatures
+
+---
+
+## Repository Prerequisites
+
+Before using this workflow, verify your local git config and GitHub repository
+rulesets are correctly configured.
+
+### A. Required Local Git Config
+
+Your local git must be configured to sign commits automatically:
+
+```bash
+git config commit.gpgsign    # should be true
+git config user.signingkey   # your GPG key ID
+git config gpg.format        # openpgp or ssh
+```
+
+If any of these are missing, commits created during rebase will not be signed
+and the push to main will be rejected by the `required_signatures` rule.
+
+### B. Required Ruleset Architecture
+
+<!-- markdownlint-disable-next-line MD013 -->
+Critical principle: **All-branches rulesets must only contain truly universal rules.** Main-level protections belong on the main-only ruleset.
+
+| Rule | Correct Scope | Why |
+| ---- | ------------- | --- |
+| `required_signatures` | All branches | Every commit everywhere must be signed |
+| `non_fast_forward` | Main only | Feature branches need force-push after rebase |
+| `required_linear_history` | Main only | Feature branches may have intermediate merge states |
+| `pull_request` | Main only | Feature branches don't need PR requirements |
+| `required_status_checks` | Main only | CI gates belong at the merge point |
+| `code_scanning` | Main only | CodeQL gates belong at the merge point |
+
+> **Anti-pattern**: Putting `non_fast_forward` or `required_linear_history`
+> on an all-branches ruleset breaks this workflow by preventing force-push
+> of rebased feature branches.
+
+### C. How the `pull_request` Rule Works with Local Rebase
+
+The `pull_request` rule requires changes to main to come through a pull
+request. This workflow satisfies that requirement because:
+
+1. You open a PR for your feature branch (the PR exists in GitHub)
+2. You locally rebase the PR's commits onto main and push them to main
+3. GitHub recognizes the pushed commits as belonging to the existing open PR
+4. The push succeeds and the PR auto-closes — no bypass actors needed
+
+This is fundamentally different from `gh pr merge` (server-side), which fails
+because GitHub cannot sign rebase commits with your GPG key.
+
+---
 
 ## Critical Requirements for Pull Request Merging
 
@@ -242,8 +310,16 @@ echo "Branch is $COMMITS_AHEAD commits ahead of main"
 
 ## Phase 4: Push Rebased Branch and Wait for CI
 
+> **Prerequisite**: The all-branches ruleset must NOT include
+> `non_fast_forward`. See [Repository Prerequisites](#repository-prerequisites).
+
 After rebase, the branch has new commit SHAs that CodeQL hasn't scanned.
-Push the branch to origin so CI runs on the rebased commits before merging.
+Force-push is required because the rebased SHAs differ from what is on origin,
+and CI/CodeQL must scan these new commits before merging to main.
+
+**If you see "Cannot force-push to this branch"**: The cause is
+`non_fast_forward` in the all-branches ruleset. Move that rule to the
+main-only ruleset. See [Repository Prerequisites](#repository-prerequisites).
 
 ### 4.1 Force-Push Rebased Branch
 
@@ -328,22 +404,31 @@ echo "Main now includes: $(git log -1 --format='%s')"
 git push origin main
 ```
 
-**If push is rejected with "Code scanning is waiting for results"**: This means
-CodeQL hasn't finished scanning the rebased commits. Wait and retry:
+**Why this works despite the `pull_request` rule**: The commits being pushed
+are already associated with an open PR. GitHub recognizes them as belonging
+to that PR and allows the push. The PR then auto-closes because its commits
+are now on main. See [How the pull_request Rule Works](#c-how-the-pull_request-rule-works-with-local-rebase).
+
+**If push is rejected with "Code scanning is waiting for results"**: CodeQL
+has not finished scanning the rebased commits. If Phase 4 properly waited
+for CI, this should be rare. Wait and retry:
 
 ```bash
 gh pr checks "$PR_NUMBER" --watch --interval 15
 git push origin main
 ```
 
-**NEVER fall back to `gh pr merge`** - it cannot sign rebase commits, which
-violates the `required_signatures` branch protection rule. This local workflow
-exists specifically because `gh pr merge` doesn't sign commits.
+**NEVER fall back to `gh pr merge`** — GitHub cannot sign rebase commits
+server-side because it has no access to your GPG key. This is the exact
+error: "Rebase merges cannot be automatically signed by GitHub." This local
+workflow exists specifically to solve that problem.
 
-**This automatically closes the pull request** because the PR's commits (with signatures) are now on main.
+**This automatically closes the pull request** because the PR's commits
+(with signatures) are now on main.
 
-**Note on Commit Signing**: All commits retain their signatures through the rebase process.
-This is critical for repositories with signing requirements and is why we use this local workflow instead of `gh pr merge`.
+**Note on Commit Signing**: All commits retain their signatures through the
+rebase process. This is critical for repositories with signing requirements
+and is why we use this local workflow instead of `gh pr merge`.
 
 ### 6.2 Verify Push Success
 
@@ -541,6 +626,29 @@ git pull origin main
 # Then start next PR
 ```
 
+### Force-Push Blocked on Feature Branch
+
+**Detection**: Error message "Cannot force-push to this branch"
+
+**Cause**: `non_fast_forward` rule is present in the all-branches ruleset,
+which prevents force-push on every branch including feature branches.
+
+**Action**: Remove `non_fast_forward` from the all-branches ruleset and keep
+it on the main-only ruleset. Feature branches need force-push after rebase.
+See [Repository Prerequisites](#repository-prerequisites).
+
+### Ruleset Misconfiguration — Main-Level Rules on All Branches
+
+**Detection**: Multiple phases fail with ruleset violations (force-push
+blocked, linear history violations, PR requirement errors on feature branches)
+
+**Cause**: Rules like `required_linear_history`, `non_fast_forward`, or
+`pull_request` are applied to all branches instead of main-only.
+
+**Action**: Audit your repository rulesets. Only `required_signatures` belongs
+on an all-branches ruleset. All other protective rules should be scoped to
+main only. See [Repository Prerequisites](#repository-prerequisites).
+
 ---
 
 ## Summary Output Template
@@ -588,6 +696,8 @@ Linear history preserved ✨
 | Use `gh pr merge` as fallback | Never - can't sign rebase commits |
 | Push to main without waiting for CI on rebased commits | Always push branch first, wait for CI |
 | Create local branch from `FETCH_HEAD` | Use `origin/<branch>` tracking ref |
+| Put `non_fast_forward` on all-branches ruleset | Keep on main-only — feature branches need force-push after rebase |
+| Put `required_linear_history` on all-branches | Keep on main-only — feature branches may need intermediate states |
 
 ---
 
