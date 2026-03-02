@@ -409,11 +409,15 @@ are already associated with an open PR. GitHub recognizes them as belonging
 to that PR and allows the push. The PR then auto-closes because its commits
 are now on main. See [How the pull_request Rule Works](#c-how-the-pull_request-rule-works-with-local-rebase).
 
-**If push is rejected with "Code scanning is waiting for results"**: CodeQL
-has not finished scanning the rebased commits. If Phase 4 properly waited
-for CI, this should be rare. Wait and retry:
+**If push is rejected by a required CodeQL status check**: The `main` branch
+ruleset may have a required status check for "CodeQL". Even though Phase 4
+waited for CI on the feature branch, `git push origin main` pushes new SHAs
+to main that CodeQL has not yet analyzed in that context. The force-push in
+Phase 4 triggers the CodeQL run — wait for the "Analyze (actions)" check to
+complete (typically 1-2 minutes) before pushing main:
 
 ```bash
+# Wait for CodeQL to finish on the rebased commits
 gh pr checks "$PR_NUMBER" --watch --interval 15
 git push origin main
 ```
@@ -587,16 +591,25 @@ This repository may not be using worktree structure.
 See /init-worktree to set up proper worktree structure.
 ```
 
-### Push to Main Rejected: Code Scanning Pending
+### Push to Main Rejected: Required CodeQL Status Check
 
-**Detection**: `git push origin main` fails with "Code scanning is waiting for results"
+**Detection**: `git push origin main` is rejected with a required status check
+failure or "Code scanning is waiting for results"
 
-**Action**: Wait for CodeQL to finish, then retry:
+**Cause**: The `main` branch ruleset has a required status check for CodeQL.
+The force-push of rebased commits in Phase 4 triggers the CodeQL "Analyze
+(actions)" run, but it may not have completed by the time you reach Phase 6.
+
+**Action**: Wait 1-2 minutes for CodeQL to complete, then retry:
 
 ```bash
 gh pr checks "$PR_NUMBER" --watch --interval 15
 git push origin main
 ```
+
+If Phase 4 `gh pr checks --watch` did not wait for CodeQL specifically,
+consider adding `--required-only` or checking manually with
+`gh run list --workflow=codeql.yml`.
 
 ### Remote-Only Branch (No Local Worktree)
 
