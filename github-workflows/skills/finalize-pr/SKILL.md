@@ -8,7 +8,7 @@ description: >-
 argument-hint: "[PR_NUMBER]"
 ---
 
-<!-- cspell:words worktree -->
+<!-- cspell:words worktree oneline -->
 
 # Finalize PR
 
@@ -24,7 +24,7 @@ argument-hint: "[PR_NUMBER]"
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Create PR immediately** - Push and open PR as soon as work completes
 8. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
-9. **Report ready and pause** - Instruct user to invoke `/squash-merge-pr` when ready
+9. **Update PR metadata automatically** - Before reporting ready, update title, description, and linked issues via haiku subagent
 10. **Take direct action** - Identify issues and fix them automatically (except merge decisions)
 
 ## Phase 1: Create PR
@@ -119,20 +119,72 @@ Verify ALL conditions automatically and proceed directly:
 5. ✅ **All checks pass**: `gh pr checks <PR>` all green
 6. ✅ **Local validation**: Project linters pass
 
-**Only if ALL six pass**: Proceed to Phase 4 to report ready status.
+**Only if ALL six pass**: Proceed to Phase 4 to update PR metadata.
 
-## Phase 4: Report Ready Status
+## Phase 4: Update PR Metadata
 
-After verifying all conditions pass, report:
+Delegate to a **haiku subagent** to keep full diff out of main context.
+Sub-steps 4.1 and 4.2 can run in parallel within the agent.
+
+### 4.1 Update PR Title and Description
+
+1. Run compact summary commands:
+
+   ```bash
+   git fetch origin main
+   git log --oneline origin/main..HEAD
+   git diff --stat origin/main...HEAD
+   ```
+
+2. Read current PR title and body:
+
+   ```bash
+   gh pr view <PR> --json title,body
+   ```
+
+3. Generate updated title (conventional commit format, <70 chars) and
+   description with sections: **Summary**, **Changes**, **Test Plan**.
+
+### 4.2 Link Related Issues and PRs
+
+1. Extract keywords from branch name and commit messages.
+2. Search for related items:
+
+   ```bash
+   gh issue list --search "<keywords>" --json number,title --limit 5
+   gh pr list --search "<keywords>" --json number,title --limit 5
+   ```
+
+3. Add `Closes #X` (directly related issues) or `Related: #X` (adjacent PRs)
+   to description. Only link clearly related items — no guessing.
+
+### 4.3 Apply Updates
+
+After 4.1 and 4.2 complete, apply using a multiline-safe pattern:
+
+```bash
+cat <<'EOF' > /tmp/pr-body.md
+...
+EOF
+
+gh pr edit <PR> --title "..." --body-file /tmp/pr-body.md
+```
+
+Proceed to Phase 5.
+
+## Phase 5: Report Ready Status
+
+After verifying all conditions pass and updating PR metadata, report:
 
 ```text
 ✅ PR #{NUMBER} ready for final review!
 
-All checks passed. To prepare for merge, invoke:
+All checks passed and PR metadata is up to date.
+To prepare commit message for merge, optionally invoke:
   /squash-merge-pr
 ```
 
-Wait for explicit user invocation of `/squash-merge-pr`.
+Wait for explicit user merge command.
 
 ## Workflow
 
@@ -142,9 +194,10 @@ Wait for explicit user invocation of `/squash-merge-pr`.
                     Phase 1: Create PR
                     Phase 2: Resolution Loop (automatic fixes)
                     Phase 3: Pre-Handoff Verification
-                    Phase 4: Report ready (wait for user)
+                    Phase 4: Update PR Metadata (title, description, linked issues)
+                    Phase 5: Report ready (wait for user)
                                           ↓
-                    User invokes: /squash-merge-pr
+                    User optionally invokes: /squash-merge-pr
                                           ↓
                     User executes: gh pr merge
 ```
