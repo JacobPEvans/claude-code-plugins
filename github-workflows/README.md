@@ -31,6 +31,7 @@ claude plugins add jacobpevans-cc-plugins/github-workflows
 | Skill | Requires | Why |
 |-------|----------|-----|
 | `/resolve-pr-threads` | `superpowers` plugin | Sub-agents invoke `superpowers:receiving-code-review` for review feedback handling |
+| `/squash-merge-pr` | `git-workflows` plugin | Reads `/rebase-pr` Step 1 for PR validation query (single source of truth) |
 
 Install superpowers: `claude plugins add superpowers-marketplace/superpowers`
 

@@ -21,9 +21,8 @@ issues — only merges.
 
 ## Step 1: Validate PR Ready
 
-Run the same validation as `/rebase-pr` Step 1 — same GraphQL query, same
-fields, same abort conditions. `/rebase-pr` Step 1 is the single source of
-truth for the query and abort table.
+Read `@git-workflows/skills/rebase-pr/SKILL.md` Step 1 — use its GraphQL query,
+fields, and abort conditions as the single source of truth.
 
 If any check fails, abort immediately with the field's failure message and
 append: `— run /finalize-pr to fix`.
