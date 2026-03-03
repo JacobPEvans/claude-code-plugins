@@ -37,7 +37,9 @@ Verify the PR exists and is open:
 
 ```bash
 STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
-if [ "$STATE" != "OPEN" ]; then
+if [ "$STATE" = "OPEN" ]; then
+  : # continue
+else
   echo "PR #$PR_NUMBER is $STATE — only open PRs can be reviewed"
   exit 1
 fi

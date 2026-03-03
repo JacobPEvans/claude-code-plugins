@@ -78,7 +78,7 @@ gh api "repos/{owner}/{repo}/issues/{number}/comments?since={lastCommitDate}"
 #### Step 1d: Fetch Review Body Comments Since Last Commit
 
 ```bash
-gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and .body != "") | {id, body, author: .user.login, submitted_at}]'
+gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and (.body | length > 0)) | {id, body, author: .user.login, submitted_at}]'
 ```
 
 ### Step 2a: Group Related Threads
@@ -212,3 +212,4 @@ Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
 | REST reply fails | Invalid `databaseId` or permissions | Verify numeric databaseId (not node ID) and ensure token has required repo permissions (403 = permission issue) |
 | `since` filter returns all comments | Invalid date format | Verify ISO 8601 format |
 | Reviews endpoint returns empty | No reviews submitted | Proceed with threads only |
+| `\!` in jq expression | Claude Code Bash escapes `!` | Use `(.x == y \| not)` or `.x \| length > 0` instead of `!=` |

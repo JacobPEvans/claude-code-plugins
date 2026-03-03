@@ -178,3 +178,17 @@ Skip Steps 1–6. Go directly to Step 7 cleanup.
 **merge-base --is-ancestor exits non-zero:**
 Main moved while you were waiting for CI. Return to Step 2, re-sync main, re-fetch branch,
 re-rebase, force-push again, wait for CI, then retry merge.
+
+### Pre-Push Hook Auto-Fixes Files
+
+**Detection**: `git push` fails, hook output shows "files were modified by this hook"
+
+**Action**: Commit the auto-fixed files and retry the push:
+
+```bash
+git add -A
+git commit -m "style: apply pre-push hook auto-fixes"
+git push --force-with-lease origin "$BRANCH"
+```
+
+This commonly occurs with release-please CHANGELOG.md entries that don't conform to markdownlint rules.
