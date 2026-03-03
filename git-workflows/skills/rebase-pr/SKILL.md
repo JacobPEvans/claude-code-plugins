@@ -188,7 +188,7 @@ re-rebase, force-push again, wait for CI, then retry merge.
 ```bash
 git add -A
 git commit -m "style: apply pre-push hook auto-fixes"
-git push --force-with-lease origin "$BRANCH"
+git push --force-with-lease origin {branch}
 ```
 
 This commonly occurs with release-please CHANGELOG.md entries that don't conform to markdownlint rules.
