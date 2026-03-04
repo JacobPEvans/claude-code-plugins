@@ -21,7 +21,7 @@ No manual intervention required. For reviewing others' PRs, use `/review-pr`.
 2. **Verify all checks pass** - Report ready only when ALL conditions meet requirements
 3. **Resolve all conversations** - Automatically invoke `/resolve-pr-threads` for review threads
 4. **Fix all CodeQL violations** - Check repository and automatically fix using `/resolve-codeql`
-5. **Simplify all code changes** - Invoke code-simplifier after ANY code modifications
+5. **Simplify all code changes** - Invoke /simplify after ANY code modifications
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
 8. **Update PR metadata automatically** - Before reporting ready, update title, description, and linked issues via haiku subagent
@@ -60,13 +60,13 @@ gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
   --jq '[.[] | select(.state == "open")] | length'
 ```
 
-**If violations found**: Invoke `/resolve-codeql fix`, then code-simplifier,
+**If violations found**: Invoke `/resolve-codeql fix`, then /simplify,
 validate locally.
 
 #### Review Threads
 
 Invoke `/resolve-pr-threads`. It exits cleanly when no threads exist.
-After completion, invoke code-simplifier and validate locally.
+After completion, invoke /simplify and validate locally.
 
 #### Merge Conflicts
 
@@ -75,7 +75,7 @@ gh pr view <PR> --json mergeable
 ```
 
 **If conflicts**: Fetch main, attempt merge, report unresolvable conflicts for
-user. After resolution, invoke code-simplifier and validate locally.
+user. After resolution, invoke /simplify and validate locally.
 
 ### 1.3 CI Failure Fixes
 
@@ -83,7 +83,7 @@ Check background CI results from 1.1:
 
 - **All passing**: Proceed to Phase 2
 - **Failures**: Get logs via `gh run view <RUN_ID> --log-failed`, fix locally,
-  invoke code-simplifier, validate, commit and push. Restart background CI
+  invoke /simplify, validate, commit and push. Restart background CI
   monitoring and loop back to 1.2 if new issues emerged.
 
 ### 1.4 Health Check
@@ -103,7 +103,7 @@ Verify ALL conditions automatically and proceed directly:
 1. ✅ **CodeQL clean**: No open alerts in repository
 2. ✅ **All threads resolved**: All review conversations addressed
 3. ✅ **No merge conflicts**: PR is mergeable
-4. ✅ **Code simplified**: All changes reviewed by code-simplifier
+4. ✅ **Code simplified**: All changes reviewed by /simplify
 5. ✅ **All checks pass**: `gh pr checks <PR>` all green
 6. ✅ **Local validation**: Project linters pass
 
