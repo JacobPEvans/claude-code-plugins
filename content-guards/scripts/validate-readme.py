@@ -13,12 +13,15 @@ Exit codes:
 Input: JSON from stdin with tool_input.file_path containing the edited file
 """
 
+import ipaddress
 import json
 import re
+import socket
 import sys
 from pathlib import Path
 from typing import Optional
 from urllib.error import URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
@@ -64,9 +67,11 @@ def parse_simple_yaml(text: str) -> dict:
             current_list.append(stripped[2:].strip())
             continue
 
-        # Flush previous list
-        if current_key is not None and current_list is not None:
-            result[current_key] = current_list
+        # New key encountered — flush any pending list first, even if empty
+        if current_key is not None:
+            if current_list is not None:
+                result[current_key] = current_list
+            # If current_list is None, the key had no list items — drop it (empty list key)
             current_list = None
             current_key = None
 
@@ -122,7 +127,7 @@ def load_config(file_path: Path) -> dict:
             "check_badges": config.get("check_badges", defaults["check_badges"]),
             "badge_timeout": config.get("badge_timeout", defaults["badge_timeout"]),
         }
-    except Exception:
+    except (OSError, ValueError):
         # Config parse error, fail open with defaults
         return defaults
 
@@ -167,9 +172,45 @@ def check_required_sections(
     return missing
 
 
+# Known badge hosting domains — only these are checked to prevent SSRF
+BADGE_ALLOWED_HOSTS = frozenset(
+    [
+        "img.shields.io",
+        "shields.io",
+        "badge.fury.io",
+        "badgen.net",
+        "codecov.io",
+        "travis-ci.com",
+        "travis-ci.org",
+        "circleci.com",
+        "github.com",
+        "raw.githubusercontent.com",
+        "api.codeclimate.com",
+        "coveralls.io",
+        "snyk.io",
+    ]
+)
+
+
+def _is_private_ip(hostname: str) -> bool:
+    """Return True if hostname resolves to a private or loopback IP address."""
+    try:
+        addr = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+        for _, _, _, _, sockaddr in addr:
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local:
+                return True
+    except (socket.gaierror, ValueError):
+        pass
+    return False
+
+
 def check_badges(content: str, timeout: int) -> list[str]:
     """
     Find markdown badge images and verify URLs return HTTP 200.
+
+    Only checks URLs from known badge hosting domains (BADGE_ALLOWED_HOSTS)
+    to prevent SSRF. Skips all other images silently.
     Returns list of warning strings for broken badges.
     """
     warnings = []
@@ -184,14 +225,24 @@ def check_badges(content: str, timeout: int) -> list[str]:
         if not badge_url.startswith(("http://", "https://")):
             continue
 
+        # Only check known badge hosts to prevent SSRF
+        parsed = urlparse(badge_url)
+        hostname = parsed.hostname or ""
+        if hostname not in BADGE_ALLOWED_HOSTS:
+            continue
+
+        # Extra safety: block private/loopback IPs even for allowlisted hostnames
+        if _is_private_ip(hostname):
+            continue
+
         try:
             req = Request(badge_url, method="HEAD")
             req.add_header("User-Agent", "readme-validator/1.0")
-            response = urlopen(req, timeout=timeout)  # noqa: S310
-            if response.status != 200:
-                warnings.append(
-                    f"Badge '{alt_text}' returned HTTP {response.status}: {badge_url}"
-                )
+            with urlopen(req, timeout=timeout) as response:  # noqa: S310
+                if response.status != 200:
+                    warnings.append(
+                        f"Badge '{alt_text}' returned HTTP {response.status}: {badge_url}"
+                    )
         except (URLError, OSError, TimeoutError, ValueError):
             warnings.append(f"Badge '{alt_text}' unreachable: {badge_url}")
 
