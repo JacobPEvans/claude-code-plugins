@@ -2,17 +2,17 @@
 name: finalize-pr
 description: >-
   Automatically finalize pull requests for merge by resolving CodeQL violations,
-  review threads, merge conflicts, and CI failures. Assumes PR already exists.
-  Use when a PR needs to be prepared for merge. Handles single PR from argument
-  or current branch.
-argument-hint: "[PR_NUMBER]"
+  review threads, merge conflicts, and CI failures. Handles single PR (current
+  branch or by number), all open PRs in the repo, or all open PRs across the org.
+  Includes bot-authored PRs in all modes.
+argument-hint: "[PR_NUMBER | all | org]"
 ---
 
 <!-- cspell:words worktree oneline -->
 
 # Finalize PR
 
-**FULLY AUTOMATIC** - Finalizes YOUR PRs as author: monitor, fix, prepare for merge. Assumes PR already exists.
+**FULLY AUTOMATIC** - Finalizes PRs as author: monitor, fix, prepare for merge. Assumes PR already exists.
 No manual intervention required. For reviewing others' PRs, use `/review-pr`.
 
 ## Critical Rules
@@ -26,12 +26,95 @@ No manual intervention required. For reviewing others' PRs, use `/review-pr`.
 7. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
 8. **Update PR metadata automatically** - Before reporting ready, update title, description, and linked issues via haiku subagent
 9. **Take direct action** - Identify issues and fix them automatically (except merge decisions)
+10. **Include bot PRs** - Never filter by author. All modes include dependabot, release-please, claude, github-actions, etc.
+11. **Never cross org boundaries** - Org mode derives owner from current repo only
+
+## Phase 0: PR Discovery and Targeting
+
+Parse the argument to determine mode, then discover and confirm the target set.
+
+### 0.1 Parse Argument
+
+| Argument | Mode | Target |
+|---|---|---|
+| _(none)_ | Current branch | Single PR on current branch |
+| `42` (a number) | Single PR | PR #42 |
+| `all` | Repo-wide | All open PRs in current repo |
+| `org` | Org-wide | All open PRs across all repos in current org |
+
+### 0.2 Discover PRs
+
+**Single/current-branch mode**: Resolve to one PR number, then skip to Phase 1.
+
+```bash
+# If no argument — resolve from current branch
+gh pr view --json number --jq '.number'
+```
+
+**Repo-wide (`all`) mode**:
+
+```bash
+gh pr list --state open --json number,title,author,headRefName
+```
+
+**Org-wide (`org`) mode**:
+
+```bash
+OWNER=$(gh repo view --json owner --jq '.owner.login')
+gh repo list "$OWNER" --limit 100 --json name --jq '.[].name' | \
+  xargs -I{} gh pr list --repo "$OWNER/{}" --state open \
+    --json number,title,author,headRefName,repository 2>/dev/null
+```
+
+Cap at 50 PRs. If more exist, warn the user and process only the first 50.
+
+### 0.3 Tag Bot PRs
+
+For each discovered PR, check if `author.login` matches bot patterns
+(`*[bot]`, `app/*`, `dependabot`, `release-please`, `github-actions`, `claude`).
+Tag these as `[bot]` in the discovery list for reporting purposes only — they are
+processed identically to human-authored PRs.
+
+### 0.4 Confirm Batch (Multi-PR Only)
+
+For `all` and `org` modes, display the discovery list before proceeding:
+
+```text
+Found N open PRs:
+  #42  feat: add user auth          (alice)
+  #43  chore: bump dependencies     [bot] (dependabot)
+  #58  fix: resolve edge case       [bot] (claude)
+
+Proceeding to finalize all N PRs sequentially.
+```
+
+Check for a clean working tree before multi-PR modes:
+
+```bash
+git status --porcelain
+```
+
+If the working tree is dirty, report and ask the user to commit or stash before proceeding.
+
+Record the current branch for restoration after each iteration:
+
+```bash
+ORIGINAL_BRANCH=$(git branch --show-current)
+```
 
 ## Phase 1: Resolution Loop (AUTOMATIC — PARALLEL)
 
 **Execution strategy**: CI checks take 10+ minutes. Start monitoring them in
 the background FIRST, then fix all other issues in parallel while CI runs.
 Never block on CI when other work is available.
+
+_For multi-PR modes, this phase and Phases 2-4 execute once per PR in sequence.
+At the start of each iteration, check out the PR branch:_
+
+```bash
+# Multi-PR only — not needed for single/current-branch mode
+gh pr checkout <number>
+```
 
 ### 1.1 Start CI Monitoring (BACKGROUND)
 
@@ -109,6 +192,10 @@ Verify ALL conditions automatically and proceed directly:
 
 **Only if ALL six pass**: Proceed to Phase 3 to update PR metadata.
 
+**Multi-PR handling**: If a PR needs human intervention (unresolvable conflict,
+unrecoverable CI failure, etc.), log it with reason and continue to the next PR.
+Do not stop the batch for one blocked PR.
+
 ## Phase 3: Update PR Metadata
 
 Delegate to a **haiku subagent** to keep full diff out of main context.
@@ -160,9 +247,9 @@ gh pr edit <PR> --title "..." --body-file /tmp/pr-body.md
 
 Proceed to Phase 4.
 
-## Phase 4: Report Ready Status
+## Phase 4: Record Result
 
-After verifying all conditions pass and updating PR metadata, report:
+**Single/current-branch mode**: Report ready status and wait for user:
 
 ```text
 ✅ PR #{NUMBER} ready for final review!
@@ -173,17 +260,62 @@ To merge, invoke one of:
   /rebase-pr          # Rebase commits onto main (preserves history)
 ```
 
-Wait for explicit user merge command.
+**Multi-PR mode**: Record the per-PR result (ready / blocked / needs-human).
+After recording, restore the original branch and continue to the next PR:
+
+```bash
+git switch "$ORIGINAL_BRANCH"
+```
+
+Do NOT emit a ready report here in multi-PR mode — that happens in Phase 5.
+
+## Phase 5: Aggregate Report (Multi-PR Only)
+
+After processing all PRs, emit a summary:
+
+```text
+PR Finalization Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅  #42  feat: add user auth          (alice)
+  ✅  #58  fix: resolve edge case       [bot] (claude)
+  ⛔  #43  chore: bump dependencies     [bot] (dependabot)  — unresolvable conflict
+
+Ready to merge (2):
+  gh pr merge 42 --squash
+  gh pr merge 58 --squash
+
+Blocked — needs human (1):
+  #43  chore: bump dependencies  — unresolvable conflict in package-lock.json
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Wait for explicit user merge commands.
 
 ## Workflow
 
 ```text
-/init-worktree → [implement] → gh pr create → /finalize-pr
+Single PR:
+/init-worktree → [implement] → gh pr create → /finalize-pr [number]
                                                       ↓
+                              Phase 0: Resolve PR number
                               Phase 1: Resolution Loop (automatic fixes)
                               Phase 2: Pre-Handoff Verification
-                              Phase 3: Update PR Metadata (title, description, linked issues)
+                              Phase 3: Update PR Metadata
                               Phase 4: Report ready (wait for user)
                                                       ↓
                               User invokes: /squash-merge-pr or /rebase-pr
+
+Repo-wide:
+/finalize-pr all
+  ↓
+Phase 0: Discover all open PRs (including bots), confirm batch
+Phase 1-4: Loop over each PR sequentially
+Phase 5: Aggregate report with merge commands for ready PRs
+
+Org-wide:
+/finalize-pr org
+  ↓
+Phase 0: Derive org owner, enumerate repos, collect all open PRs
+Phase 1-4: Loop over each PR sequentially
+Phase 5: Aggregate report with merge commands for ready PRs
 ```
