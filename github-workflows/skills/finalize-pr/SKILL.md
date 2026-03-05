@@ -12,8 +12,8 @@ argument-hint: "[PR_NUMBER | all | org]"
 
 # Finalize PR
 
-**FULLY AUTOMATIC** - Finalizes PRs as author: monitor, fix, prepare for merge. Assumes PR already exists.
-No manual intervention required. For reviewing others' PRs, use `/review-pr`.
+**FULLY AUTOMATIC** - Fully automates PR finalization: monitor, fix, prepare for merge. Assumes PR already exists.
+No manual intervention required. For manual review-focused workflows, use `/review-pr`.
 
 ## Critical Rules
 
@@ -29,11 +29,12 @@ No manual intervention required. For reviewing others' PRs, use `/review-pr`.
 10. **Include bot PRs** - Never filter by author. All modes include dependabot, release-please, claude, github-actions, etc.
 11. **Never cross org boundaries** - Org mode derives owner from current repo only
 
-## Phase 0: PR Discovery and Targeting
+## Phase 1: PR Discovery and Targeting
 
 Parse the argument to determine mode, then discover and confirm the target set.
+Steps 1.1 through 1.4 run sequentially.
 
-### 0.1 Parse Argument
+### 1.1 Parse Argument
 
 | Argument | Mode | Target |
 |---|---|---|
@@ -42,9 +43,9 @@ Parse the argument to determine mode, then discover and confirm the target set.
 | `all` | Repo-wide | All open PRs in current repo |
 | `org` | Org-wide | All open PRs across all repos in current org |
 
-### 0.2 Discover PRs
+### 1.2 Discover PRs
 
-**Single/current-branch mode**: Resolve to one PR number, then skip to Phase 1.
+**Single/current-branch mode**: Resolve to one PR number, then skip to Phase 2.
 
 ```bash
 # If no argument — resolve from current branch
@@ -54,36 +55,44 @@ gh pr view --json number --jq '.number'
 **Repo-wide (`all`) mode**:
 
 ```bash
-gh pr list --state open --json number,title,author,headRefName
+gh pr list --state open --limit 50 --json number,title,author,headRefName
 ```
 
-**Org-wide (`org`) mode**:
+**Org-wide (`org`) mode**: Each `gh pr list` call outputs a separate JSON array.
+Use `jq -s` to merge them. If a repo cannot be listed, emit a warning and continue.
 
 ```bash
 OWNER=$(gh repo view --json owner --jq '.owner.login')
 gh repo list "$OWNER" --limit 100 --json name --jq '.[].name' | \
-  xargs -I{} gh pr list --repo "$OWNER/{}" --state open \
-    --json number,title,author,headRefName,repository 2>/dev/null
+  while read -r REPO_NAME; do
+    if ! out=$(gh pr list --repo "$OWNER/$REPO_NAME" --state open \
+      --limit 50 \
+      --json number,title,author,headRefName,repository); then
+      echo "Warning: unable to list PRs for $OWNER/$REPO_NAME" >&2
+    else
+      echo "$out"
+    fi
+  done | jq -s 'flatten | sort_by(.number) | .[0:50]'
 ```
 
 Cap at 50 PRs. If more exist, warn the user and process only the first 50.
 
-### 0.3 Tag Bot PRs
+### 1.3 Tag Bot PRs
 
-For each discovered PR, check if `author.login` matches bot patterns
-(`*[bot]`, `app/*`, `dependabot`, `release-please`, `github-actions`, `claude`).
+For each discovered PR, check if `author.login` ends with `[bot]`
+(e.g., `dependabot[bot]`, `github-actions[bot]`, `claude[bot]`).
 Tag these as `[bot]` in the discovery list for reporting purposes only — they are
 processed identically to human-authored PRs.
 
-### 0.4 Confirm Batch (Multi-PR Only)
+### 1.4 Confirm Batch (Multi-PR Only)
 
 For `all` and `org` modes, display the discovery list before proceeding:
 
 ```text
 Found N open PRs:
   #42  feat: add user auth          (alice)
-  #43  chore: bump dependencies     [bot] (dependabot)
-  #58  fix: resolve edge case       [bot] (claude)
+  #43  chore: bump dependencies     [bot] (dependabot[bot])
+  #58  fix: resolve edge case       [bot] (claude[bot])
 
 Proceeding to finalize all N PRs sequentially.
 ```
@@ -102,21 +111,28 @@ Record the current branch for restoration after each iteration:
 ORIGINAL_BRANCH=$(git branch --show-current)
 ```
 
-## Phase 1: Resolution Loop (AUTOMATIC — PARALLEL)
+## Phase 2: Resolution Loop (AUTOMATIC)
 
 **Execution strategy**: CI checks take 10+ minutes. Start monitoring them in
 the background FIRST, then fix all other issues in parallel while CI runs.
 Never block on CI when other work is available.
 
-_For multi-PR modes, this phase and Phases 2-4 execute once per PR in sequence.
-At the start of each iteration, check out the PR branch:_
+_For multi-PR modes, Phases 2-5 execute once per PR in sequence.
+At the start of each iteration, check out the PR branch.
+For repo-wide mode (all PRs in the same repo), the bare number suffices.
+For org-wide mode, include `--repo` because PRs may belong to other repos:_
 
 ```bash
-# Multi-PR only — not needed for single/current-branch mode
+# Repo-wide mode
 gh pr checkout <number>
+
+# Org-wide mode — use the repository field from Phase 1 discovery
+gh pr checkout <number> --repo "<OWNER>/<REPO_NAME>"
 ```
 
-### 1.1 Start CI Monitoring (BACKGROUND)
+Steps 2.1 and 2.2 start concurrently (2.1 is non-blocking). Steps 2.3 and 2.4 run sequentially after 2.2.
+
+### 2.1 Start CI Monitoring (BACKGROUND)
 
 Launch CI monitoring in a background Task agent (`run_in_background: true` on
 the Task tool). The agent runs this blocking command in its own context:
@@ -125,10 +141,10 @@ the Task tool). The agent runs this blocking command in its own context:
 gh pr checks <PR> --watch
 ```
 
-Do NOT wait for the Task to complete — proceed to 1.2 immediately. Check the
-background task's output after completing other fixes in 1.2.
+Do NOT wait for the Task to complete — proceed to 2.2 immediately. Check the
+background task's output after completing other fixes in 2.2.
 
-### 1.2 Parallel Fixes
+### 2.2 Parallel Fixes
 
 Run these checks simultaneously. Launch independent fixes in parallel via
 Task agents when they touch different files. Invoke `superpowers:dispatching-parallel-agents` for dispatch patterns.
@@ -160,16 +176,16 @@ gh pr view <PR> --json mergeable
 **If conflicts**: Fetch main, attempt merge, report unresolvable conflicts for
 user. After resolution, invoke /simplify and validate locally.
 
-### 1.3 CI Failure Fixes
+### 2.3 CI Failure Fixes
 
-Check background CI results from 1.1:
+Check background CI results from 2.1:
 
-- **All passing**: Proceed to Phase 2
+- **All passing**: Proceed to Phase 3
 - **Failures**: Get logs via `gh run view <RUN_ID> --log-failed`, fix locally,
   invoke /simplify, validate, commit and push. Restart background CI
-  monitoring and loop back to 1.2 if new issues emerged.
+  monitoring and loop back to 2.2 if new issues emerged.
 
-### 1.4 Health Check
+### 2.4 Health Check
 
 Verify final PR status after all fixes:
 
@@ -177,9 +193,9 @@ Verify final PR status after all fixes:
 gh pr view <PR> --json state,mergeable,statusCheckRollup
 ```
 
-If fixes introduced new issues, loop back to 1.2.
+If fixes introduced new issues, loop back to 2.2.
 
-## Phase 2: Pre-Handoff Verification
+## Phase 3: Pre-Handoff Verification
 
 Verify ALL conditions automatically and proceed directly:
 
@@ -190,18 +206,18 @@ Verify ALL conditions automatically and proceed directly:
 5. ✅ **All checks pass**: `gh pr checks <PR>` all green
 6. ✅ **Local validation**: Project linters pass
 
-**Only if ALL six pass**: Proceed to Phase 3 to update PR metadata.
+**Only if ALL six pass**: Proceed to Phase 4 to update PR metadata.
 
 **Multi-PR handling**: If a PR needs human intervention (unresolvable conflict,
 unrecoverable CI failure, etc.), log it with reason and continue to the next PR.
 Do not stop the batch for one blocked PR.
 
-## Phase 3: Update PR Metadata
+## Phase 4: Update PR Metadata
 
 Delegate to a **haiku subagent** to keep full diff out of main context.
-Sub-steps 3.1 and 3.2 can run in parallel within the agent.
+Steps 4.1 and 4.2 can run in parallel within the agent. Step 4.3 runs after both.
 
-### 3.1 Update PR Title and Description
+### 4.1 Update PR Title and Description
 
 1. Run compact summary commands:
 
@@ -220,7 +236,7 @@ Sub-steps 3.1 and 3.2 can run in parallel within the agent.
 3. Generate updated title (conventional commit format, <70 chars) and
    description with sections: **Summary**, **Changes**, **Test Plan**.
 
-### 3.2 Link Related Issues and PRs
+### 4.2 Link Related Issues and PRs
 
 1. Extract keywords from branch name and commit messages.
 2. Search for related items:
@@ -233,9 +249,9 @@ Sub-steps 3.1 and 3.2 can run in parallel within the agent.
 3. Add `Closes #X` (directly related issues) or `Related: #X` (adjacent PRs)
    to description. Only link clearly related items — no guessing.
 
-### 3.3 Apply Updates
+### 4.3 Apply Updates
 
-After 3.1 and 3.2 complete, apply using a multiline-safe pattern:
+After 4.1 and 4.2 complete, apply using a multiline-safe pattern:
 
 ```bash
 cat <<'EOF' > /tmp/pr-body.md
@@ -245,9 +261,9 @@ EOF
 gh pr edit <PR> --title "..." --body-file /tmp/pr-body.md
 ```
 
-Proceed to Phase 4.
+Proceed to Phase 5.
 
-## Phase 4: Record Result
+## Phase 5: Record Result
 
 **Single/current-branch mode**: Report ready status and wait for user:
 
@@ -267,27 +283,31 @@ After recording, restore the original branch and continue to the next PR:
 git switch "$ORIGINAL_BRANCH"
 ```
 
-Do NOT emit a ready report here in multi-PR mode — that happens in Phase 5.
+Do NOT emit a ready report here in multi-PR mode — that happens in Phase 6.
 
-## Phase 5: Aggregate Report (Multi-PR Only)
+## Phase 6: Aggregate Report (Multi-PR Only)
 
-After processing all PRs, emit a summary:
+After processing all PRs, emit a summary.
+For org-wide mode, include `--repo` in merge commands since PR numbers are
+scoped per-repository and the current repo may differ from the PR's repo.
 
 ```text
 PR Finalization Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ✅  #42  feat: add user auth          (alice)
-  ✅  #58  fix: resolve edge case       [bot] (claude)
-  ⛔  #43  chore: bump dependencies     [bot] (dependabot)  — unresolvable conflict
+  ✅  #42  feat: add user auth          (alice)         [owner/repo]
+  ✅  #58  fix: resolve edge case       [bot] (claude[bot])  [owner/repo]
+  ⛔  #43  chore: bump dependencies     [bot] (dependabot[bot])  — unresolvable conflict
 
 Ready to merge (2):
-  gh pr merge 42 --squash
-  gh pr merge 58 --squash
+  gh pr merge 42 --squash --repo owner/repo
+  gh pr merge 58 --squash --repo owner/repo
 
 Blocked — needs human (1):
   #43  chore: bump dependencies  — unresolvable conflict in package-lock.json
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+For repo-wide (`all`) mode, `--repo` may be omitted from merge commands since all PRs share the current repo.
 
 Wait for explicit user merge commands.
 
@@ -297,25 +317,25 @@ Wait for explicit user merge commands.
 Single PR:
 /init-worktree → [implement] → gh pr create → /finalize-pr [number]
                                                       ↓
-                              Phase 0: Resolve PR number
-                              Phase 1: Resolution Loop (automatic fixes)
-                              Phase 2: Pre-Handoff Verification
-                              Phase 3: Update PR Metadata
-                              Phase 4: Report ready (wait for user)
+                              Phase 1: Resolve PR number
+                              Phase 2: Resolution Loop (automatic fixes)
+                              Phase 3: Pre-Handoff Verification
+                              Phase 4: Update PR Metadata
+                              Phase 5: Report ready (wait for user)
                                                       ↓
                               User invokes: /squash-merge-pr or /rebase-pr
 
 Repo-wide:
 /finalize-pr all
   ↓
-Phase 0: Discover all open PRs (including bots), confirm batch
-Phase 1-4: Loop over each PR sequentially
-Phase 5: Aggregate report with merge commands for ready PRs
+Phase 1: Discover all open PRs (including bots), confirm batch
+Phases 2-5: Loop over each PR sequentially
+Phase 6: Aggregate report with merge commands for ready PRs
 
 Org-wide:
 /finalize-pr org
   ↓
-Phase 0: Derive org owner, enumerate repos, collect all open PRs
-Phase 1-4: Loop over each PR sequentially
-Phase 5: Aggregate report with merge commands for ready PRs
+Phase 1: Derive org owner, enumerate repos, collect and merge all open PRs
+Phases 2-5: Loop over each PR sequentially
+Phase 6: Aggregate report with --repo-qualified merge commands for ready PRs
 ```
