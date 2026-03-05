@@ -45,37 +45,13 @@ Steps 1.1 through 1.4 run sequentially.
 
 ### 1.2 Discover PRs
 
-**Single/current-branch mode**: Resolve to one PR number, then skip to Phase 2.
+**Single/current-branch mode**: Resolve the PR number from the current branch, then skip to Phase 2.
 
-```bash
-# If no argument — resolve from current branch
-gh pr view --json number --jq '.number'
-```
+**Repo-wide (`all`) mode**: List all open PRs (limit 50) with number, title, author, and headRefName.
 
-**Repo-wide (`all`) mode**:
-
-```bash
-gh pr list --state open --limit 50 --json number,title,author,headRefName
-```
-
-**Org-wide (`org`) mode**: Each `gh pr list` call outputs a separate JSON array.
-Use `jq -s` to merge them. If a repo cannot be listed, emit a warning and continue.
-
-```bash
-OWNER=$(gh repo view --json owner --jq '.owner.login')
-gh repo list "$OWNER" --limit 100 --json name --jq '.[].name' | \
-  while read -r REPO_NAME; do
-    if ! out=$(gh pr list --repo "$OWNER/$REPO_NAME" --state open \
-      --limit 50 \
-      --json number,title,author,headRefName,repository); then
-      echo "Warning: unable to list PRs for $OWNER/$REPO_NAME" >&2
-    else
-      echo "$out"
-    fi
-  done | jq -s 'flatten | sort_by(.number) | .[0:50]'
-```
-
-Cap at 50 PRs. If more exist, warn the user and process only the first 50.
+**Org-wide (`org`) mode**: Enumerate all repos in the org, then for each repo list open PRs (limit 50
+per repo) including the `repository` field (needed for checkout and merge commands). Merge all results
+sorted by PR number, capped at 50 total. Emit a warning and continue if any repo cannot be listed.
 
 ### 1.3 Tag Bot PRs
 
@@ -97,19 +73,8 @@ Found N open PRs:
 Proceeding to finalize all N PRs sequentially.
 ```
 
-Check for a clean working tree before multi-PR modes:
-
-```bash
-git status --porcelain
-```
-
-If the working tree is dirty, report and ask the user to commit or stash before proceeding.
-
-Record the current branch for restoration after each iteration:
-
-```bash
-ORIGINAL_BRANCH=$(git branch --show-current)
-```
+Verify the working tree is clean before proceeding. If dirty, report and ask the user to commit or
+stash. Note the current branch for restoration after each PR iteration.
 
 ## Phase 2: Resolution Loop (AUTOMATIC)
 
@@ -117,33 +82,18 @@ ORIGINAL_BRANCH=$(git branch --show-current)
 the background FIRST, then fix all other issues in parallel while CI runs.
 Never block on CI when other work is available.
 
-_For multi-PR modes, Phases 2-5 execute once per PR in sequence.
-At the start of each iteration, check out the PR branch.
-For repo-wide mode (all PRs in the same repo), the bare number suffices.
-For org-wide mode, each PR object from Phase 1 carries a `repository` field
-(`repository.nameWithOwner`); extract and pass it as `--repo`:_
-
-```bash
-# Repo-wide mode
-gh pr checkout <number>
-
-# Org-wide mode — extract repository.nameWithOwner from Phase 1 discovery JSON
-gh pr checkout <number> --repo "<repository.nameWithOwner>"
-```
+_For multi-PR modes, Phases 2-5 execute once per PR in sequence. Check out each PR branch at the
+start of each iteration. For org-wide mode, use `repository.nameWithOwner` from Phase 1 as the
+`--repo` argument when checking out._
 
 Steps 2.1 and 2.2 start concurrently (2.1 is non-blocking). Steps 2.3 and 2.4 run sequentially after 2.2.
 
 ### 2.1 Start CI Monitoring (BACKGROUND)
 
-Launch CI monitoring in a background Task agent (`run_in_background: true` on
-the Task tool). The agent runs this blocking command in its own context:
+Launch CI monitoring in a background Task agent (`run_in_background: true` on the Task tool).
+Monitor CI checks using `--watch` so the agent blocks until all complete.
 
-```bash
-gh pr checks <PR> --watch
-```
-
-Do NOT wait for the Task to complete — proceed to 2.2 immediately. Check the
-background task's output after completing other fixes in 2.2.
+Do NOT wait for the agent to finish — proceed to 2.2 immediately.
 
 ### 2.2 Parallel Fixes
 
@@ -152,16 +102,14 @@ Task agents when they touch different files. Invoke `superpowers:dispatching-par
 
 #### CodeQL Violations
 
-```bash
-OWNER=${OWNER:-$(gh repo view --json owner --jq '.owner.login')}
-REPO=${REPO:-$(gh repo view --json name --jq '.name')}
+Check for open code-scanning alerts:
 
+```bash
 gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
   --jq '[.[] | select(.state == "open")] | length'
 ```
 
-**If violations found**: Invoke `/resolve-codeql fix`, then /simplify,
-validate locally.
+**If violations found**: Invoke `/resolve-codeql fix`, then /simplify, validate locally.
 
 #### Review Threads
 
@@ -170,31 +118,20 @@ After completion, invoke /simplify and validate locally.
 
 #### Merge Conflicts
 
-```bash
-gh pr view <PR> --json mergeable
-```
-
-**If conflicts**: Fetch main, attempt merge, report unresolvable conflicts for
-user. After resolution, invoke /simplify and validate locally.
+Check if the PR is mergeable. **If conflicts**: Fetch main, attempt merge, report unresolvable
+conflicts for user. After resolution, invoke /simplify and validate locally.
 
 ### 2.3 CI Failure Fixes
 
 Check background CI results from 2.1:
 
 - **All passing**: Proceed to Phase 3
-- **Failures**: Get logs via `gh run view <RUN_ID> --log-failed`, fix locally,
-  invoke /simplify, validate, commit and push. Restart background CI
-  monitoring and loop back to 2.2 if new issues emerged.
+- **Failures**: Fetch failed run logs, fix locally, invoke /simplify, validate, commit and push.
+  Restart background CI monitoring and loop back to 2.2 if new issues emerged.
 
 ### 2.4 Health Check
 
-Verify final PR status after all fixes:
-
-```bash
-gh pr view <PR> --json state,mergeable,statusCheckRollup
-```
-
-If fixes introduced new issues, loop back to 2.2.
+Verify final PR state, mergeability, and check status. If fixes introduced new issues, loop back to 2.2.
 
 ## Phase 3: Pre-Handoff Verification
 
@@ -220,47 +157,20 @@ Steps 4.1 and 4.2 can run in parallel within the agent. Step 4.3 runs after both
 
 ### 4.1 Update PR Title and Description
 
-1. Run compact summary commands:
-
-   ```bash
-   git fetch origin main
-   git log --oneline origin/main..HEAD
-   git diff --stat origin/main...HEAD
-   ```
-
-2. Read current PR title and body:
-
-   ```bash
-   gh pr view <PR> --json title,body
-   ```
-
-3. Generate updated title (conventional commit format, <70 chars) and
-   description with sections: **Summary**, **Changes**, **Test Plan**.
+1. Summarize branch history and diff stats against main; read current PR title and body.
+2. Generate updated title (conventional commit format, <70 chars) and description with sections:
+   **Summary**, **Changes**, **Test Plan**.
 
 ### 4.2 Link Related Issues and PRs
 
 1. Extract keywords from branch name and commit messages.
-2. Search for related items:
-
-   ```bash
-   gh issue list --search "<keywords>" --json number,title --limit 5
-   gh pr list --search "<keywords>" --json number,title --limit 5
-   ```
-
-3. Add `Closes #X` (directly related issues) or `Related: #X` (adjacent PRs)
-   to description. Only link clearly related items — no guessing.
+2. Search GitHub issues and PRs for related items (limit 5 each).
+3. Add `Closes #X` (directly related issues) or `Related: #X` (adjacent PRs) — no guessing.
 
 ### 4.3 Apply Updates
 
-After 4.1 and 4.2 complete, apply using a multiline-safe pattern:
-
-```bash
-cat <<'EOF' > /tmp/pr-body.md
-...
-EOF
-
-gh pr edit <PR> --title "..." --body-file /tmp/pr-body.md
-```
+After 4.1 and 4.2 complete, write the body to a temp file and apply with `gh pr edit --body-file`
+(safer than inline for multiline content).
 
 Proceed to Phase 5.
 
@@ -277,20 +187,13 @@ To merge, invoke one of:
   /rebase-pr          # Rebase commits onto main (preserves history)
 ```
 
-**Multi-PR mode**: Record the per-PR result (ready / blocked / needs-human).
-After recording, restore the original branch and continue to the next PR:
-
-```bash
-git switch "$ORIGINAL_BRANCH"
-```
-
-Do NOT emit a ready report here in multi-PR mode — that happens in Phase 6.
+**Multi-PR mode**: Record the per-PR result (ready / blocked / needs-human). Restore the original
+branch and continue to the next PR. Do NOT emit a ready report — that happens in Phase 6.
 
 ## Phase 6: Aggregate Report (Multi-PR Only)
 
-After processing all PRs, emit a summary.
-For org-wide mode, include `--repo` in merge commands since PR numbers are
-scoped per-repository and the current repo may differ from the PR's repo.
+After processing all PRs, emit a summary. For org-wide mode, merge commands must include `--repo`
+since PR numbers are scoped per-repository; use `repository.nameWithOwner` from Phase 1 discovery.
 
 ```text
 PR Finalization Summary
@@ -308,7 +211,7 @@ Blocked — needs human (1):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-For repo-wide (`all`) mode, `--repo` may be omitted from merge commands since all PRs share the current repo.
+For repo-wide (`all`) mode, `--repo` may be omitted since all PRs share the current repo.
 
 Wait for explicit user merge commands.
 
