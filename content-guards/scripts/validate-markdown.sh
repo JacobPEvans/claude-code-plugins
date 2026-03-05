@@ -131,8 +131,13 @@ EOF
 fi
 
 # Run cspell for spell checking
+# cspell must run from the file's directory so it resolves its config root correctly.
+# Running with an absolute path from a different working directory causes cspell to
+# match 0 files (exit 1) even when there are no issues.
 if command -v cspell &>/dev/null; then
-  if ! cspell_output=$(cspell --no-progress "$file_path" 2>&1); then
+  cspell_dir="$(dirname -- "$file_path")"
+  cspell_file="$(basename -- "$file_path")"
+  if ! cspell_output=$( cd "$cspell_dir" && cspell --no-progress "$cspell_file" 2>&1 ); then
     errors+=("cspell failed:")
     errors+=("$cspell_output")
   fi

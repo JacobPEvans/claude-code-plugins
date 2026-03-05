@@ -1,10 +1,9 @@
 # git-workflows
 
-Claude Code plugin for git worktree initialization, main branch synchronization, repository refresh, and PR merging.
+Claude Code plugin for main branch synchronization, repository refresh, and PR merging. For worktree creation, use `superpowers:using-git-worktrees` guided by `.claude/rules/worktree-conventions.md`.
 
 ## Skills
 
-- **`/init-worktree`** - Initialize a clean worktree for new development work with stale cleanup and branch naming
 - **`/sync-main`** - Update main from remote and merge into current branch (or all open PR branches with `all`)
 - **`/refresh-repo`** - Check PR merge-readiness, sync local repo, and cleanup stale worktrees
 - **`/rebase-pr`** - Merge a PR using local git rebase + signed commits + push to main
@@ -21,7 +20,6 @@ claude plugins add jacobpevans-cc-plugins/git-workflows
 ## Usage
 
 ```text
-/init-worktree fix login bug
 /sync-main
 /sync-main all
 /refresh-repo

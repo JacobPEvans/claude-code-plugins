@@ -178,7 +178,7 @@ Wait for explicit user merge command.
 ## Workflow
 
 ```text
-/init-worktree → [implement] → gh pr create → /finalize-pr
+superpowers:using-git-worktrees → [implement] → gh pr create → /finalize-pr
                                                       ↓
                               Phase 1: Resolution Loop (automatic fixes)
                               Phase 2: Pre-Handoff Verification

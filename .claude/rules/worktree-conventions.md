@@ -22,7 +22,7 @@ Examples:
 
 ## Before Creating
 
-1. Switch to main and sync: `cd ~/git/<repo>/main && git pull`
+1. Switch to main and sync: `cd ~/git/{repo-name}/main && git switch main && git pull`
 2. Clean stale worktrees (merged or `[gone]` branches):
    - `git branch --merged main` to find merged branches
    - `git branch -vv | grep '\[gone\]'` to find deleted remote branches
