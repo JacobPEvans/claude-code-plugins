@@ -141,6 +141,43 @@ It must always be clear whether child phases/steps can run in parallel or not. B
 sub-steps are assumed to be sequential. If they can run in parallel, this should be explicitly
 stated (e.g., "Steps 3.1 and 3.2 can be run in parallel.").
 
+### Skill and Command Authoring
+
+Skill files should describe **what** to accomplish and any non-obvious constraints — let the AI
+determine the implementation.
+
+**Do** state goals, required field names, important flags, and API paths in prose.
+**Do** use `text` blocks to show expected output formats so the AI knows what to produce.
+**Do** use code blocks for GraphQL mutations, non-obvious API endpoints, or complex queries that
+cannot be reasonably inferred.
+
+**Why this matters**: Spelling out trivial bash trains the AI to reach for shell scripts even when
+native tools (Read, Edit, Glob, Write) are faster and safer. Prose-based instructions let AIs choose
+the most appropriate tool and improve their approach as capabilities grow.
+
+Prefer:
+
+> List all open PRs (limit 50) with number, title, author, and headRefName.
+
+Over:
+
+```bash
+gh pr list --state open --limit 50 --json number,title,author,headRefName
+```
+
+Prefer:
+
+> Verify the working tree is clean before proceeding.
+
+Over:
+
+```bash
+git status --porcelain
+```
+
+Reserve code blocks for non-obvious things: GraphQL mutations, specific API endpoint paths, complex
+jq pipelines, and expected output formats.
+
 ### Hook Implementation Language Selection
 
 Choose the implementation language based on complexity:

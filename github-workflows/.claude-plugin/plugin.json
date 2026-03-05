@@ -1,7 +1,7 @@
 {
   "name": "github-workflows",
-  "version": "1.1.0",
-  "description": "PR management, multi-repo PR finalization, and issue shaping with Shape Up methodology",
+  "version": "1.2.0",
+  "description": "PR finalization (single, repo-wide, or org-wide including bots), squash-merge, review thread resolution, and issue shaping",
   "author": {
     "name": "JacobPEvans"
   },
