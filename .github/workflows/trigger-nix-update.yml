@@ -19,9 +19,9 @@ jobs:
       contents: read  # Minimal permissions
 
     steps:
-      - name: Trigger nix repository flake update
+      - name: Trigger nix-ai flake update
         run: |
-          gh api repos/JacobPEvans/nix/dispatches \
+          gh api repos/JacobPEvans/nix-ai/dispatches \
             --method POST \
             --field event_type='upstream-repo-updated' \
             --field client_payload[flake_input_name]='jacobpevans-cc-plugins' \
@@ -36,7 +36,7 @@ jobs:
 
       - name: Log dispatch
         run: |
-          echo "✅ Triggered nix flake update workflow"
+          echo "✅ Triggered nix-ai flake update workflow"
           echo "Source: $SOURCE_REPO"
           echo "Commit: $COMMIT_SHA"
         env:
