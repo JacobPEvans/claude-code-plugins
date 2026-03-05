@@ -7,7 +7,7 @@ Blocks `gh issue create` when issue limits are exceeded, and enforces
 Limits:
   - 50 total open issues: Hard block on issue creation
   - 25 AI-created issues: Hard block on issue creation
-  - 15 issues or PRs created/updated in 24 hours: Rate limit block
+  - 15 issues or PRs created in 24 hours: Rate limit block
 
 Exit codes:
   0 = allow the command
@@ -95,8 +95,11 @@ def check_recent_issues() -> int:
 
 
 def check_recent_prs() -> int:
-    """Count PRs created or updated in the last 24 hours."""
-    cmd = ["gh", "pr", "list", "--state", "all", "--json", "createdAt,updatedAt", "--limit", "100"]
+    """Count PRs created by the current user in the last 24 hours."""
+    cmd = [
+        "gh", "pr", "list", "--state", "all", "--author", "@me",
+        "--json", "createdAt", "--limit", "100",
+    ]
     try:
         result = subprocess.run(
             cmd, capture_output=True, text=True, check=True, timeout=30
@@ -106,17 +109,10 @@ def check_recent_prs() -> int:
         count = 0
         for pr in prs:
             created_at = pr.get("createdAt", "")
-            updated_at = pr.get("updatedAt", "")
-            in_window = False
-            if created_at:
-                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                if created >= cutoff:
-                    in_window = True
-            if not in_window and updated_at:
-                updated = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
-                if updated >= cutoff:
-                    in_window = True
-            if in_window:
+            if not created_at:
+                continue
+            created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            if created >= cutoff:
                 count += 1
         return count
     except (
