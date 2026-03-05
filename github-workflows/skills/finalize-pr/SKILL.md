@@ -120,14 +120,15 @@ Never block on CI when other work is available.
 _For multi-PR modes, Phases 2-5 execute once per PR in sequence.
 At the start of each iteration, check out the PR branch.
 For repo-wide mode (all PRs in the same repo), the bare number suffices.
-For org-wide mode, include `--repo` because PRs may belong to other repos:_
+For org-wide mode, each PR object from Phase 1 carries a `repository` field
+(`repository.nameWithOwner`); extract and pass it as `--repo`:_
 
 ```bash
 # Repo-wide mode
 gh pr checkout <number>
 
-# Org-wide mode — use the repository field from Phase 1 discovery
-gh pr checkout <number> --repo "<OWNER>/<REPO_NAME>"
+# Org-wide mode — extract repository.nameWithOwner from Phase 1 discovery JSON
+gh pr checkout <number> --repo "<repository.nameWithOwner>"
 ```
 
 Steps 2.1 and 2.2 start concurrently (2.1 is non-blocking). Steps 2.3 and 2.4 run sequentially after 2.2.
@@ -296,7 +297,7 @@ PR Finalization Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ✅  #42  feat: add user auth          (alice)         [owner/repo]
   ✅  #58  fix: resolve edge case       [bot] (claude[bot])  [owner/repo]
-  ⛔  #43  chore: bump dependencies     [bot] (dependabot[bot])  — unresolvable conflict
+  ⛔  #43  chore: bump dependencies     [bot] (dependabot[bot])  [owner/repo]  — unresolvable conflict
 
 Ready to merge (2):
   gh pr merge 42 --squash --repo owner/repo
