@@ -53,7 +53,7 @@ git pull
 
 Apply conventional branch naming:
 
-- **Format**: `<type>/<description>` (e.g., `feature/add-dark-mode`, `bugfix/login-bug`)
+- **Format**: `<type>/<description>` (e.g., `feature/add-dark-mode`, `bugfix/login-bug`, `docs/update-readme`)
 - **Rules**: lowercase, hyphens separate words, alphanumeric + hyphens only
 
 ### 6. Create Worktree
