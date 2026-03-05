@@ -54,14 +54,14 @@ setup() {
 
 @test "TC6: non-empty config_flag with fallback config" {
   # File without ancestor config should use fallback (temp config or plugin default)
-  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"'"$FIXTURES"'/cross-repo-sim/feat/new-feature/README.md\"}}" | /bin/bash "$1"' _ "$SCRIPT"
+  run bash -c 'echo "{\"tool_input\":{\"file_path\":\"'"$FIXTURES"'/cross-repo-sim/feature/new-feature/README.md\"}}" | /bin/bash "$1"' _ "$SCRIPT"
   [ "$status" -eq 0 ]
   [[ ! "$output" =~ "unbound variable" ]]
 }
 
 @test "TC7: cross-repo editing finds config from file directory not CWD" {
   # Simulate being in a completely different directory (like ~/git/repo1)
-  # while editing a file in ~/git/repo2/feat/branch/
+  # while editing a file in ~/git/repo2/feature/branch/
   original_dir=$(pwd)
   cd /tmp
 
