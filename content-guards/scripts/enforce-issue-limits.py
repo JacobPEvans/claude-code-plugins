@@ -7,7 +7,8 @@ Blocks `gh issue create` when issue limits are exceeded, and enforces
 Limits:
   - 50 total open issues: Hard block on issue creation
   - 25 AI-created issues: Hard block on issue creation
-  - 15 issues or PRs created in 24 hours: Rate limit block
+  - 15 issues created in 24 hours: Rate limit block (checked per resource type)
+  - 15 PRs created in 24 hours: Rate limit block (checked per resource type)
 
 Exit codes:
   0 = allow the command
@@ -143,7 +144,7 @@ def block_rate_limit(kind: str, count: int) -> None:
     )
     print("", file=sys.stderr)
     print(
-        "Ask the user for explicit permission before creating another.",
+        "Ask the user for explicit permission before creating or updating another issue or pull request.",
         file=sys.stderr,
     )
     print("=" * 64 + "\n", file=sys.stderr, flush=True)
@@ -204,11 +205,10 @@ def main() -> None:
                 print(f"  {reason}", file=sys.stderr)
             print("", file=sys.stderr)
             print("Required actions:", file=sys.stderr)
-            print("  1. Use the consolidate-issues skill to reduce issue count", file=sys.stderr)
-            print("  2. Close duplicates and resolved issues", file=sys.stderr)
-            print("  3. Focus on creating PRs to close existing issues", file=sys.stderr)
+            print("  1. Close or resolve duplicate and completed issues", file=sys.stderr)
+            print("  2. Focus on creating PRs to close existing issues", file=sys.stderr)
+            print("  3. Ask the user for explicit permission to create more issues", file=sys.stderr)
             print("", file=sys.stderr)
-            print("See: agentsmd/skills/consolidate-issues/SKILL.md", file=sys.stderr)
             print("=" * 64 + "\n", file=sys.stderr, flush=True)
             sys.exit(2)
 
