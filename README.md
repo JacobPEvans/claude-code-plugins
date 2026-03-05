@@ -111,7 +111,7 @@ plugin-name/
 See individual plugin READMEs for specific details. General contribution guidelines:
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/your-feature`
+2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Follow conventional commits: `feat(plugin): description`
 4. Sign your commits (GPG required)
 5. Submit a pull request
