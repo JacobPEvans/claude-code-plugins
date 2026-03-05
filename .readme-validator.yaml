@@ -1,0 +1,10 @@
+required_sections:
+  - Installation
+optional_sections:
+  - Usage
+  - Features
+  - Contributing
+  - License
+  - API
+check_badges: true
+badge_timeout: 5

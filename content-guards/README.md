@@ -7,7 +7,8 @@ Content validation and guard hooks via PostToolUse.
 - **markdown-validator**: Validates markdown with markdownlint and cspell
 - **token-validator**: Enforces configurable file token limits
 - **webfetch-guard**: Blocks outdated year references in web queries
-- **issue-limiter**: Prevents GitHub issue backlog overflow
+- **readme-validator**: Checks README files for required sections and badge health
+- **issue-limiter**: Prevents GitHub issue backlog overflow with 24h rate limiting
 
 ## Installation
 
