@@ -7,7 +7,8 @@ Content validation and guard hooks via PostToolUse.
 - **markdown-validator**: Validates markdown with markdownlint and cspell
 - **token-validator**: Enforces configurable file token limits
 - **webfetch-guard**: Blocks outdated year references in web queries
-- **issue-limiter**: Prevents GitHub issue backlog overflow
+- **readme-validator**: Checks README files for required sections and badge health
+- **issue-limiter**: Prevents GitHub issue backlog overflow with 24h rate limiting
 
 ## Installation
 
@@ -32,7 +33,7 @@ Run tests using the shared test runner:
 ./scripts/run-tests.sh content-guards
 
 # Alternative: run bats directly
-bats content-guards/tests/*.bats
+bats tests/content-guards/**/*.bats
 ```
 
 Test coverage includes:
@@ -41,6 +42,8 @@ Test coverage includes:
 - Config resolution (project vs fallback)
 - Cross-repo editing scenarios
 - Unbound variable regression prevention (PR #39, #40)
+- Issue/PR rate limiting and hard-limit blocking
+- README required section and installation code block validation
 
 ## License
 

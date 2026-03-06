@@ -130,9 +130,7 @@ EOF
   fi
 fi
 
-# Run cspell for spell checking
-# Must run from the file's directory: cspell with an absolute path checks 0 files
-# when a cspell config is found in a parent directory (cspell bug with globRoot resolution).
+# Run cspell (must cd to file's directory for config resolution)
 if command -v cspell &>/dev/null; then
   cspell_dir="$(dirname -- "$file_path")"
   cspell_file="$(basename -- "$file_path")"
