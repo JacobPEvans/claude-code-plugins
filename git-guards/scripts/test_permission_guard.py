@@ -93,6 +93,8 @@ all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPat
 
 # Fallback bypass detection: unrecognised global option before -c breaks loop early
 all_pass &= check("--no-pager before -c hooksPath", "git --no-pager -c core.hooksPath=/dev/null commit -m msg", "deny")
+# Fallback also fires when loop parsed a prior -c but broke before a second -c hooksPath
+all_pass &= check("valid -c then --bare then -c hooksPath", "git -c user.name=test --bare -c core.hooksPath=/dev/null commit -m msg", "deny")
 
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
