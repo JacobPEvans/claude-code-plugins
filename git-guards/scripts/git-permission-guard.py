@@ -8,6 +8,7 @@ Most Bash commands are not git/gh - early exit is critical for performance.
 
 import json
 import re
+import shlex
 import sys
 
 # Patterns checked against ALL commands (not git-specific)
@@ -262,10 +263,24 @@ def main():
         for opt in git_config_opts:
             if re.match(r"core\.hooksPath\s*(?:=|$)", opt, re.IGNORECASE):
                 deny("This command bypasses configured hooks. Fix the underlying issue instead.")
-        # Fallback: detect -c core.hooksPath when the extraction loop broke early
-        # on an unrecognised git global option (e.g. --no-pager, --bare).
-        if not git_config_opts and re.search(r"-c\s+['\"]?core\.hooksPath", subcommand, re.IGNORECASE):
-            deny("This command bypasses configured hooks. Fix the underlying issue instead.")
+        # Fallback: detect -c core.hooksPath remaining in the subcommand when the
+        # extraction loop broke early on an unrecognised git global option.
+        # Successfully parsed -c opts are stripped from subcommand, so this
+        # only fires for opts the loop didn't reach.
+        # Use shlex tokenisation to avoid false positives from commit messages
+        # that contain the literal substring (e.g. -m "... -c core.hooksPath ...").
+        # On ValueError (malformed shell input such as unclosed quotes), treat as
+        # non-matching: malformed input cannot be a valid -c core.hooksPath bypass,
+        # and falling back to .split() would reintroduce the false-positive this
+        # check was added to prevent.
+        try:
+            subcmd_tokens = shlex.split(subcommand)
+        except ValueError:
+            subcmd_tokens = []
+        for i, tok in enumerate(subcmd_tokens):
+            if tok == "-c" and i + 1 < len(subcmd_tokens):
+                if re.match(r"core\.hooksPath\s*(?:=|$)", subcmd_tokens[i + 1], re.IGNORECASE):
+                    deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
     # Check DENY_GH patterns (token prefix match on gh subcommand)
     if is_gh:

@@ -1,7 +1,7 @@
 {
   "name": "git-workflows",
   "version": "1.0.0",
-  "description": "Git worktree initialization, main branch sync, and repository refresh workflows",
+  "description": "Git main branch sync, repository refresh, and PR merge workflows",
   "author": {
     "name": "JacobPEvans"
   },
@@ -9,7 +9,6 @@
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "keywords": ["git", "worktree", "sync", "refresh", "branch", "workflow"],
   "skills": [
-    "./skills/init-worktree",
     "./skills/sync-main",
     "./skills/refresh-repo",
     "./skills/rebase-pr",
