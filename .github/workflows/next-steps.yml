@@ -10,7 +10,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: next-steps
+  group: next-steps-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
