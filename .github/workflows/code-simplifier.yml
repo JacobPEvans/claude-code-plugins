@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: code-simplifier
+  group: code-simplifier-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
