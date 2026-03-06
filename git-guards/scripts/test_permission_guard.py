@@ -81,6 +81,13 @@ all_pass &= check("rm .git/hooks", "rm .git/hooks/pre-commit", "deny")
 # Non-git command: silent allow
 all_pass &= check("ls command", "ls -la", "silent_allow")
 
+# git -C <path> tests: subcommand extracted correctly before DENY/ASK checks
+all_pass &= check("git -C rm plain", "git -C ~/git/.github/main rm .github/workflows/file.yml", "silent_allow")
+all_pass &= check("git -C commit --no-verify", 'git -C /some/path commit -m "msg" --no-verify', "deny")
+all_pass &= check("git -C reset --hard", "git -C /some/path reset --hard HEAD", "ask")
+all_pass &= check("git -C -c core.hooksPath deny", "git -C /some/path -c core.hooksPath=/dev/null commit -m test", "deny")
+all_pass &= check("git -C restore ask", "git -C /some/path restore file.txt", "ask")
+
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
 sys.exit(0 if all_pass else 1)
