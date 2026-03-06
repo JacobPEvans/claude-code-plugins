@@ -33,7 +33,7 @@ Run tests using the shared test runner:
 ./scripts/run-tests.sh content-guards
 
 # Alternative: run bats directly
-bats content-guards/tests/*.bats
+bats tests/content-guards/**/*.bats
 ```
 
 Test coverage includes:
@@ -42,6 +42,8 @@ Test coverage includes:
 - Config resolution (project vs fallback)
 - Cross-repo editing scenarios
 - Unbound variable regression prevention (PR #39, #40)
+- Issue/PR rate limiting and hard-limit blocking
+- README required section and installation code block validation
 
 ## License
 

@@ -33,6 +33,23 @@ teardown() {
   rm -rf "$FAKE_GH_DIR"
 }
 
+# Helper: get current UTC time as ISO 8601
+utc_now() {
+  python3 -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))'
+}
+
+# Helper: build a JSON array with __N__ substituted for the item number
+build_json_array() {
+  local template="$1" count="$2"
+  local arr="[" i
+  for i in $(seq 1 "$count"); do
+    arr+="${template//__N__/$i}"
+    [[ $i -lt "$count" ]] && arr+=","
+  done
+  arr+="]"
+  echo "$arr"
+}
+
 # Helper: run the hook with the given JSON input, capturing exit status and stderr
 run_hook() {
   run python3 "$SCRIPT" <<< "$1"
@@ -73,14 +90,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC3: gh issue create blocked when total open issues >= 50" {
-  # Build 50 open issues with no labels
-  issues="["
-  for i in $(seq 1 50); do
-    issues+='{"number":'"$i"',"labels":[]}'
-    [[ $i -lt 50 ]] && issues+=","
-  done
-  issues+="]"
-  export GH_RESPONSE="$issues"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[]}' 50)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
@@ -93,14 +103,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC4: gh issue create blocked when ai-created issues >= 25" {
-  # 25 issues all with the ai-created label
-  issues="["
-  for i in $(seq 1 25); do
-    issues+='{"number":'"$i"',"labels":[{"name":"ai-created"}]}'
-    [[ $i -lt 25 ]] && issues+=","
-  done
-  issues+="]"
-  export GH_RESPONSE="$issues"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[{"name":"ai-created"}]}' 25)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
@@ -113,15 +116,9 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC5: gh issue create blocked when 15 issues created in last 24h" {
-  # Fake gh returns 15 issues all created within the last hour
-  now="$(python3 -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))')"
-  issues="["
-  for i in $(seq 1 15); do
-    issues+='{"number":'"$i"',"labels":[],"createdAt":"'"$now"'"}'
-    [[ $i -lt 15 ]] && issues+=","
-  done
-  issues+="]"
-  export GH_RESPONSE="$issues"
+  local now
+  now="$(utc_now)"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 15)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
@@ -134,14 +131,9 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC6: gh pr create blocked when 15 PRs created in last 24h" {
-  now="$(python3 -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))')"
-  prs="["
-  for i in $(seq 1 15); do
-    prs+='{"createdAt":"'"$now"'"}'
-    [[ $i -lt 15 ]] && prs+=","
-  done
-  prs+="]"
-  export GH_RESPONSE="$prs"
+  local now
+  now="$(utc_now)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 15)"
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
@@ -154,14 +146,9 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC7: gh pr edit blocked when 15 PRs created in last 24h" {
-  now="$(python3 -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))')"
-  prs="["
-  for i in $(seq 1 15); do
-    prs+='{"createdAt":"'"$now"'"}'
-    [[ $i -lt 15 ]] && prs+=","
-  done
-  prs+="]"
-  export GH_RESPONSE="$prs"
+  local now
+  now="$(utc_now)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 15)"
 
   run_hook '{"tool_input":{"command":"gh pr edit 42 --title new-title"}}'
   [ "$status" -eq 2 ]
@@ -174,7 +161,8 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC8: gh pr create allowed when under rate limit" {
-  now="$(python3 -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))')"
+  local now
+  now="$(utc_now)"
   export GH_RESPONSE='[{"createdAt":"'"$now"'"}]'
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
@@ -198,13 +186,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC10: hard-limit block message does not reference missing skill path" {
-  issues="["
-  for i in $(seq 1 50); do
-    issues+='{"number":'"$i"',"labels":[]}'
-    [[ $i -lt 50 ]] && issues+=","
-  done
-  issues+="]"
-  export GH_RESPONSE="$issues"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[]}' 50)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
