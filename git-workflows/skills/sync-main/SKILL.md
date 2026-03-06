@@ -28,12 +28,13 @@ or all open PR branches when using the `all` parameter.
    - STOP if on main or uncommitted changes
 2. **Find and sync main**: `cd ~/git/<repo>/main && git fetch --all --prune && git pull`
 3. **Check for updates**: `git fetch origin main`
-4. **Inform user**: Report if the branch is behind `main` by checking for new commits with
-   `git log --oneline HEAD..origin/main`. The output also serves as the summary of commits.
-5. **Request confirmation**: Ask user if they want to merge main into current branch
-6. **Merge (if confirmed)**: `git merge origin/main --no-edit`
-7. **Push (if confirmed)**: `git push origin $(git branch --show-current)`
-8. **Report**: branch, main SHA, merge status or "merge declined by user"
+4. **Report**: Show commits behind with `git log --oneline HEAD..origin/main` (informational only)
+5. **Merge**: `git merge origin/main --no-edit`
+   - If already up-to-date: skip to step 7 and report
+   - If merge succeeds cleanly: continue to step 6
+   - If conflicts occur: **STOP, do not push**. Report conflict status and follow the **Conflict Resolution** section below
+6. **Push (only if merge succeeded cleanly)**: `git push origin $(git branch --show-current)`
+7. **Report**: branch, main SHA, merge status
 
 ## All Branches Mode (Orchestrator)
 
@@ -46,8 +47,8 @@ Report sync status for all open PR branches.
 3. **List open PRs**: `gh pr list --state open --json number,headRefName,title`
 4. **Check each PR**: Launch subagents in parallel (invoke `superpowers:dispatching-parallel-agents`). Each checks if behind main. Do NOT merge or push.
 5. **Report**: repo, main SHA, merge-readiness for each PR (current/behind/conflict)
-6. **Prompt user**: Ask which PRs should be synced with main
-7. **Sync only confirmed**: Only merge confirmed branches after user approval
+6. **Sync conflict-free branches**: For each branch classified as `behind` (not `conflict`) in step 5, merge `origin/main` using `git merge origin/main --no-edit`. Branches already classified as `conflict` in step 5 are skipped entirely — no merge is attempted on them, so no `git merge --abort` is needed. No confirmation required.
+7. **Report conflicting branches**: Branches skipped due to pre-identified conflicts are reported for manual resolution
 
 ## Conflict Resolution
 
