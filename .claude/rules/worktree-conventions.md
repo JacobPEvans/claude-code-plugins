@@ -6,7 +6,7 @@ default `.worktrees/` placement.
 ## Path Convention
 
 ```text
-~/git/<repo-name>/<branch-name>/
+~/git/{repo-name}/{branch-name}/
 ```
 
 Examples:
@@ -16,7 +16,7 @@ Examples:
 
 ## Branch Naming
 
-- Format: `<type>/<description>` (e.g., `feat/add-dark-mode`, `fix/login-bug`)
+- Format: `{type}/{description}` (e.g., `feat/add-dark-mode`, `fix/login-bug`)
 - Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `ci`, `test`, `perf`
 - Rules: lowercase, hyphens between words, alphanumeric + hyphens only
 
@@ -26,7 +26,7 @@ Examples:
 2. Clean stale worktrees (merged or `[gone]` branches):
    - `git branch --merged main` to find merged branches
    - `git branch -vv | grep '\[gone\]'` to find deleted remote branches
-   - `git worktree remove <path>` + `git branch -d <branch>` for each
+   - `git worktree remove {path}` + `git branch -d {branch}` for each
    - `git worktree prune` to clean up
 
 ## After Creating
