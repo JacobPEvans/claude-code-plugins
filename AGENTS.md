@@ -9,13 +9,11 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 ## Available Plugins
 
 | Plugin | Type | Tools/Commands | Purpose |
-|--------|------|--------|---------|
-| **git-permission-guard** | PreToolUse | Bash | Blocks dangerous git/gh commands |
-| **git-workflows** | Command/Skill | `/rebase-pr`, `/sync-main`, `/refresh-repo` | Git sync, refresh, and PR merge workflows |
-| **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues` | GitHub PR/issue management workflows |
+|--------|------|--------|------|
+| **git-guards** | PreToolUse | Bash, Edit, Write, NotebookEdit | Blocks dangerous git/gh commands and file edits on main branch |
+| **git-workflows** | Command/Skill | `/rebase-pr`, `/sync-main`, `/refresh-repo`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree` | Git sync, refresh, and PR merge workflows |
+| **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews` | GitHub PR/issue management workflows |
 | **content-guards** | Pre/PostToolUse | Bash, Write, Edit | Token limits, markdown/README validation, webfetch guard, issue/PR rate limiting |
-| **main-branch-guard** | PreToolUse | Edit, Write, NotebookEdit | Blocks file edits on main branch |
-| **pr-review-toolkit** | Skill | `/resolve-pr-threads` | Resolve PR review threads via GraphQL (read, reply, resolve) |
 
 ## Multi-Model Delegation
 
