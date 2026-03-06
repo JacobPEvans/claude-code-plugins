@@ -4,48 +4,75 @@ A collection of Claude Code plugins for enhanced development workflows with AI a
 
 ## Available Plugins
 
-### git-rebase-workflow
+### git-guards
 
-Local rebase-merge workflow for maintaining linear git history with signed commits.
-
-- **Type**: Command/Skill-based plugin
-- **Command**: `/rebase-pr`
-- **Purpose**: Merge PRs using a local rebase workflow that preserves commit signatures
-
-### webfetch-guard
-
-Intercepts WebFetch and WebSearch tool calls to enforce date awareness and block outdated year references.
+Git security and workflow protection via PreToolUse hooks.
 
 - **Type**: PreToolUse hook
-- **Tools**: WebFetch, WebSearch
-- **Purpose**: Prevents Claude from using outdated search queries by blocking old year references
+- **Features**: git-permission-guard (blocks dangerous git/gh commands), main-branch-guard (prevents edits on main)
+- **Purpose**: Enforce safe git practices and worktree workflow
 
-### markdown-validator
+### content-guards
 
-Validates markdown files after Write/Edit operations using industry-standard linting tools.
+Combined content validation and guard hooks.
 
 - **Type**: PostToolUse hook
-- **Tools**: Write, Edit
-- **Linters**: markdownlint-cli2, cspell
-- **Purpose**: Ensures markdown quality and consistency
+- **Tools**: Write, Edit, Bash (gh CLI)
+- **Features**: markdown-validator, token-validator, webfetch-guard, issue-limiter
+- **Purpose**: Markdown quality, file size governance, date-aware web queries, backlog control
 
-### token-validator
+### git-workflows
 
-Enforces configurable token limits on files to prevent bloat and maintain focused modules.
+Git worktree initialization, main branch synchronization, and PR merging skills.
 
-- **Type**: PreToolUse hook
-- **Tools**: Write, Edit
-- **Configuration**: `.token-limits.yaml`
-- **Purpose**: File size governance via token counting
+- **Type**: Command/Skill-based plugin
+- **Skills**: `/init-worktree`, `/sync-main`, `/rebase-pr`, `/refresh-repo`, and troubleshooting skills
+- **Purpose**: Structured worktree and PR merge workflows
 
-### issue-limiter
+### github-workflows
 
-Prevents GitHub issue backlog overflow by enforcing creation limits.
+GitHub PR and issue management skills.
 
-- **Type**: PreToolUse hook
-- **Tools**: Bash (gh CLI)
-- **Limits**: 50 total issues, 25 AI-created issues
-- **Purpose**: Backlog management and quality control
+- **Type**: Command/Skill-based plugin
+- **Skills**: `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews`
+- **Purpose**: PR lifecycle and issue shaping workflows
+
+### ai-delegation
+
+Delegate tasks to external AI models and run autonomous maintenance loops.
+
+- **Type**: Skill-based plugin
+- **Skills**: `auto-maintain`, `delegate-to-ai`
+- **Purpose**: AI-assisted automation and delegation
+
+### config-management
+
+Sync AI tool permissions across repositories.
+
+- **Type**: Skill-based plugin
+- **Skills**: `sync-permissions`, `quick-add-permission`
+- **Purpose**: Consistent always-allow permission management
+
+### codeql-resolver
+
+Systematic CodeQL alert analysis and resolution for GitHub Actions workflows.
+
+- **Type**: Command/Skill/Agent-based plugin
+- **Purpose**: Diagnose and fix CodeQL security alerts
+
+### infra-orchestration
+
+Cross-repo infrastructure orchestration for Terraform and Ansible workflows.
+
+- **Type**: Skill-based plugin
+- **Purpose**: Orchestrate infrastructure changes across multiple repositories
+
+### process-cleanup
+
+Cleanup orphaned MCP server processes on session exit.
+
+- **Type**: PostToolUse hook
+- **Purpose**: Workaround for upstream MCP process leak bug
 
 ## Installation
 
@@ -57,11 +84,15 @@ claude plugins add jacobpevans-cc-plugins/<plugin-name>
 
 **Available plugins**:
 
-- `jacobpevans-cc-plugins/git-rebase-workflow`
-- `jacobpevans-cc-plugins/issue-limiter`
-- `jacobpevans-cc-plugins/markdown-validator`
-- `jacobpevans-cc-plugins/token-validator`
-- `jacobpevans-cc-plugins/webfetch-guard`
+- `jacobpevans-cc-plugins/git-guards`
+- `jacobpevans-cc-plugins/content-guards`
+- `jacobpevans-cc-plugins/git-workflows`
+- `jacobpevans-cc-plugins/github-workflows`
+- `jacobpevans-cc-plugins/ai-delegation`
+- `jacobpevans-cc-plugins/config-management`
+- `jacobpevans-cc-plugins/codeql-resolver`
+- `jacobpevans-cc-plugins/infra-orchestration`
+- `jacobpevans-cc-plugins/process-cleanup`
 
 ### Local Development
 
@@ -70,11 +101,10 @@ Clone this repository and link plugins:
 ```bash
 git clone https://github.com/JacobPEvans/claude-code-plugins.git
 cd claude-code-plugins
-claude plugins link ./git-rebase-workflow
-claude plugins link ./issue-limiter
-claude plugins link ./markdown-validator
-claude plugins link ./token-validator
-claude plugins link ./webfetch-guard
+claude plugins link ./git-guards
+claude plugins link ./content-guards
+claude plugins link ./git-workflows
+claude plugins link ./github-workflows
 ```
 
 ## Plugin Structure
@@ -150,7 +180,7 @@ Run the shared test runner to execute all plugin tests:
 ./scripts/run-tests.sh content-guards
 
 # Alternative: run bats directly on a specific test file
-bats content-guards/tests/markdown-validator.bats
+bats tests/content-guards/markdown-validator/validate-markdown.bats
 ```
 
 ### Git Hooks
