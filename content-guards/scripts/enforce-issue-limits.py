@@ -168,12 +168,19 @@ def main() -> None:
             )
             sys.exit(2)
 
-        # Check 24h issue rate limit
-        recent_issues = _count_recent("issue")
+        # Check 24h issue rate limit (scoped to @me so other contributors
+        # or bots creating issues in the same window don't block Claude).
+        recent_issues = _count_recent("issue", ["--author", "@me"])
         if recent_issues >= RATE_LIMIT_24H:
             block_rate_limit("issues", recent_issues)
 
     # --- gh pr create / gh pr edit: check 24h PR rate limit ---
+    # Note: `_count_recent` counts by `createdAt`, so `gh pr edit` on a PR
+    # that was created more than 24 hours ago does not accumulate against this
+    # limit.  Tracking edit frequency would require a separate local state
+    # file with timestamps, which is out of scope for this hook.  The rate
+    # limit therefore applies to PR *creation* only; the `gh pr edit` guard
+    # exists to catch same-session churn on newly created PRs.
     if is_pr_create or is_pr_edit:
         recent_prs = _count_recent("pr", ["--author", "@me"])
         if recent_prs >= RATE_LIMIT_24H:
