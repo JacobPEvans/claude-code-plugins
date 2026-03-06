@@ -10,15 +10,15 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 
 | Plugin | Type | Tools/Commands | Purpose |
 |--------|------|--------|---------|
-| **git-permission-guard** | PreToolUse | Bash | Blocks dangerous git/gh commands |
+| **git-guards** | PreToolUse | Bash, Edit, Write, NotebookEdit | Blocks dangerous git/gh commands; prevents file edits on main branch |
+| **content-guards** | PreToolUse/PostToolUse | Bash (gh), Write, Edit, WebFetch, WebSearch | Token limits, markdown validation, issue backlog limits, webfetch guard |
 | **git-workflows** | Command/Skill | `/rebase-pr`, `/init-worktree`, `/sync-main` | Git worktree, sync, and PR merge workflows |
 | **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues` | GitHub PR/issue management workflows |
-| **issue-limiter** | PreToolUse | Bash (gh) | Prevents GitHub issue backlog overflow |
-| **main-branch-guard** | PreToolUse | Edit, Write, NotebookEdit | Blocks file edits on main branch |
-| **markdown-validator** | PostToolUse | Write, Edit | Validates markdown with markdownlint and cspell |
-| **pr-review-toolkit** | Skill | `/resolve-pr-threads` | Resolve PR review threads via GraphQL (read, reply, resolve) |
-| **token-validator** | PreToolUse | Write, Edit | Enforces configurable file token limits |
-| **webfetch-guard** | PreToolUse | WebFetch, WebSearch | Blocks outdated year references in web queries |
+| **ai-delegation** | Skill | — | Delegate tasks to external AI models; autonomous maintenance loops |
+| **config-management** | Skill | — | Sync AI tool permissions across repos |
+| **codeql-resolver** | Agent/Skill/Command | `/resolve-codeql` | Systematic CodeQL alert analysis and resolution |
+| **infra-orchestration** | Skill | — | Cross-repo infrastructure orchestration for Terraform and Ansible |
+| **process-cleanup** | PostToolUse | — | Cleanup orphaned MCP server processes on session exit |
 
 ## Plugin Development
 
