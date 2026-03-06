@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Tests for gh-specific ASK/DENY decisions in git-permission-guard.py."""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+SCRIPT = Path(__file__).parent / "git-permission-guard.py"
+
+
+def run(cmd: str) -> dict:
+    inp = json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}})
+    result = subprocess.run(
+        ["python3", str(SCRIPT)],
+        input=inp,
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout.strip():
+        return json.loads(result.stdout.strip())
+    return {}
+
+
+def check(label: str, cmd: str, expected_decision: str) -> bool:
+    out = run(cmd)
+    if not out:
+        actual = "silent_allow"
+    else:
+        actual = out["hookSpecificOutput"]["permissionDecision"]
+
+    ok = actual == expected_decision
+    status = "PASS" if ok else "FAIL"
+    print(f"{status} [{label}]: decision={actual}")
+    if not ok:
+        print(f"  Expected: {expected_decision}, Got: {actual}")
+    return ok
+
+
+all_pass = True
+
+# DENY_GH: gh pr comment must be denied (use review threads instead)
+all_pass &= check("gh pr comment deny", "gh pr comment 42 --body 'looks good'", "deny")
+# gh pr comment with --body flag variant
+all_pass &= check("gh pr comment -b flag", "gh pr comment 42 -b 'feedback here'", "deny")
+
+# ASK_GH: destructive/irreversible gh commands require confirmation
+all_pass &= check("gh repo delete ask", "gh repo delete owner/repo", "ask")
+all_pass &= check("gh release delete ask", "gh release delete v1.0.0", "ask")
+all_pass &= check("gh issue close ask", "gh issue close 123", "ask")
+all_pass &= check("gh pr close ask", "gh pr close 42", "ask")
+all_pass &= check("gh pr merge ask", "gh pr merge 42 --squash", "ask")
+
+# Silent-allow: safe gh read commands must not be blocked
+all_pass &= check("gh pr list silent", "gh pr list", "silent_allow")
+all_pass &= check("gh issue list silent", "gh issue list", "silent_allow")
+all_pass &= check("gh pr view silent", "gh pr view 42", "silent_allow")
+all_pass &= check("gh repo view silent", "gh repo view owner/repo", "silent_allow")
+
+# Non-gh command must not trigger gh checks
+all_pass &= check("non-gh command", "echo 'gh pr comment'", "silent_allow")
+
+print()
+print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
+sys.exit(0 if all_pass else 1)
