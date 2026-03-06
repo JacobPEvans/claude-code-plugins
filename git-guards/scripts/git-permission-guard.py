@@ -256,10 +256,16 @@ def main():
         for pattern, reason in DENY_GIT_ONLY:
             if re.search(pattern, subcommand, re.IGNORECASE):
                 deny(f"This command {reason}. Fix the underlying issue instead.")
-        # Check git -c config options for hook bypass attempts
+        # Check git -c config options for hook bypass attempts.
+        # Anchor to the key portion to avoid false positives where the value
+        # contains 'core.hooksPath' as a substring.
         for opt in git_config_opts:
-            if re.search(r"core\.hooksPath", opt, re.IGNORECASE):
+            if re.match(r"core\.hooksPath\s*(?:=|$)", opt, re.IGNORECASE):
                 deny("This command bypasses configured hooks. Fix the underlying issue instead.")
+        # Fallback: detect -c core.hooksPath when the extraction loop broke early
+        # on an unrecognised git global option (e.g. --no-pager, --bare).
+        if not git_config_opts and re.search(r"-c\s+['\"]?core\.hooksPath", subcommand, re.IGNORECASE):
+            deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
     # Check DENY_GH patterns (token prefix match on gh subcommand)
     if is_gh:

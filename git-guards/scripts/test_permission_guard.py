@@ -88,6 +88,12 @@ all_pass &= check("git -C reset --hard", "git -C /some/path reset --hard HEAD", 
 all_pass &= check("git -C -c core.hooksPath deny", "git -C /some/path -c core.hooksPath=/dev/null commit -m test", "deny")
 all_pass &= check("git -C restore ask", "git -C /some/path restore file.txt", "ask")
 
+# core.hooksPath precision: value containing the string should not trigger deny
+all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath commit -m test", "silent_allow")
+
+# Fallback bypass detection: unrecognised global option before -c breaks loop early
+all_pass &= check("--no-pager before -c hooksPath", "git --no-pager -c core.hooksPath=/dev/null commit -m msg", "deny")
+
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
 sys.exit(0 if all_pass else 1)
