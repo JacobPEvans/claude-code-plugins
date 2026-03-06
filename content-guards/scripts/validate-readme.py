@@ -94,10 +94,10 @@ def load_config(file_path: Path) -> dict:
 
 
 def parse_headings(content: str) -> list[str]:
-    """Extract all ## level headings from markdown content."""
+    """Extract all h1, h2, and h3 headings from markdown content."""
     headings = []
     for line in content.splitlines():
-        match = re.match(r"^##\s+(.+)$", line)
+        match = re.match(r"^#{1,3}\s+(.+)$", line)
         if match:
             headings.append(match.group(1).strip())
     return headings
@@ -111,12 +111,12 @@ def check_required_sections(content: str, required: list[str]) -> list[str]:
 
 def check_install_code_blocks(content: str) -> bool:
     """Check that the Installation section contains at least one code block."""
-    pattern = re.compile(r"^##\s+Installation\s*$", re.IGNORECASE | re.MULTILINE)
+    pattern = re.compile(r"^#{1,3}\s+Installation\s*$", re.IGNORECASE | re.MULTILINE)
     match = pattern.search(content)
     if not match:
         return True  # No Installation section; required-sections check handles this
     start = match.end()
-    next_heading = re.search(r"^##\s+", content[start:], re.MULTILINE)
+    next_heading = re.search(r"^#{1,3}\s+", content[start:], re.MULTILINE)
     section = content[start : start + next_heading.start()] if next_heading else content[start:]
     return "```" in section
 
