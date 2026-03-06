@@ -47,7 +47,10 @@ Report sync status for all open PR branches.
 3. **List open PRs**: `gh pr list --state open --json number,headRefName,title`
 4. **Check each PR**: Launch subagents in parallel (invoke `superpowers:dispatching-parallel-agents`). Each checks if behind main. Do NOT merge or push.
 5. **Report**: repo, main SHA, merge-readiness for each PR (current/behind/conflict)
-6. **Sync conflict-free branches**: For each branch classified as `behind` (not `conflict`) in step 5, merge `origin/main` using `git merge origin/main --no-edit`. Branches already classified as `conflict` in step 5 are skipped entirely — no merge is attempted on them, so no `git merge --abort` is needed. No confirmation required.
+6. **Sync conflict-free branches**: For each branch classified as `behind` (not `conflict`) in step 5,
+   merge `origin/main` using `git merge origin/main --no-edit`. Branches already classified as
+   `conflict` in step 5 are skipped entirely — no merge is attempted, so no `git merge --abort` needed.
+   No confirmation required.
 7. **Report conflicting branches**: Branches skipped due to pre-identified conflicts are reported for manual resolution
 
 ## Conflict Resolution
