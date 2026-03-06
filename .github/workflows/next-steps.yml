@@ -8,6 +8,11 @@ permissions:
   id-token: write
   pull-requests: write
   issues: write
+
+concurrency:
+  group: next-steps
+  cancel-in-progress: true
+
 jobs:
   next-steps:
     uses: JacobPEvans/ai-workflows/.github/workflows/next-steps.yml@v0.8.0
