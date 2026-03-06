@@ -269,10 +269,14 @@ def main():
         # only fires for opts the loop didn't reach.
         # Use shlex tokenisation to avoid false positives from commit messages
         # that contain the literal substring (e.g. -m "... -c core.hooksPath ...").
+        # On ValueError (malformed shell input such as unclosed quotes), treat as
+        # non-matching: malformed input cannot be a valid -c core.hooksPath bypass,
+        # and falling back to .split() would reintroduce the false-positive this
+        # check was added to prevent.
         try:
             subcmd_tokens = shlex.split(subcommand)
         except ValueError:
-            subcmd_tokens = subcommand.split()
+            subcmd_tokens = []
         for i, tok in enumerate(subcmd_tokens):
             if tok == "-c" and i + 1 < len(subcmd_tokens):
                 if re.match(r"core\.hooksPath\s*(?:=|$)", subcmd_tokens[i + 1], re.IGNORECASE):
