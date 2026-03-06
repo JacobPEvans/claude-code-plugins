@@ -25,7 +25,6 @@ DENY_GIT_ONLY = [
     (r"cherry-pick\s+.*--no-verify", "bypasses commit hooks"),
     (r"rebase\s+.*--no-verify", "bypasses commit hooks"),
     (r"config\s+.*core\.hooksPath", "changes hook directory"),
-    (r"-c\s+core\.hooksPath", "bypasses configured hooks"),
 ]
 
 # Commands requiring explicit user confirmation
@@ -226,17 +225,11 @@ def main():
     if not is_git and not is_gh:
         sys.exit(0)
 
-    # Check git-specific DENY patterns (after early exit to avoid false
-    # positives from matching substrings in non-git commands like gh api)
-    if is_git:
-        for pattern, reason in DENY_GIT_ONLY:
-            if re.search(pattern, command, re.IGNORECASE):
-                deny(f"This command {reason}. Fix the underlying issue instead.")
-
-    # Extract subcommand for git (handle -C <path>, -c <key=value>)
+    # Extract subcommand (handle -C <path>, -c <key=value>) + collect git config options
     if is_git:
         rest = command[4:] if command.startswith("git ") else ""
-        # Strip git options to find actual subcommand
+        git_config_opts = []
+        # Strip git global options to find actual subcommand
         while rest:
             # -C <path>
             m = re.match(r'^-C\s+("[^"]+"|\'[^\']+\'|\S+)\s*(.*)', rest)
@@ -246,14 +239,33 @@ def main():
             # -c <key=value>
             m = re.match(r'^-c\s+("[^"]+"|\'[^\']+\'|\S+)\s*(.*)', rest)
             if m:
+                git_config_opts.append(m.group(1).strip("'\""))
                 rest = m.group(2).strip()
                 continue
             break
         subcommand = rest
     else:
+        git_config_opts = []
         subcommand = command[3:] if command.startswith("gh ") else ""
 
     sub_tokens = subcommand.split()
+
+    # Check git-specific DENY patterns against extracted subcommand (after early
+    # exit to avoid false positives from matching substrings in non-git commands)
+    if is_git:
+        for pattern, reason in DENY_GIT_ONLY:
+            if re.search(pattern, subcommand, re.IGNORECASE):
+                deny(f"This command {reason}. Fix the underlying issue instead.")
+        # Check git -c config options for hook bypass attempts.
+        # Anchor to the key portion to avoid false positives where the value
+        # contains 'core.hooksPath' as a substring.
+        for opt in git_config_opts:
+            if re.match(r"core\.hooksPath\s*(?:=|$)", opt, re.IGNORECASE):
+                deny("This command bypasses configured hooks. Fix the underlying issue instead.")
+        # Fallback: detect -c core.hooksPath when the extraction loop broke early
+        # on an unrecognised git global option (e.g. --no-pager, --bare).
+        if not git_config_opts and re.search(r"-c\s+['\"]?core\.hooksPath", subcommand, re.IGNORECASE):
+            deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
     # Check DENY_GH patterns (token prefix match on gh subcommand)
     if is_gh:
