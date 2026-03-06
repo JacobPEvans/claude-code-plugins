@@ -217,17 +217,19 @@ Wait for explicit user merge commands.
 
 ## Workflow
 
+Use this skill ONLY after a PR already exists. To create a PR first, use `gh pr create`.
+
 ```text
-Single PR:
-/init-worktree → [implement] → gh pr create → /finalize-pr [number]
-                                                      ↓
-                              Phase 1: Resolve PR number
-                              Phase 2: Resolution Loop (automatic fixes)
-                              Phase 3: Pre-Handoff Verification
-                              Phase 4: Update PR Metadata
-                              Phase 5: Report ready (wait for user)
-                                                      ↓
-                              User invokes: /squash-merge-pr or /rebase-pr
+Single PR (PR already created):
+/finalize-pr [number]
+  ↓
+Phase 1: Resolve PR number
+Phase 2: Resolution Loop (automatic fixes)
+Phase 3: Pre-Handoff Verification
+Phase 4: Update PR Metadata
+Phase 5: Report ready (wait for user)
+  ↓
+User invokes: /squash-merge-pr or /rebase-pr
 
 Repo-wide:
 /finalize-pr all
