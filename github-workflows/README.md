@@ -4,7 +4,7 @@ Claude Code plugin for PR management and issue shaping with Shape Up methodology
 
 ## Skills
 
-- **`/finalize-pr`** - Automatically finalize pull requests for merge (CodeQL checks, CI, review threads)
+- **`/finalize-pr`** - Finalize PRs for merge: single PR, all repo PRs (`all`), or all org PRs (`org`). Includes bot-authored PRs in all modes.
 - **`/squash-merge-pr`** - Validate PR readiness and squash merge into main (errors if not ready)
 - **`/resolve-pr-threads`** - Orchestrate resolution of PR review threads (requires superpowers plugin)
 - **`/shape-issues`** - Shape raw ideas into actionable GitHub Issues using Shape Up methodology
@@ -19,7 +19,10 @@ claude plugins add jacobpevans-cc-plugins/github-workflows
 ## Usage
 
 ```text
-/finalize-pr              # Automatic PR finalization workflow
+/finalize-pr              # Finalize PR on current branch
+/finalize-pr 42           # Finalize specific PR by number
+/finalize-pr all          # Finalize all open PRs in repo (including bots)
+/finalize-pr org          # Finalize all open PRs across org (including bots)
 /squash-merge-pr          # Validate and squash merge
 /resolve-pr-threads       # Batch resolve review threads
 /shape-issues             # Shape ideas into GitHub issues

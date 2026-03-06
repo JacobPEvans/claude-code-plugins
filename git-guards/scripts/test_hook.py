@@ -121,7 +121,7 @@ def test_allow_for_non_main():
             check=True,
         )
         subprocess.run(
-            ["git", "checkout", "-b", "feat/test-feature"],
+            ["git", "checkout", "-b", "feature/test-feature"],
             cwd=feat_worktree,
             capture_output=True,
             check=True,

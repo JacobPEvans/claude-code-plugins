@@ -1,0 +1,26 @@
+name: AI CI
+
+on:
+  workflow_run:
+    workflows: ["Validate Claude Code Plugin"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+  id-token: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: ai-ci-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  ci-suite:
+    uses: JacobPEvans/ai-workflows/.github/workflows/suite-ci.yml@v0.8.0
+    with:
+      repo_context: "Claude Code plugins: skills, hooks, and slash commands for Claude Code CLI"
+      ci_structure: "validate-plugin.yml (JSON schema validation for plugin manifests)"
+      workflow_name: "Validate Claude Code Plugin"
+    secrets: inherit

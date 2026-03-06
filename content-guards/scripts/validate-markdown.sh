@@ -134,7 +134,7 @@ fi
 if command -v cspell &>/dev/null; then
   cspell_dir="$(dirname -- "$file_path")"
   cspell_file="$(basename -- "$file_path")"
-  if ! cspell_output=$( cd "$cspell_dir" && cspell --no-progress "$cspell_file" 2>&1 ); then
+  if ! cspell_output=$(cd "$cspell_dir" && cspell --no-progress --no-must-find-files "$cspell_file" 2>&1); then
     errors+=("cspell failed:")
     errors+=("$cspell_output")
   fi

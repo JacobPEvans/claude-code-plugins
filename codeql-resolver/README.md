@@ -13,7 +13,9 @@ A Claude Code plugin that provides systematic analysis and resolution of CodeQL 
 ## Key Features
 
 ### Alert Classification
+
 Automatically categorizes CodeQL alerts by type:
+
 - ✅ **Permissions** - "Workflow does not contain permissions"
 - ✅ **Expression Injection** - Untrusted input in shell commands
 - ✅ **Other** - Resource leaks, hardcoded credentials, etc.
@@ -21,21 +23,28 @@ Automatically categorizes CodeQL alerts by type:
 ### Specialized Agents
 
 #### 1. Permissions Auditor
+
 Fixes "Workflow does not contain permissions" alerts by:
+
 - Analyzing reusable workflow call requirements
 - Determining minimum permissions needed
 - Adding explicit least-privilege blocks
 
-**Test case**: [ci-gate.yml](https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/.github/workflows/ci-gate.yml) - Fixed 8 alerts with this agent's methodology
+**Test case**: [ci-gate.yml](https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/.github/workflows/ci-gate.yml) -
+Fixed 8 alerts with this agent's methodology
 
 #### 2. Expression Injection Fixer
+
 Mitigates GitHub Actions expression injection vulnerabilities by:
+
 - Identifying dangerous untrusted inputs
 - Wrapping in environment variables
 - Following GitHub's official security guidance
 
 #### 3. Generic Resolver
+
 Handles other CodeQL alert types:
+
 - Resource leaks, hardcoded credentials, unsafe shell
 - Escalates unclear issues for human review
 - Provides detailed analysis when patterns match
@@ -85,7 +94,7 @@ claude --plugin-dir /path/to/codeql-resolver
 
 ## Architecture
 
-```
+```text
 ┌────────────────────────────────────┐
 │   /resolve-codeql (Command)        │
 │   - Discover alerts via GitHub API │
@@ -116,7 +125,7 @@ claude --plugin-dir /path/to/codeql-resolver
 
 ## Plugin Structure
 
-```
+```text
 codeql-resolver/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest
@@ -144,7 +153,8 @@ cd ~/git/ai-assistant-instructions
 ```
 
 **Output**:
-```
+
+```text
 CodeQL Alert Resolution Report
 ===============================
 File: .github/workflows/ci-gate.yml
@@ -173,7 +183,8 @@ Commit: "security: fix CodeQL alerts - add explicit permissions"
 ```
 
 **Output**:
-```
+
+```text
 CodeQL Alert Resolution Report
 ===============================
 Alert Type: Expression Injection
@@ -220,7 +231,7 @@ All fixes follow these security principles:
 ### Local Testing
 
 ```bash
-cd ~/git/claude-code-plugins/feat/codeql-resolver/codeql-resolver
+cd ~/git/claude-code-plugins/feature/codeql-resolver/codeql-resolver
 python3 scripts/test_codeql_plugin.py
 ```
 
