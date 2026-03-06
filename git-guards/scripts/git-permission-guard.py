@@ -262,9 +262,11 @@ def main():
         for opt in git_config_opts:
             if re.match(r"core\.hooksPath\s*(?:=|$)", opt, re.IGNORECASE):
                 deny("This command bypasses configured hooks. Fix the underlying issue instead.")
-        # Fallback: detect -c core.hooksPath when the extraction loop broke early
-        # on an unrecognised git global option (e.g. --no-pager, --bare).
-        if not git_config_opts and re.search(r"-c\s+['\"]?core\.hooksPath", subcommand, re.IGNORECASE):
+        # Fallback: detect -c core.hooksPath remaining in the subcommand when the
+        # extraction loop broke early on an unrecognised git global option.
+        # Successfully parsed -c opts are stripped from subcommand, so this
+        # only fires for opts the loop didn't reach.
+        if re.search(r"-c\s+['\"]?core\.hooksPath", subcommand, re.IGNORECASE):
             deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
     # Check DENY_GH patterns (token prefix match on gh subcommand)
