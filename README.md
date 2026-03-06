@@ -4,7 +4,7 @@ A collection of Claude Code plugins for enhanced development workflows with AI a
 
 ## Available Plugins
 
-### git-rebase-workflow
+### git-workflows
 
 Local rebase-merge workflow for maintaining linear git history with signed commits.
 
@@ -57,11 +57,15 @@ claude plugins add jacobpevans-cc-plugins/<plugin-name>
 
 **Available plugins**:
 
-- `jacobpevans-cc-plugins/git-rebase-workflow`
-- `jacobpevans-cc-plugins/issue-limiter`
-- `jacobpevans-cc-plugins/markdown-validator`
-- `jacobpevans-cc-plugins/token-validator`
-- `jacobpevans-cc-plugins/webfetch-guard`
+- `jacobpevans-cc-plugins/git-guards`
+- `jacobpevans-cc-plugins/content-guards`
+- `jacobpevans-cc-plugins/git-workflows`
+- `jacobpevans-cc-plugins/github-workflows`
+- `jacobpevans-cc-plugins/ai-delegation`
+- `jacobpevans-cc-plugins/config-management`
+- `jacobpevans-cc-plugins/codeql-resolver`
+- `jacobpevans-cc-plugins/infra-orchestration`
+- `jacobpevans-cc-plugins/process-cleanup`
 
 ### Local Development
 
@@ -70,11 +74,10 @@ Clone this repository and link plugins:
 ```bash
 git clone https://github.com/JacobPEvans/claude-code-plugins.git
 cd claude-code-plugins
-claude plugins link ./git-rebase-workflow
-claude plugins link ./issue-limiter
-claude plugins link ./markdown-validator
-claude plugins link ./token-validator
-claude plugins link ./webfetch-guard
+claude plugins link ./git-guards
+claude plugins link ./content-guards
+claude plugins link ./git-workflows
+claude plugins link ./github-workflows
 ```
 
 ## Plugin Structure
@@ -150,7 +153,7 @@ Run the shared test runner to execute all plugin tests:
 ./scripts/run-tests.sh content-guards
 
 # Alternative: run bats directly on a specific test file
-bats content-guards/tests/markdown-validator.bats
+bats tests/content-guards/markdown-validator/validate-markdown.bats
 ```
 
 ### Git Hooks
