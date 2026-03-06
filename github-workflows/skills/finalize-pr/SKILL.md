@@ -221,7 +221,8 @@ Use this skill ONLY after a PR already exists. To create a PR first, use `gh pr 
 
 ```text
 Single PR (PR already created):
-/finalize-pr [number]
+/finalize-pr                (current branch)
+/finalize-pr <PR_NUMBER>    (by number)
   ↓
 Phase 1: Resolve PR number
 Phase 2: Resolution Loop (automatic fixes)
