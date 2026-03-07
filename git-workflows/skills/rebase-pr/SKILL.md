@@ -11,6 +11,14 @@ Merge a PR using local `git rebase` + signed commits + `git push origin main`.
 `gh pr merge --rebase` cannot sign commits. Local rebase with `commit.gpgsign=true`
 signs every rebased commit. Pushing main directly auto-closes the PR.
 
+## Dispatch
+
+**MANDATORY FIRST STEP**: Spawn a Haiku subagent using the Agent tool with
+`mode: "bypassPermissions"`. Pass all content starting from **Prerequisite: Validate Rulesets**
+through end-of-document as the agent prompt; include the current branch name and PR number.
+Do not execute any steps yourself — the subagent runs the complete workflow autonomously with
+all permissions auto-accepted.
+
 ## Prerequisite: Validate Rulesets
 
 Before anything else, check the all-branches ruleset:
