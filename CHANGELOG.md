@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.1.0...v1.2.0) (2026-03-07)
+
+
+### Features
+
+* **rebase-pr:** auto-dispatch to Haiku subagent with bypassPermissions ([#103](https://github.com/JacobPEvans/claude-code-plugins/issues/103)) ([8af9bec](https://github.com/JacobPEvans/claude-code-plugins/commit/8af9bec5b715231865240da952e3b2195bc35b9f))
+
+
+### Bug Fixes
+
+* **content-guards:** lower PR/issue rate limit to 5/day and add duplicate detection ([#101](https://github.com/JacobPEvans/claude-code-plugins/issues/101)) ([1563350](https://github.com/JacobPEvans/claude-code-plugins/commit/1563350df7d4cfe61dfd20b72b5019f155302e17))
+
 ## [1.1.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.0.0...v1.1.0) (2026-03-07)
 
 
