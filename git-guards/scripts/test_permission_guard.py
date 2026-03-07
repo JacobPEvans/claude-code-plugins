@@ -69,8 +69,11 @@ all_pass &= check("git clean", "git clean -fd", "ask")
 # git reset - must ask: can lose uncommitted work
 all_pass &= check("git reset", "git reset --hard HEAD", "ask")
 
-# git push --force - must ask
-all_pass &= check("git push --force", "git push --force origin main", "ask")
+# git push --force origin main - must DENY (DENY_GIT_ONLY: force-push to protected branch)
+all_pass &= check("git push --force origin main", "git push --force origin main", "deny")
+
+# git push --force to a feature branch - must ask (non-main target)
+all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "ask")
 
 # DENY: commit --no-verify
 all_pass &= check("git commit --no-verify", "git commit -m msg --no-verify", "deny")
