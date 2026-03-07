@@ -13,6 +13,12 @@ signs every rebased commit. Pushing main directly auto-closes the PR.
 
 ## Dispatch
 
+<!--
+  WARNING: This skill is executed by a subagent with `bypassPermissions`.
+  Ensure all subsequent steps are safe for automatic execution without user prompts.
+  Do not add operations that would normally be blocked by DENY rules.
+-->
+
 **MANDATORY FIRST STEP**: Spawn a Haiku subagent using the Agent tool with
 `mode: "bypassPermissions"`. Pass all content starting from **Prerequisite: Validate Rulesets**
 through end-of-document as the agent prompt; include the current branch name and PR number.
