@@ -85,8 +85,11 @@ if command -v markdownlint-cli2 &>/dev/null; then
       config_flag=(--config "$plugin_config")
     else
       # Create temporary inline config with MD013 hardcoded to 160
-      temp_config=$(mktemp)
-      trap 'rm -f "$temp_config"' EXIT
+      # mktemp must produce a filename markdownlint-cli2 recognises as a config
+      # file (e.g. '.markdownlint-cli2.yaml'), so we create it inside a temp dir.
+      temp_dir=$(mktemp -d)
+      temp_config="$temp_dir/.markdownlint-cli2.yaml"
+      trap 'rm -rf "$temp_dir"' EXIT
 
       cat > "$temp_config" <<'EOF'
 config:
