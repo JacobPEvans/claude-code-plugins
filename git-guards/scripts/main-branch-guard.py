@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""
+main-branch-guard.py - PreToolUse hook to prevent Edit/Write/NotebookEdit on main branch.
+
+Blocks file editing operations when the file is in a git repository on the main branch.
+Ignores files outside git repositories (like ~/.claude/plans/).
+
+Exit codes: 0=allow (JSON on stdout), 0=deny (JSON on stdout with permissionDecision=deny)
+"""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+def deny(reason: str) -> None:
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }))
+    sys.exit(0)
+
+
+def is_in_git_repo(file_path: str) -> bool:
+    """Check if the file's directory is inside a git repository."""
+    path = Path(file_path)
+    file_dir = str(path.parent)
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-dir"],
+            cwd=file_dir,
+            capture_output=True,
+            text=True,
+        )
+        return result.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def get_worktree_root(file_path: str) -> str:
+    """Get the git worktree root directory for the given file."""
+    path = Path(file_path)
+    file_dir = str(path.parent)
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=file_dir,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return ""
+
+
+def get_current_branch(file_path: str) -> str:
+    """Get the current git branch from the file's directory."""
+    path = Path(file_path)
+    file_dir = str(path.parent)
+    try:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            cwd=file_dir,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return ""
+
+
+def main() -> None:
+    try:
+        hook_input = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        sys.exit(0)
+
+    tool_name = hook_input.get("tool_name", "")
+    if tool_name not in ("Edit", "Write", "NotebookEdit"):
+        sys.exit(0)
+
+    tool_input = hook_input.get("tool_input", {})
+    file_path = tool_input.get("file_path") or tool_input.get("notebook_path", "")
+    if not file_path:
+        sys.exit(0)
+
+    if not is_in_git_repo(file_path):
+        sys.exit(0)
+
+    worktree_root = get_worktree_root(file_path)
+    if worktree_root and Path(worktree_root).name == "main":
+        deny(
+            f"BLOCKED: File '{file_path}' is in the main worktree. "
+            "Editing files on the main branch is not allowed.\n\n"
+            "Run `/init-worktree` to create a feature branch.",
+        )
+
+    current_branch = get_current_branch(file_path)
+    if current_branch == "main":
+        deny(
+            f"BLOCKED: Current branch is 'main'. "
+            "Editing files on the main branch is not allowed.\n\n"
+            "Run `/init-worktree` to create a feature branch.",
+        )
+
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

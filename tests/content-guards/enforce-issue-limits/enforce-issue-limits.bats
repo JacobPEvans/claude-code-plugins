@@ -233,7 +233,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC14: gh issue create blocked when duplicate open issue exists" {
-  export GH_RESPONSE='[{"title":"chore: update dependencies","number":10,"labels":[],"number":10}]'
+  export GH_RESPONSE='[{"title":"chore: update dependencies","number":10,"labels":[]}]'
 
   run_hook '{"tool_input":{"command":"gh issue create --title \"chore: update dependencies\""}}'
   [ "$status" -eq 2 ]
