@@ -115,10 +115,10 @@ run_hook() {
 # TC5: gh issue create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC5: gh issue create blocked when 15 issues created in last 24h" {
+@test "TC5: gh issue create blocked when 5 issues created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 15)"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 5)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
@@ -130,10 +130,10 @@ run_hook() {
 # TC6: gh pr create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC6: gh pr create blocked when 15 PRs created in last 24h" {
+@test "TC6: gh pr create blocked when 5 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 15)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 5)"
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
@@ -145,10 +145,10 @@ run_hook() {
 # TC7: gh pr edit - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC7: gh pr edit blocked when 15 PRs created in last 24h" {
+@test "TC7: gh pr edit blocked when 5 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 15)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 5)"
 
   run_hook '{"tool_input":{"command":"gh pr edit 42 --title new-title"}}'
   [ "$status" -eq 2 ]
@@ -191,4 +191,63 @@ run_hook() {
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
   [[ ! "$output" =~ "agentsmd/skills/consolidate-issues" ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC11: gh pr create - duplicate PR detection (exit 2)
+# ---------------------------------------------------------------------------
+
+@test "TC11: gh pr create blocked when duplicate open PR exists" {
+  export GH_RESPONSE='[{"title":"docs: fix stale references","number":42}]'
+
+  run_hook '{"tool_input":{"command":"gh pr create --title \"docs: fix stale references\""}}'
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "BLOCKED: Duplicate PR detected" ]]
+  [[ "$output" =~ "#42" ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC12: gh pr create - different title allowed (exit 0)
+# ---------------------------------------------------------------------------
+
+@test "TC12: gh pr create allowed when no duplicate PR" {
+  export GH_RESPONSE='[{"title":"docs: fix stale references","number":42,"createdAt":"2020-01-01T00:00:00Z"}]'
+
+  run_hook '{"tool_input":{"command":"gh pr create --title \"feat: add new feature\""}}'
+  [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# TC13: gh pr create - no title flag passes through (exit 0)
+# ---------------------------------------------------------------------------
+
+@test "TC13: gh pr create without --title flag is allowed" {
+  export GH_RESPONSE='[{"title":"docs: fix stale references","number":42,"createdAt":"2020-01-01T00:00:00Z"}]'
+
+  run_hook '{"tool_input":{"command":"gh pr create --body something"}}'
+  [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# TC14: gh issue create - duplicate issue detection (exit 2)
+# ---------------------------------------------------------------------------
+
+@test "TC14: gh issue create blocked when duplicate open issue exists" {
+  export GH_RESPONSE='[{"title":"chore: update dependencies","number":10,"labels":[],"number":10}]'
+
+  run_hook '{"tool_input":{"command":"gh issue create --title \"chore: update dependencies\""}}'
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "BLOCKED: Duplicate issue detected" ]]
+  [[ "$output" =~ "#10" ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC15: gh issue create - different title allowed (exit 0)
+# ---------------------------------------------------------------------------
+
+@test "TC15: gh issue create allowed when no duplicate issue" {
+  export GH_RESPONSE='[{"title":"chore: update dependencies","number":10,"labels":[],"createdAt":"2020-01-01T00:00:00Z"}]'
+
+  run_hook '{"tool_input":{"command":"gh issue create --title \"fix: broken login\""}}'
+  [ "$status" -eq 0 ]
 }

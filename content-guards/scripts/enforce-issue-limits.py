@@ -7,8 +7,8 @@ Blocks `gh issue create` when issue limits are exceeded, and enforces
 Limits:
   - 50 total open issues: Hard block on issue creation
   - 25 AI-created issues: Hard block on issue creation
-  - 15 issues created in 24 hours: Rate limit block (checked per resource type)
-  - 15 PRs created in 24 hours: Rate limit block (checked per resource type)
+  - 5 issues created in 24 hours: Rate limit block (checked per resource type)
+  - 5 PRs created in 24 hours: Rate limit block (checked per resource type)
 
 Exit codes:
   0 = allow the command
@@ -18,6 +18,8 @@ Input: JSON from stdin with tool_input.command containing the Bash command
 """
 
 import json
+import re
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -27,7 +29,7 @@ TOTAL_ISSUE_LIMIT = 50
 AI_ISSUE_LIMIT = 25
 
 # 24-hour rate limit for issues and PRs
-RATE_LIMIT_24H = 15
+RATE_LIMIT_24H = 5
 
 _GH_ERRORS = (
     subprocess.TimeoutExpired,
@@ -106,6 +108,86 @@ def block_rate_limit(kind: str, count: int) -> None:
     sys.exit(2)
 
 
+def extract_flag_value(command: str, flag: str) -> str | None:
+    """Extract the value of a CLI flag (e.g. --title) from a command string."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return None
+    for i, token in enumerate(tokens):
+        if token == flag and i + 1 < len(tokens):
+            return tokens[i + 1]
+        if token.startswith(f"{flag}="):
+            return token[len(flag) + 1 :]
+    return None
+
+
+def normalize_title(title: str) -> list[str]:
+    """Strip type prefix (e.g. 'fix:', 'docs:') and return first 4 lowercase words."""
+    cleaned = re.sub(r"^[a-z]+(\([^)]*\))?:\s*", "", title.strip().lower())
+    words = cleaned.split()
+    return words[:4]
+
+
+def _block_duplicate(kind: str, title: str, existing_number: int) -> None:
+    """Print duplicate block message and exit with code 2."""
+    print(
+        f"\n{'=' * 64}\n"
+        f"BLOCKED: Duplicate {kind} detected\n"
+        f"{'=' * 64}\n\n"
+        f"  Your title matches existing #{existing_number}: {title!r}\n\n"
+        f"Ask the user before creating a duplicate {kind}.\n"
+        f"{'=' * 64}\n",
+        file=sys.stderr,
+        flush=True,
+    )
+    sys.exit(2)
+
+
+def check_duplicate_pr(command: str) -> None:
+    """Block if an open PR has a similar title to the one being created."""
+    title = extract_flag_value(command, "--title")
+    if not title:
+        return
+    proposed = normalize_title(title)
+    if len(proposed) < 2:
+        return
+    cmd = ["gh", "pr", "list", "--state", "open", "--json", "title,number"]
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, timeout=30
+        )
+        prs = json.loads(result.stdout)
+    except _GH_ERRORS:
+        return  # fail-open
+    for pr in prs:
+        existing = normalize_title(pr.get("title", ""))
+        if len(existing) >= 2 and proposed == existing:
+            _block_duplicate("PR", pr["title"], pr["number"])
+
+
+def check_duplicate_issue(command: str) -> None:
+    """Block if an open issue has a similar title to the one being created."""
+    title = extract_flag_value(command, "--title")
+    if not title:
+        return
+    proposed = normalize_title(title)
+    if len(proposed) < 2:
+        return
+    cmd = ["gh", "issue", "list", "--state", "open", "--json", "title,number"]
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, timeout=30
+        )
+        issues = json.loads(result.stdout)
+    except _GH_ERRORS:
+        return  # fail-open
+    for issue in issues:
+        existing = normalize_title(issue.get("title", ""))
+        if len(existing) >= 2 and proposed == existing:
+            _block_duplicate("issue", issue["title"], issue["number"])
+
+
 def main() -> None:
     # Read hook input from stdin
     try:
@@ -132,6 +214,12 @@ def main() -> None:
     # Only act on commands we care about
     if not (is_issue_create or is_pr_create or is_pr_edit):
         sys.exit(0)
+
+    # --- Duplicate detection (before rate limits) ---
+    if is_pr_create:
+        check_duplicate_pr(command)
+    if is_issue_create:
+        check_duplicate_issue(command)
 
     # --- gh issue create: check existing limits AND 24h rate limit ---
     if is_issue_create:
