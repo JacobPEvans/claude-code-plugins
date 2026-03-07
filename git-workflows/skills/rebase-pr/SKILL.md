@@ -25,6 +25,11 @@ through end-of-document as the agent prompt; include the current branch name and
 Do not execute any steps yourself — the subagent runs the complete workflow autonomously with
 all permissions auto-accepted.
 
+If the Haiku subagent cannot be spawned, becomes unavailable, or encounters an unrecoverable
+error while running this workflow, clearly report the failure to the user and ask whether to
+(a) retry spawning the subagent or (b) proceed manually by following the remaining steps of
+this document together step-by-step.
+
 ## Prerequisite: Validate Rulesets
 
 Before anything else, check the all-branches ruleset:
