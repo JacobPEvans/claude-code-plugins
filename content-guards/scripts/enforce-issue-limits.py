@@ -41,7 +41,7 @@ _GH_ERRORS = (
 
 def get_issue_counts() -> tuple[int, int]:
     """Count total and AI-created open issues in one pass."""
-    cmd = ["gh", "issue", "list", "--state", "open", "--json", "number,labels"]
+    cmd = ["gh", "issue", "list", "--state", "open", "--json", "number,labels", "--limit", "100"]
     try:
         result = subprocess.run(
             cmd, capture_output=True, text=True, check=True, timeout=30
@@ -152,7 +152,7 @@ def check_duplicate_pr(command: str) -> None:
     proposed = normalize_title(title)
     if len(proposed) < 2:
         return
-    cmd = ["gh", "pr", "list", "--state", "open", "--json", "title,number"]
+    cmd = ["gh", "pr", "list", "--state", "open", "--json", "title,number", "--limit", "100"]
     try:
         result = subprocess.run(
             cmd, capture_output=True, text=True, check=True, timeout=30
@@ -174,7 +174,7 @@ def check_duplicate_issue(command: str) -> None:
     proposed = normalize_title(title)
     if len(proposed) < 2:
         return
-    cmd = ["gh", "issue", "list", "--state", "open", "--json", "title,number"]
+    cmd = ["gh", "issue", "list", "--state", "open", "--json", "title,number", "--limit", "100"]
     try:
         result = subprocess.run(
             cmd, capture_output=True, text=True, check=True, timeout=30
