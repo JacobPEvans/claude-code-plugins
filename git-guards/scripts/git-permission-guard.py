@@ -26,6 +26,7 @@ DENY_GIT_ONLY = [
     (r"cherry-pick\s+.*--no-verify", "bypasses commit hooks"),
     (r"rebase\s+.*--no-verify", "bypasses commit hooks"),
     (r"config\s+.*core\.hooksPath", "changes hook directory"),
+    (r"push\s+(--force|--force-with-lease|-f)\s+\S+\s+main\b", "force-pushes to the main branch"),
 ]
 
 # Commands requiring explicit user confirmation

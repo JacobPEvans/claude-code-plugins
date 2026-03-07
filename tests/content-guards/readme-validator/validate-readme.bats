@@ -60,7 +60,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC3: README with all required sections passes" {
-  run_hook '{"tool_input":{"file_path":"'"$FIXTURES/valid-readme.md"'"}}'
+  run_hook '{"tool_input":{"file_path":"'"$FIXTURES/README-valid.md"'"}}'
   [ "$status" -eq 0 ]
 }
 
@@ -69,7 +69,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC4: README missing required sections is blocked" {
-  run_hook '{"tool_input":{"file_path":"'"$FIXTURES/missing-sections-readme.md"'"}}'
+  run_hook '{"tool_input":{"file_path":"'"$FIXTURES/README-missing-sections.md"'"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "Missing required sections" ]]
 }
@@ -79,7 +79,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC5: README with Installation but no code block warns but allows" {
-  run_hook '{"tool_input":{"file_path":"'"$FIXTURES/no-install-code-readme.md"'"}}'
+  run_hook '{"tool_input":{"file_path":"'"$FIXTURES/README-no-install-code.md"'"}}'
   [ "$status" -eq 0 ]
   [[ "$output" =~ "code block" ]] || [[ "$output" =~ "code blocks" ]]
 }
