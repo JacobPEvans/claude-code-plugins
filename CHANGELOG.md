@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.2.0...v1.3.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* port main-branch-guard to Python, fix CI and TC14 JSON ([#108](https://github.com/JacobPEvans/claude-code-plugins/issues/108)) ([92e323e](https://github.com/JacobPEvans/claude-code-plugins/commit/92e323efda21e57ab4f2807457db0e428d687341))
+
 ## [1.2.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.1.0...v1.2.0) (2026-03-07)
 
 
