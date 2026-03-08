@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.3.0...v1.4.0) (2026-03-08)
+
+
+### Features
+
+* disable automatic triggers on Claude-executing workflows ([6c42de9](https://github.com/JacobPEvans/claude-code-plugins/commit/6c42de9d7f8cb3bfc28271714e462f91f8f3c53d))
+
 ## [1.3.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.2.0...v1.3.0) (2026-03-07)
 
 
