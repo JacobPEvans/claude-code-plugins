@@ -29,7 +29,7 @@ All development MUST use dedicated worktrees. Never work directly on main.
 | Release | `release/1.2.0` | `~/git/<repo>/release/1.2.0/` |
 | Chore | `chore/dependency-updates` | `~/git/<repo>/chore/dependency-updates/` |
 
-Create: `git worktree add ~/git/<repo>/<branch> -b <branch> main`
+Create: `git worktree add -b <branch> ~/git/<repo>/<branch> main`
 Remove: `git worktree remove ~/git/<repo>/<branch>`
 
 Every branch with commits MUST have an associated PR.
