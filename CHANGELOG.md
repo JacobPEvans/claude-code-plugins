@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.4.0...v1.5.0) (2026-03-10)
+
+
+### Features
+
+* add 4 standards plugins migrated from auto-loaded rules ([#113](https://github.com/JacobPEvans/claude-code-plugins/issues/113)) ([fcf8acf](https://github.com/JacobPEvans/claude-code-plugins/commit/fcf8acfa0b0385551b15b9061c515df020638276))
+
 ## [1.4.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.3.0...v1.4.0) (2026-03-08)
 
 
