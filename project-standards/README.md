@@ -24,4 +24,4 @@ claude plugins add jacobpevans-cc-plugins/project-standards
 
 ## License
 
-Apache-2.0
+MIT

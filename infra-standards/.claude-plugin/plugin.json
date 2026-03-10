@@ -5,7 +5,7 @@
   "author": {
     "name": "JacobPEvans"
   },
-  "license": "Apache-2.0",
+  "license": "MIT",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "keywords": ["infrastructure", "terraform", "ansible", "proxmox", "nix", "devshell"],
   "skills": [
