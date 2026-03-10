@@ -5,7 +5,7 @@
   "author": {
     "name": "JacobPEvans"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/JacobPEvans/claude-code-plugins",
   "keywords": ["code", "quality", "review", "testing", "documentation", "standards"],
   "skills": [

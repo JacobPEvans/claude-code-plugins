@@ -20,4 +20,4 @@ claude plugins add jacobpevans-cc-plugins/infra-standards
 
 ## License
 
-MIT
+Apache-2.0
