@@ -9,16 +9,14 @@ description: Use when looking up available tools, skills, commands, agents, or p
 
 | Intent | Command | Plugin | Notes |
 | --- | --- | --- | --- |
-| Start new development | `/init-worktree` | `git-workflows` | Always first |
 | Sync branch with main | `/sync-main` | `git-workflows` | Merge into current |
 | Sync repo, cleanup | `/refresh-repo` | `git-workflows` | Also merges PRs |
 | Rebase + merge PR | `/rebase-pr` | `git-workflows` | Local rebase-merge |
-| Squash + merge PR | `/squash-merge-pr` | `git-workflows` | Squash-merge |
+| Squash + merge PR | `/squash-merge-pr` | `github-workflows` | Squash-merge |
 | Troubleshoot rebase | `/troubleshoot-rebase` | `git-workflows` | Recover failures |
 | Troubleshoot worktrees | `/troubleshoot-worktree` | `git-workflows` | Fix refname |
 | Troubleshoot pre-commit | `/troubleshoot-precommit` | `git-workflows` | Fix hooks |
-| Manage your PR | `/finalize-pr` | `github-workflows` | PR author flow |
-| Finalize PRs (multi-repo) | `/finalize-prs` | `github-workflows` | Merge readiness |
+| Manage your PR | `/finalize-pr` | `github-workflows` | PR author flow (`all`/`org` for multi-repo) |
 | Create GitHub issues | `/shape-issues` | `github-workflows` | Shape Up method |
 | Resolve PR threads | `/resolve-pr-threads` | `github-workflows` | Thread resolution |
 | Resolve CodeQL alerts | `/resolve-codeql` | `codeql-resolver` | Fix alerts |
