@@ -1,0 +1,15 @@
+{
+  "name": "git-standards",
+  "version": "1.0.0",
+  "description": "Git workflow standards, branch hygiene, PR creation guards, and issue linking",
+  "author": {
+    "name": "JacobPEvans"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "keywords": ["git", "branch", "pr", "worktree", "issue", "hygiene"],
+  "skills": [
+    "./skills/git-workflow-standards",
+    "./skills/pr-standards"
+  ]
+}

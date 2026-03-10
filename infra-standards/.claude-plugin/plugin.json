@@ -1,0 +1,14 @@
+{
+  "name": "infra-standards",
+  "version": "1.0.0",
+  "description": "Infrastructure standards for Proxmox, Terraform, Ansible including deployment pipeline, IP addressing, and secrets management",
+  "author": {
+    "name": "JacobPEvans"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "keywords": ["infrastructure", "terraform", "ansible", "proxmox", "nix", "devshell"],
+  "skills": [
+    "./skills/infrastructure-standards"
+  ]
+}
