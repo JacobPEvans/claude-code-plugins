@@ -1,0 +1,16 @@
+{
+  "name": "project-standards",
+  "version": "1.0.0",
+  "description": "AgentsMD authoring standards, workspace management, and skills/tools registry lookup",
+  "author": {
+    "name": "JacobPEvans"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/JacobPEvans/claude-code-plugins",
+  "keywords": ["agentsmd", "authoring", "workspace", "skills", "registry", "standards"],
+  "skills": [
+    "./skills/agentsmd-authoring",
+    "./skills/workspace-standards",
+    "./skills/skills-registry"
+  ]
+}

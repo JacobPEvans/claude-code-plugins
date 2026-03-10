@@ -89,6 +89,42 @@
       "author": {
         "name": "JacobPEvans"
       }
+    },
+    {
+      "name": "git-standards",
+      "source": "./git-standards",
+      "description": "Git workflow standards, branch hygiene, PR creation guards, and issue linking",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "code-standards",
+      "source": "./code-standards",
+      "description": "Code quality standards, documentation formatting, testing philosophy, and review guidelines",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "infra-standards",
+      "source": "./infra-standards",
+      "description": "Infrastructure standards for Proxmox, Terraform, Ansible including deployment pipeline, IP addressing, and secrets management",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
+    },
+    {
+      "name": "project-standards",
+      "source": "./project-standards",
+      "description": "AgentsMD authoring standards, workspace management, and skills/tools registry lookup",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
     }
   ]
 }
