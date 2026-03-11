@@ -75,6 +75,13 @@ DENY_GH = [
     )),
 ]
 
+# Regex patterns checked ONLY for gh commands - catches flag-based bypasses
+# that token-prefix matching in DENY_GH cannot detect
+DENY_GH_REGEX = [
+    (r"pr\s+merge\s+.*--admin\b", "bypasses all branch protection rules including required status checks"),
+    (r"api\s+.*\b(rulesets|branches/[^/]+/protection)\b", "modifies repository branch protection or rulesets directly"),
+]
+
 # Maps incorrect GraphQL mutation names to (correct_name, example_command).
 # Based on log analysis: addPullRequestReviewComment (711 failures),
 # resolvePullRequestReviewThread (162 failures).
@@ -289,6 +296,12 @@ def main():
             tokens = pattern.split()
             if tokens and sub_tokens[:len(tokens)] == tokens:
                 deny(reason)
+
+    # Check gh-specific regex DENY patterns (flag-based bypasses)
+    if is_gh:
+        for pattern, reason in DENY_GH_REGEX:
+            if re.search(pattern, subcommand, re.IGNORECASE):
+                deny(f"This command {reason}. Use the standard merge workflow instead.")
 
     # Check GraphQL guidance (allow with corrective warnings)
     if is_gh and sub_tokens[:2] == ["api", "graphql"]:
