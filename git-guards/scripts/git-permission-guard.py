@@ -76,10 +76,15 @@ DENY_GH = [
 ]
 
 # Regex patterns checked ONLY for gh commands - catches flag-based bypasses
-# that token-prefix matching in DENY_GH cannot detect
+# that token-prefix matching in DENY_GH cannot detect.
+# Each pattern is (regex, reason_why_denied, context_specific_guidance).
 DENY_GH_REGEX = [
-    (r"pr\s+merge\s+.*--admin\b", "bypasses all branch protection rules including required status checks"),
-    (r"api\s+.*\b(rulesets|branches/[^/]+/protection)\b", "modifies repository branch protection or rulesets directly"),
+    (r"pr\s+merge\s+.*--admin\b",
+     "bypasses all branch protection rules including required status checks",
+     "Use the standard merge workflow instead."),
+    (r"api\b(?=.*(?:-X|--method)\s+(?:PUT|PATCH|DELETE))(?=.*\b(?:rulesets|branches/[^/]+/protection)\b)",
+     "modifies repository branch protection or rulesets directly",
+     "Manage branch protections through the GitHub web interface instead."),
 ]
 
 # Maps incorrect GraphQL mutation names to (correct_name, example_command).
@@ -148,6 +153,24 @@ def _strip_jq_content(command: str) -> str:
     command = re.sub(r"--jq\s+'[^']*'", "", command)
     command = re.sub(r'--jq\s+"[^"]*"', "", command)
     command = re.sub(r"--jq\s+\S+", "", command)
+    return command
+
+
+def _strip_flag_values(command: str) -> str:
+    """Remove -f/--field and similar flag values to avoid false positives in regex matching.
+
+    This prevents legitimate API calls like:
+      gh api ... -f body="See the rulesets docs"
+    from being incorrectly denied because the body contains "rulesets".
+    """
+    # Remove -f / --field quoted values
+    command = re.sub(r"(-f|--field)\s+'[^']*'", "", command)
+    command = re.sub(r'(-f|--field)\s+"[^"]*"', "", command)
+    # Remove -F / --raw-field quoted values
+    command = re.sub(r"(-F|--raw-field)\s+'[^']*'", "", command)
+    command = re.sub(r'(-F|--raw-field)\s+"[^"]*"', "", command)
+    # Remove --input file references
+    command = re.sub(r"--input\s+\S+", "", command)
     return command
 
 
@@ -298,10 +321,15 @@ def main():
                 deny(reason)
 
     # Check gh-specific regex DENY patterns (flag-based bypasses)
+    # Strip quoted flag values first to avoid false positives from command arguments
     if is_gh:
-        for pattern, reason in DENY_GH_REGEX:
-            if re.search(pattern, subcommand, re.IGNORECASE):
-                deny(f"This command {reason}. Use the standard merge workflow instead.")
+        # Exempt gh api graphql from the api pattern to avoid blocking legitimate queries
+        is_gh_api_graphql = sub_tokens[:2] == ["api", "graphql"]
+        subcommand_for_regex = _strip_flag_values(subcommand) if not is_gh_api_graphql else ""
+
+        for pattern, reason, guidance in DENY_GH_REGEX:
+            if re.search(pattern, subcommand_for_regex, re.IGNORECASE):
+                deny(f"This command {reason}. {guidance}")
 
     # Check GraphQL guidance (allow with corrective warnings)
     if is_gh and sub_tokens[:2] == ["api", "graphql"]:

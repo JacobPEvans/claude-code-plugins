@@ -77,6 +77,16 @@ all_pass &= check("gh api issues safe", "gh api repos/owner/repo/issues", "silen
 # DENY: gh pr merge with bypass-related flags
 all_pass &= check("gh pr merge auto-merge with admin", "gh pr merge 42 --auto --admin", "deny")
 
+# Regression: Safe GET calls to protection/ruleset endpoints must NOT be blocked
+all_pass &= check("gh api rulesets GET safe", "gh api repos/owner/repo/rulesets", "silent_allow")
+all_pass &= check("gh api protection GET safe", "gh api repos/owner/repo/branches/main/protection", "silent_allow")
+
+# Regression: Safe gh api graphql queries mentioning rulesets must not be blocked
+all_pass &= check("gh api graphql rulesets query safe", "gh api graphql --raw-field query='query { repository(name: \"repo\", owner: \"owner\") { rulesets(first: 10) { totalCount } } }'", "silent_allow")
+
+# Regression: API calls with -f body containing "rulesets" in text must NOT be blocked
+all_pass &= check("gh api comment with rulesets in body", "gh api repos/owner/repo/issues/42/comments -X POST -f body='See the rulesets docs for context'", "silent_allow")
+
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
 sys.exit(0 if all_pass else 1)
