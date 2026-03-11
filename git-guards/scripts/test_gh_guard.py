@@ -60,6 +60,23 @@ all_pass &= check("gh repo view silent", "gh repo view owner/repo", "silent_allo
 # Non-gh command must not trigger gh checks
 all_pass &= check("non-gh command", "echo 'gh pr comment'", "silent_allow")
 
+# DENY: gh pr merge --admin bypasses all branch protections
+all_pass &= check("gh pr merge --admin deny", "gh pr merge 42 --admin", "deny")
+all_pass &= check("gh pr merge --admin with squash", "gh pr merge 42 --squash --admin", "deny")
+
+# DENY: gh api to branch protection or ruleset endpoints
+all_pass &= check("gh api rulesets deny", "gh api repos/owner/repo/rulesets -X PUT -f '{}'", "deny")
+all_pass &= check("gh api protection deny", "gh api repos/owner/repo/branches/main/protection -X PUT", "deny")
+all_pass &= check("gh api delete ruleset deny", "gh api repos/owner/repo/rulesets/123 --method DELETE", "deny")
+all_pass &= check("gh api protection PATCH deny", "gh api -X PATCH repos/owner/repo/branches/main/protection", "deny")
+
+# Safe gh api calls must NOT be blocked (no protection/ruleset endpoints)
+all_pass &= check("gh api safe endpoint", "gh api repos/owner/repo/pulls", "silent_allow")
+all_pass &= check("gh api issues safe", "gh api repos/owner/repo/issues", "silent_allow")
+
+# DENY: gh pr merge with bypass-related flags
+all_pass &= check("gh pr merge auto-merge with admin", "gh pr merge 42 --auto --admin", "deny")
+
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
 sys.exit(0 if all_pass else 1)
