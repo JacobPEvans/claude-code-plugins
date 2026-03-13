@@ -9,16 +9,15 @@ LOG_DIR="$HOME/Library/Logs/claude-process-cleanup"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/cleanup-$(date +%Y-%m-%d).log"
 
-log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [$1] ${*:2}" >> "$LOG_FILE"; }
+log() { printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" "${*:2}" >> "$LOG_FILE"; }
 
-# Single pass: find all orphaned MCP processes, deduplicate via sort -u
+# Single pass: find all orphaned MCP processes (single ps call = no duplicates possible)
 all_pids=()
 while IFS= read -r pid; do
   [[ -n "$pid" ]] && all_pids+=("$pid")
 done < <(
   ps -Aeo pid,ppid,command \
-    | awk '$2 == 1 && ($3 ~ /terraform-mcp|context7-mcp/ || ($3 ~ /node/ && $0 ~ /mcp|context7/)) {print $1}' \
-    | sort -u
+    | awk '$2 == 1 && ($3 ~ /terraform-mcp|context7-mcp/ || ($3 ~ /node/ && $0 ~ /mcp|context7/)) {print $1}'
 )
 
 [[ ${#all_pids[@]} -eq 0 ]] && exit 0
@@ -33,13 +32,24 @@ sleep 2
 # SIGKILL survivors — re-validate PID identity before escalating (guards against PID reuse)
 for pid in "${all_pids[@]}"; do
   if kill -0 "$pid" 2>/dev/null; then
-    pid_cmd=$(ps -p "$pid" -o command= 2>/dev/null || true)
-    if [[ "$pid_cmd" =~ terraform-mcp|context7-mcp|node ]]; then
+    ps_out=$(ps -p "$pid" -o ppid=,command= 2>/dev/null) || true
+    pid_ppid=$(echo "$ps_out" | awk '{print $1}' | tr -d ' ')
+    pid_cmd=$(echo "$ps_out" | sed -E 's/^[[:space:]]*[0-9]+[[:space:]]+//')
+    # Re-enforce ppid==1 invariant: guards against PID reuse within the 2s grace window
+    if [[ -z "$pid_ppid" ]]; then
+      log INFO "Skipping SIGKILL for pid=${pid}: process exited during grace window"
+      continue
+    fi
+    if [[ "$pid_ppid" != "1" ]]; then
+      log INFO "Skipping SIGKILL for pid=${pid}: ppid changed to ${pid_ppid} (PID reuse detected)"
+      continue
+    fi
+    if [[ "$pid_cmd" =~ terraform-mcp|context7-mcp ]] || [[ "$pid_cmd" =~ node && "$pid_cmd" =~ mcp|context7 ]]; then
       log WARN "SIGKILL to surviving process (pid=${pid}, cmd=${pid_cmd})"
       kill -KILL "$pid" 2>/dev/null || true
     fi
   fi
 done
 
-log INFO "Cleanup complete"
+log INFO "Cleanup complete: processed ${#all_pids[@]} orphaned MCP process(es)"
 exit 0
