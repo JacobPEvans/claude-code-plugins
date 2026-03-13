@@ -189,7 +189,11 @@ search index=claude sourcetype="claude:code:session" sessionId="{session_id}" ty
 
 Parse the JSON output from each query. Splunk export returns newline-delimited JSON objects with a `result` key.
 
-**Important:** Filter out lines that contain `"preview"` or don't have a `"result"` key — those are search metadata, not actual results.
+**Important:**
+
+- Parse each line as JSON
+- Only process objects that contain a `"result"` key
+- Discard objects where `"preview"` is `true` — those are intermediate results before search finalizes
 
 Display the results as formatted markdown tables:
 
@@ -246,7 +250,7 @@ Keep analysis to 3-5 bullet points max. Data speaks for itself.
 | Error | Resolution |
 |-------|------------|
 | No session file found | "No active session found for current project directory" |
-| Splunk connection refused | "Cannot reach Splunk at {SPLUNK_URL}. Check VPN/network and SPLUNK_URL." |
+| Splunk connection refused | "Cannot reach Splunk at {SPLUNK_URL}. Check VPN/network and SPLUNK_NETWORK." |
 | Auth failure (401) | "Splunk auth failed. Check SPLUNK_USERNAME and SPLUNK_PASSWORD." |
 | No results returned | "No telemetry data found for session {id}. Data may not have been ingested yet (check OTEL collector)." |
 | Subagent query empty | Skip subagent section — not all sessions use subagents |

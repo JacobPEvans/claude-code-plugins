@@ -22,6 +22,8 @@
     "spath",
     "addcoltotals",
     "labelfield",
-    "mvexpand"
+    "mvexpand",
+    "mvcount",
+    "mvfilter"
   ]
 }
