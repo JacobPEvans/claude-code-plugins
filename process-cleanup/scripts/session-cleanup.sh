@@ -1,19 +1,7 @@
 #!/usr/bin/env bash
-# Claude Code Stop Hook: Cleanup orphaned MCP processes
+# Stop hook: kill orphaned MCP server processes (ppid=1 = reparented to launchd)
 #
-# Fires when a Claude session exits via /exit or Ctrl+C.
-# Sweeps for orphaned MCP server processes system-wide (ppid=1 means the
-# process was reparented to launchd — its parent terminal died without cleanup).
-#
-# SAFETY: Only kills processes with ppid=1. Never touches processes that have
-# a living parent. Cannot affect active Claude sessions in other terminals.
-#
-# Targets:
-#   - terraform-mcp-server  (Terraform MCP server)
-#   - context7-mcp          (Context7 MCP server, may run as node)
-#   - node processes with MCP-related arguments (ppid=1)
-#
-# Logs to: ~/Library/Logs/claude-process-cleanup/
+# SAFETY: Only kills processes with ppid=1. Cannot affect active Claude sessions.
 
 set -euo pipefail
 
@@ -21,78 +9,37 @@ LOG_DIR="$HOME/Library/Logs/claude-process-cleanup"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/cleanup-$(date +%Y-%m-%d).log"
 
-log_info() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $*" >> "$LOG_FILE"
-}
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [$1] ${*:2}" >> "$LOG_FILE"; }
 
-log_warn() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] $*" >> "$LOG_FILE"
-}
-
-# Find orphaned processes where ppid=1 and command path matches a pattern
-find_orphans_by_pattern() {
-  local pattern=$1
-  ps -Aeo pid,ppid,command | awk -v pat="$pattern" '$2 == 1 && $3 ~ pat {print $1}'
-}
-
-# Find orphaned node processes running MCP servers (ppid=1, args reference mcp/context7)
-find_orphan_node_mcp() {
-  ps -Aeo pid,ppid,command | awk '$2 == 1 && $3 ~ /node/ && ($0 ~ /mcp|context7/) {print $1}'
-}
-
-declare -a mcp_patterns=(
-  "terraform-mcp"
-  "context7-mcp"
-)
-
-declare -A seen_pids=()
-declare -a all_pids=()
-
-# Collect orphans by process name pattern (deduplicate via seen_pids)
-for pattern in "${mcp_patterns[@]}"; do
-  while IFS= read -r pid; do
-    [[ -n "$pid" ]] || continue
-    [[ -n "${seen_pids[$pid]:-}" ]] && continue
-    seen_pids[$pid]=1
-    all_pids+=("$pid")
-    log_info "Found orphaned ${pattern} (pid=${pid}, ppid=1)"
-  done < <(find_orphans_by_pattern "$pattern")
-done
-
-# Collect orphaned node MCP processes (deduplicate)
+# Single pass: find all orphaned MCP processes, deduplicate via sort -u
+all_pids=()
 while IFS= read -r pid; do
-  [[ -n "$pid" ]] || continue
-  [[ -n "${seen_pids[$pid]:-}" ]] && continue
-  seen_pids[$pid]=1
-  all_pids+=("$pid")
-  log_info "Found orphaned node MCP process (pid=${pid}, ppid=1)"
-done < <(find_orphan_node_mcp)
+  [[ -n "$pid" ]] && all_pids+=("$pid")
+done < <(
+  ps -Aeo pid,ppid,command \
+    | awk '$2 == 1 && ($3 ~ /terraform-mcp|context7-mcp/ || ($3 ~ /node/ && $0 ~ /mcp|context7/)) {print $1}' \
+    | sort -u
+)
 
 [[ ${#all_pids[@]} -eq 0 ]] && exit 0
 
-total_killed=0
-
-# SIGTERM (graceful shutdown)
 for pid in "${all_pids[@]}"; do
-  if kill -TERM "$pid" 2>/dev/null; then
-    total_killed=$((total_killed + 1))
-  fi
+  log INFO "Sending SIGTERM to orphaned MCP process (pid=${pid})"
+  kill -TERM "$pid" 2>/dev/null || true
 done
 
 sleep 2
 
-# SIGKILL survivors — re-validate PID identity before escalating
+# SIGKILL survivors — re-validate PID identity before escalating (guards against PID reuse)
 for pid in "${all_pids[@]}"; do
   if kill -0 "$pid" 2>/dev/null; then
-    # Confirm PID still belongs to a target process (guards against PID reuse)
     pid_cmd=$(ps -p "$pid" -o command= 2>/dev/null || true)
     if [[ "$pid_cmd" =~ terraform-mcp|context7-mcp|node ]]; then
-      log_warn "SIGKILL to surviving process (pid=${pid}, cmd=${pid_cmd})"
+      log WARN "SIGKILL to surviving process (pid=${pid}, cmd=${pid_cmd})"
       kill -KILL "$pid" 2>/dev/null || true
     fi
   fi
 done
 
-log_info "Cleanup complete: sent SIGTERM to ${total_killed} orphaned MCP process(es)"
-
+log INFO "Cleanup complete"
 exit 0
