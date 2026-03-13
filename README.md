@@ -75,6 +75,14 @@ Cleanup orphaned MCP server processes on session exit.
 - **Type**: PostToolUse hook
 - **Purpose**: Workaround for upstream MCP orphan-process bug (#1935)
 
+### session-analytics
+
+Claude Code session token analytics via Splunk OTEL telemetry.
+
+- **Type**: Skill-based plugin
+- **Skills**: `/token-breakdown`
+- **Purpose**: Per-model token breakdown, tool call costs, cache efficiency, burn rate timeline
+
 ## Installation
 
 ### From Marketplace
@@ -94,6 +102,7 @@ claude plugins add jacobpevans-cc-plugins/<plugin-name>
 - `jacobpevans-cc-plugins/github-workflows`
 - `jacobpevans-cc-plugins/infra-orchestration`
 - `jacobpevans-cc-plugins/process-cleanup`
+- `jacobpevans-cc-plugins/session-analytics`
 
 ### Local Development
 
@@ -111,6 +120,7 @@ claude plugins link ./git-workflows
 claude plugins link ./github-workflows
 claude plugins link ./infra-orchestration
 claude plugins link ./process-cleanup
+claude plugins link ./session-analytics
 ```
 
 ## Plugin Structure
