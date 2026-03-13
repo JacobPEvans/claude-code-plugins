@@ -45,6 +45,12 @@ encoded_path=$(echo "$PWD" | sed 's|^/|-|; s|/|-|g')
 # Find the most recently modified JSONL session file
 session_file=$(ls -t "$HOME/.claude/projects/${encoded_path}/"*.jsonl 2>/dev/null | head -1)
 
+# Validate a session file was found
+if [ -z "$session_file" ]; then
+  echo "No active session found for current project directory: $PWD"
+  exit 1
+fi
+
 # Extract session ID from filename
 session_id=$(basename "$session_file" .jsonl)
 ```
@@ -77,8 +83,12 @@ echo "${SPLUNK_NETWORK:?SPLUNK_NETWORK not set}" > /dev/null
 echo "${SPLUNK_USERNAME:?SPLUNK_USERNAME not set}" > /dev/null
 echo "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD not set}" > /dev/null
 
-# Extract first IP from JSON array
+# Extract first IP from JSON array and validate
 SPLUNK_IP=$(echo "$SPLUNK_NETWORK" | jq -r '.[0]')
+if [ -z "$SPLUNK_IP" ] || [ "$SPLUNK_IP" = "null" ]; then
+  echo "SPLUNK_NETWORK does not contain a valid IP. Expected JSON array, e.g. [\"192.168.0.200\"]"
+  exit 1
+fi
 SPLUNK_URL="https://${SPLUNK_IP}:8089"
 ```
 
@@ -92,15 +102,20 @@ Run **all four queries in parallel** via the Bash tool. Each query uses the Splu
 **Query template:**
 
 ```bash
-curl -sk -u "$SPLUNK_USERNAME:$SPLUNK_PASSWORD" \
+# Pass credentials via stdin to avoid exposure in process list
+curl -sk --fail-with-body --config - \
   "$SPLUNK_URL/services/search/jobs/export" \
   --data-urlencode 'search=<SPL_QUERY>' \
   -d output_mode=json \
   -d earliest_time='-7d' \
-  -d latest_time='now'
+  -d latest_time='now' <<CURL_CFG
+user = "$SPLUNK_USERNAME:$SPLUNK_PASSWORD"
+CURL_CFG
 ```
 
-Use `-sk` (silent + insecure TLS for self-signed certs).
+- `-sk` — silent + insecure TLS for self-signed certs
+- `--fail-with-body` — returns non-zero on HTTP errors (401, 500) while capturing the response body
+- `--config -` — passes credentials via stdin to avoid exposure in the process list
 
 #### Query 3a: Session Overview by Model
 
@@ -119,7 +134,7 @@ search index=claude sourcetype="claude:code:session" sessionId="{session_id}" ty
     count as api_calls
     by model
 | eval total=input+output+cache_read+cache_write
-| eval cache_pct=round(cache_read/(cache_read+input)*100, 1)
+| eval cache_pct=if((cache_read+input)>0, round(cache_read/(cache_read+input)*100, 1), 0.0)
 | sort -total
 | addcoltotals labelfield=model label="TOTAL"
 ```
@@ -130,11 +145,13 @@ search index=claude sourcetype="claude:code:session" sessionId="{session_id}" ty
 search index=claude sourcetype="claude:code:session" sessionId="{session_id}" type="assistant"
 | spath path=message.content{} output=content_items
 | spath path=message.usage.output_tokens output=output_tokens
+| eval tool_count=mvcount(mvfilter(match(content_items, "\"type\":\s*\"tool_use\"")))
+| eval output_per_call=if(tool_count>0, output_tokens/tool_count, 0)
 | mvexpand content_items
 | spath input=content_items path=type output=content_type
 | spath input=content_items path=name output=tool_name
 | where content_type="tool_use"
-| stats count as calls, sum(output_tokens) as output_tokens by tool_name
+| stats count as calls, sum(output_per_call) as output_tokens by tool_name
 | sort -calls
 ```
 
