@@ -125,6 +125,15 @@
       "author": {
         "name": "JacobPEvans"
       }
+    },
+    {
+      "name": "session-analytics",
+      "source": "./session-analytics",
+      "description": "Claude Code session token analytics via Splunk OTEL telemetry",
+      "version": "1.0.0",
+      "author": {
+        "name": "JacobPEvans"
+      }
     }
   ]
 }

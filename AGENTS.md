@@ -19,6 +19,7 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 | **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews` | GitHub PR/issue management workflows |
 | **infra-orchestration** | Skill | `/orchestrate-infra`, `/sync-inventory`, `/test-e2e` | Cross-repo infrastructure orchestration for Terraform and Ansible |
 | **process-cleanup** | PostToolUse | — | Cleanup orphaned MCP server processes on session exit |
+| **session-analytics** | Skill | `/token-breakdown` | Session token analytics via Splunk OTEL telemetry |
 
 ## Multi-Model Delegation
 
