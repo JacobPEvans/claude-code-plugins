@@ -191,9 +191,13 @@ Parse the JSON output from each query. Splunk export returns newline-delimited J
 
 **Important:**
 
-- Parse each line as JSON
+- Parse each line as JSON (do not use string matching on the raw line)
 - Only process objects that contain a `"result"` key
-- Discard objects where `"preview"` is `true` — those are intermediate results before search finalizes
+- After parsing, check the `preview` field value: keep objects where `preview` is `false` or
+  absent; discard objects where `preview` is `true` — those are intermediate results before
+  the search finalizes
+- Do not use substring matching on the word "preview" — every Splunk export line includes this
+  field, so string-based filtering would discard all results
 
 Display the results as formatted markdown tables:
 
@@ -250,7 +254,7 @@ Keep analysis to 3-5 bullet points max. Data speaks for itself.
 | Error | Resolution |
 |-------|------------|
 | No session file found | "No active session found for current project directory" |
-| Splunk connection refused | "Cannot reach Splunk at {SPLUNK_URL}. Check VPN/network and SPLUNK_NETWORK." |
+| Splunk connection refused | "Cannot reach Splunk at {SPLUNK_URL} (derived from SPLUNK_NETWORK). Check VPN/network or verify SPLUNK_NETWORK contains the correct IP." |
 | Auth failure (401) | "Splunk auth failed. Check SPLUNK_USERNAME and SPLUNK_PASSWORD." |
 | No results returned | "No telemetry data found for session {id}. Data may not have been ingested yet (check OTEL collector)." |
 | Subagent query empty | Skip subagent section — not all sessions use subagents |
