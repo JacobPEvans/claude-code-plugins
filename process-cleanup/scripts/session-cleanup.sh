@@ -9,16 +9,15 @@ LOG_DIR="$HOME/Library/Logs/claude-process-cleanup"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/cleanup-$(date +%Y-%m-%d).log"
 
-log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [$1] ${*:2}" >> "$LOG_FILE"; }
+log() { printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" "${*:2}" >> "$LOG_FILE"; }
 
-# Single pass: find all orphaned MCP processes, deduplicate via sort -u
+# Single pass: find all orphaned MCP processes (single ps call = no duplicates possible)
 all_pids=()
 while IFS= read -r pid; do
   [[ -n "$pid" ]] && all_pids+=("$pid")
 done < <(
   ps -Aeo pid,ppid,command \
-    | awk '$2 == 1 && ($3 ~ /terraform-mcp|context7-mcp/ || ($3 ~ /node/ && $0 ~ /mcp|context7/)) {print $1}' \
-    | sort -u
+    | awk '$2 == 1 && ($3 ~ /terraform-mcp|context7-mcp/ || ($3 ~ /node/ && $0 ~ /mcp|context7/)) {print $1}'
 )
 
 [[ ${#all_pids[@]} -eq 0 ]] && exit 0
