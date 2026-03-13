@@ -17,6 +17,11 @@
     "webfetch",
     "frontmatter",
     "toplevel",
-    "cclint"
+    "cclint",
+    "sourcetype",
+    "spath",
+    "addcoltotals",
+    "labelfield",
+    "mvexpand"
   ]
 }
