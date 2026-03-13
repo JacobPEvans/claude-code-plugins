@@ -11,13 +11,13 @@ Query Splunk for detailed token usage analytics of the current Claude Code sessi
 
 ## Prerequisites
 
-Three environment variables must be set (recommended: Doppler):
+The Splunk MCP server must be configured in Claude Code. This is managed by nix-darwin:
 
-- `SPLUNK_NETWORK` — JSON array containing the Splunk IP (e.g., `["192.168.0.200"]`)
-- `SPLUNK_USERNAME` — Splunk admin username
-- `SPLUNK_PASSWORD` — Splunk admin password
+- `splunk` MCP server defined in `programs.claude.mcpServers`
+- Credentials injected via Doppler (`SPLUNK_MCP_ENDPOINT`, `SPLUNK_MCP_TOKEN`)
+- Self-signed TLS handled by `NODE_TLS_REJECT_UNAUTHORIZED=0` in the MCP server env
 
-The Splunk REST API URL is derived as `https://{first_ip_from_SPLUNK_NETWORK}:8089`.
+Verify: `mcp__splunk__splunk_get_info` should return the Splunk version.
 
 ## Invocation
 
@@ -74,50 +74,26 @@ If the `slug` matches the auto-generated pattern (three hyphenated words like `g
 - **Do NOT block** — continue with the analysis regardless
 - Note the suggestion in the output header
 
-### Phase 2: Validate Environment and Derive Splunk URL
+### Phase 2: Execute Splunk Queries
 
-Check that all three env vars are set and derive the REST API URL:
+Run **all four queries in parallel** using the Splunk MCP server tools.
 
-```bash
-echo "${SPLUNK_NETWORK:?SPLUNK_NETWORK not set}" > /dev/null
-echo "${SPLUNK_USERNAME:?SPLUNK_USERNAME not set}" > /dev/null
-echo "${SPLUNK_PASSWORD:?SPLUNK_PASSWORD not set}" > /dev/null
+**MCP tool call pattern:**
 
-# Extract first IP from JSON array and validate
-SPLUNK_IP=$(echo "$SPLUNK_NETWORK" | jq -r '.[0]')
-if [ -z "$SPLUNK_IP" ] || [ "$SPLUNK_IP" = "null" ]; then
-  echo "SPLUNK_NETWORK does not contain a valid IP. Expected JSON array, e.g. [\"192.168.0.200\"]"
-  exit 1
-fi
-SPLUNK_URL="https://${SPLUNK_IP}:8089"
+Each query uses `mcp__splunk__splunk_run_query` with the SPL query text and time range:
+
+```text
+mcp__splunk__splunk_run_query({
+  "search_query": "<SPL query>",
+  "earliest_time": "-7d",
+  "latest_time": "now"
+})
 ```
 
-If any env var is missing, stop with:
-"Set SPLUNK_NETWORK, SPLUNK_USERNAME, and SPLUNK_PASSWORD (via Doppler or env vars)."
+The MCP server handles authentication, TLS, and connection management.
+Results are returned as structured JSON — no manual parsing of newline-delimited export format needed.
 
-### Phase 3: Execute Splunk Queries
-
-Run **all four queries in parallel** via the Bash tool. Each query uses the Splunk REST API one-shot export endpoint.
-
-**Query template:**
-
-```bash
-# Pass credentials via stdin to avoid exposure in process list
-curl -sk --fail-with-body --config - \
-  "$SPLUNK_URL/services/search/jobs/export" \
-  --data-urlencode 'search=<SPL_QUERY>' \
-  -d output_mode=json \
-  -d earliest_time='-7d' \
-  -d latest_time='now' <<CURL_CFG
-user = "$SPLUNK_USERNAME:$SPLUNK_PASSWORD"
-CURL_CFG
-```
-
-- `-sk` — silent + insecure TLS for self-signed certs
-- `--fail-with-body` — returns non-zero on HTTP errors (401, 500) while capturing the response body
-- `--config -` — passes credentials via stdin to avoid exposure in the process list
-
-#### Query 3a: Session Overview by Model
+#### Query 2a: Session Overview by Model
 
 ```spl
 search index=claude sourcetype="claude:code:session" sessionId="{session_id}" type="assistant"
@@ -139,7 +115,7 @@ search index=claude sourcetype="claude:code:session" sessionId="{session_id}" ty
 | addcoltotals labelfield=model label="TOTAL"
 ```
 
-#### Query 3b: Token Usage by Tool
+#### Query 2b: Token Usage by Tool
 
 ```spl
 search index=claude sourcetype="claude:code:session" sessionId="{session_id}" type="assistant"
@@ -155,7 +131,7 @@ search index=claude sourcetype="claude:code:session" sessionId="{session_id}" ty
 | sort -calls
 ```
 
-#### Query 3c: Subagent Token Usage
+#### Query 2c: Subagent Token Usage
 
 ```spl
 search index=claude sourcetype="claude:code:subagent" sessionId="{session_id}" type="assistant"
@@ -172,7 +148,7 @@ search index=claude sourcetype="claude:code:subagent" sessionId="{session_id}" t
 | sort -total
 ```
 
-#### Query 3d: Token Burn Rate (Timeline)
+#### Query 2d: Token Burn Rate (Timeline)
 
 ```spl
 search index=claude sourcetype="claude:code:session" sessionId="{session_id}" type="assistant"
@@ -185,21 +161,10 @@ search index=claude sourcetype="claude:code:session" sessionId="{session_id}" ty
 | sort _time
 ```
 
-### Phase 4: Parse and Display Results
+### Phase 3: Parse and Display Results
 
-Parse the JSON output from each query. Splunk export returns newline-delimited JSON objects with a `result` key.
-
-**Important:**
-
-- Parse each line as JSON (do not use string matching on the raw line)
-- Only process objects that contain a `"result"` key
-- After parsing, check the `preview` field value: keep objects where `preview` is `false` or
-  absent; discard objects where `preview` is `true` — those are intermediate results before
-  the search finalizes
-- Do not use substring matching on the word "preview" — every Splunk export line includes this
-  field, so string-based filtering would discard all results
-
-Display the results as formatted markdown tables:
+The MCP tool returns results as structured JSON directly — no newline-delimited parsing needed.
+Extract the result rows from each query response and display as formatted markdown tables:
 
 #### Output Format
 
@@ -238,7 +203,7 @@ Display the results as formatted markdown tables:
 
 Format all token counts with thousand separators for readability (e.g., `37,064`).
 
-### Phase 5: Efficiency Analysis
+### Phase 4: Efficiency Analysis
 
 After displaying raw data, provide a brief analysis:
 
@@ -253,16 +218,17 @@ Keep analysis to 3-5 bullet points max. Data speaks for itself.
 
 | Error | Resolution |
 |-------|------------|
-| No session file found | "No active session found for current project directory" |
-| Splunk connection refused | "Cannot reach Splunk at {SPLUNK_URL} (derived from SPLUNK_NETWORK). Check VPN/network or verify SPLUNK_NETWORK contains the correct IP." |
-| Auth failure (401) | "Splunk auth failed. Check SPLUNK_USERNAME and SPLUNK_PASSWORD." |
-| No results returned | "No telemetry data found for session {id}. Data may not have been ingested yet (check OTEL collector)." |
+| MCP tool not available | "Splunk MCP server not configured. Check nix-darwin mcpServers." |
+| Auth failure | "Splunk MCP auth failed. Check SPLUNK_MCP_TOKEN in Doppler." |
+| Connection refused | "Cannot reach Splunk. Check VPN/network." |
+| No results | "No telemetry for session {id}. Data may not have been ingested yet." |
 | Subagent query empty | Skip subagent section — not all sessions use subagents |
 
 ## Notes
 
 - All aggregation happens server-side in Splunk — Claude only receives summary rows
-- Self-signed TLS is expected (`-k` flag); the Splunk instance uses internal certs
 - Session data lands in Splunk via: Claude Code → OTEL Collector → Cribl Stream → Splunk HEC
 - There may be a ~60s ingestion delay between Claude Code activity and Splunk availability
 - Token counts come from the Anthropic API response `usage` object — they are exact, not estimates
+- The Splunk MCP Server App has a 1-minute query timeout and 1000-event max per query
+- Our queries use `stats` aggregation so results are small summary rows — well within limits

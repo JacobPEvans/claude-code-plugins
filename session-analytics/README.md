@@ -13,11 +13,10 @@ Claude Code session token analytics via Splunk OTEL telemetry.
 
 ## Prerequisites
 
-Set these environment variables (recommended: Doppler):
+Splunk MCP server configured in Claude Code (managed by nix-darwin):
 
-- `SPLUNK_NETWORK` — JSON array with Splunk IP (e.g., `["192.168.0.200"]`)
-- `SPLUNK_USERNAME` — Splunk admin username
-- `SPLUNK_PASSWORD` — Splunk admin password
+- `splunk` entry in `programs.claude.mcpServers`
+- Doppler secrets: `SPLUNK_MCP_ENDPOINT`, `SPLUNK_MCP_TOKEN`
 
 ## Data Pipeline
 
