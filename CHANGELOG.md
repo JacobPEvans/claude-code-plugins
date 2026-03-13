@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.5.0...v1.6.0) (2026-03-13)
+
+
+### Bug Fixes
+
+* **process-cleanup:** replace bash 4+ declare -A with sort -u deduplication ([#117](https://github.com/JacobPEvans/claude-code-plugins/issues/117)) ([d89e006](https://github.com/JacobPEvans/claude-code-plugins/commit/d89e006b0b6dfb443d8c9c12d7245f337c50e6b3))
+
 ## [1.5.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.4.0...v1.5.0) (2026-03-10)
 
 
