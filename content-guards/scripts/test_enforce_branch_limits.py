@@ -63,8 +63,12 @@ ok = ebl._is_branch_create("git switch --create fix/bug")
 print(f"{'PASS' if ok else 'FAIL'} [detect: git switch --create]")
 all_pass &= ok
 
-ok = ebl._is_branch_create("git worktree add /tmp/wt feat/new")
-print(f"{'PASS' if ok else 'FAIL'} [detect: git worktree add]")
+ok = ebl._is_branch_create("git worktree add /tmp/wt -b feat/new main")
+print(f"{'PASS' if ok else 'FAIL'} [detect: git worktree add -b]")
+all_pass &= ok
+
+ok = ebl._is_branch_create("git worktree add -B feat/force /tmp/wt main")
+print(f"{'PASS' if ok else 'FAIL'} [detect: git worktree add -B]")
 all_pass &= ok
 
 ok = ebl._is_branch_create("git checkout -B feat/force")
@@ -114,6 +118,37 @@ all_pass &= ok
 
 ok = not ebl._is_branch_create("git worktree remove /tmp/wt")
 print(f"{'PASS' if ok else 'FAIL'} [skip: git worktree remove]")
+all_pass &= ok
+
+# Regression: branch rename/move must not be treated as create
+ok = not ebl._is_branch_create("git branch -m old-name new-name")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git branch -m (rename)]")
+all_pass &= ok
+
+ok = not ebl._is_branch_create("git branch -M old-name new-name")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git branch -M (force rename)]")
+all_pass &= ok
+
+ok = not ebl._is_branch_create("git branch --move old-name new-name")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git branch --move]")
+all_pass &= ok
+
+# Regression: branch copy must not be treated as create
+ok = not ebl._is_branch_create("git branch -c old-name new-name")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git branch -c (copy)]")
+all_pass &= ok
+
+ok = not ebl._is_branch_create("git branch -C old-name new-name")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git branch -C (force copy)]")
+all_pass &= ok
+
+# Regression: worktree add existing branch (no -b) must not be treated as create
+ok = not ebl._is_branch_create("git worktree add /tmp/wt existing-branch")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git worktree add existing branch]")
+all_pass &= ok
+
+ok = not ebl._is_branch_create("git worktree add /tmp/wt")
+print(f"{'PASS' if ok else 'FAIL'} [skip: git worktree add (detached HEAD)]")
 all_pass &= ok
 
 # --- Hook integration tests (via stdin) ---
