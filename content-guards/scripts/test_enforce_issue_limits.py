@@ -105,6 +105,65 @@ if not ok:
     print(f"  Expected exit: 0 or 2, Got: {result.returncode}")
 all_pass &= ok
 
+# --- Tests for label-based filtering and label enforcement ---
+
+# Test extract_flag_values and warn_missing_ai_label via import
+import importlib.util
+spec = importlib.util.spec_from_file_location("enforce_issue_limits", str(SCRIPT))
+eil = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(eil)
+
+# extract_flag_values: single --label
+vals = eil.extract_flag_values("gh issue create --label ai-created --title test", "--label")
+ok = vals == ["ai-created"]
+print(f"{'PASS' if ok else 'FAIL'} [extract_flag_values single]: {vals}")
+all_pass &= ok
+
+# extract_flag_values: multiple --label flags
+vals = eil.extract_flag_values("gh issue create --label bug --label ai-created --title test", "--label")
+ok = vals == ["bug", "ai-created"]
+print(f"{'PASS' if ok else 'FAIL'} [extract_flag_values multiple]: {vals}")
+all_pass &= ok
+
+# extract_flag_values: comma-separated --label
+vals = eil.extract_flag_values('gh issue create --label "bug,ai-created" --title test', "--label")
+ok = vals == ["bug,ai-created"]
+print(f"{'PASS' if ok else 'FAIL'} [extract_flag_values comma]: {vals}")
+all_pass &= ok
+
+# extract_flag_values: no --label flag
+vals = eil.extract_flag_values("gh issue create --title test", "--label")
+ok = vals == []
+print(f"{'PASS' if ok else 'FAIL'} [extract_flag_values none]: {vals}")
+all_pass &= ok
+
+# warn_missing_ai_label: with label present (no warning)
+import io
+import contextlib
+
+stderr_buf = io.StringIO()
+with contextlib.redirect_stderr(stderr_buf):
+    eil.warn_missing_ai_label("gh issue create --label ai-created --title test")
+ok = "Warning" not in stderr_buf.getvalue()
+print(f"{'PASS' if ok else 'FAIL'} [warn_missing_ai_label with label]: no warning emitted")
+all_pass &= ok
+
+# warn_missing_ai_label: without label (warning)
+stderr_buf = io.StringIO()
+with contextlib.redirect_stderr(stderr_buf):
+    eil.warn_missing_ai_label("gh issue create --title test")
+ok = "Warning" in stderr_buf.getvalue() and "ai-created" in stderr_buf.getvalue()
+print(f"{'PASS' if ok else 'FAIL'} [warn_missing_ai_label without label]: warning emitted")
+all_pass &= ok
+
+# warn_missing_ai_label: comma-separated label including ai-created (no warning)
+stderr_buf = io.StringIO()
+with contextlib.redirect_stderr(stderr_buf):
+    eil.warn_missing_ai_label('gh pr create --label "bug,ai-created" --title test')
+ok = "Warning" not in stderr_buf.getvalue()
+print(f"{'PASS' if ok else 'FAIL'} [warn_missing_ai_label comma label]: no warning emitted")
+all_pass &= ok
+
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
 sys.exit(0 if all_pass else 1)

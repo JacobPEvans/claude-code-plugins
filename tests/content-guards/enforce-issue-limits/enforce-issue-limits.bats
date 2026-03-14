@@ -251,3 +251,62 @@ run_hook() {
   run_hook '{"tool_input":{"command":"gh issue create --title \"fix: broken login\""}}'
   [ "$status" -eq 0 ]
 }
+
+# ---------------------------------------------------------------------------
+# TC16: Label-based filtering - unlabeled items don't count toward rate limit
+# ---------------------------------------------------------------------------
+
+@test "TC16: unlabeled items don't count toward 24h rate limit" {
+  # The fake gh returns items without the ai-created label.
+  # Since _count_recent uses --label ai-created, the fake gh returning
+  # unlabeled items means 0 recent AI-created items -> allowed.
+  export GH_RESPONSE='[{"number":1,"labels":[],"createdAt":"2020-01-01T00:00:00Z"}]'
+  run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
+  [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# TC17: Label enforcement - warning emitted when ai-created label is missing
+# ---------------------------------------------------------------------------
+
+@test "TC17: warning emitted when gh issue create lacks ai-created label" {
+  export GH_RESPONSE='[{"number":1,"labels":[],"createdAt":"2020-01-01T00:00:00Z"}]'
+  run_hook '{"tool_input":{"command":"gh issue create --title test --label bug"}}'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Warning" ]]
+  [[ "$output" =~ "ai-created" ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC18: Label enforcement - no warning when ai-created label is present
+# ---------------------------------------------------------------------------
+
+@test "TC18: no warning when gh issue create includes ai-created label" {
+  export GH_RESPONSE='[{"number":1,"labels":[],"createdAt":"2020-01-01T00:00:00Z"}]'
+  run_hook '{"tool_input":{"command":"gh issue create --title test --label ai-created"}}'
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "Warning" ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC19: Label enforcement - no warning when ai-created is in comma-separated labels
+# ---------------------------------------------------------------------------
+
+@test "TC19: no warning when ai-created is in comma-separated --label" {
+  export GH_RESPONSE='[{"number":1,"labels":[],"createdAt":"2020-01-01T00:00:00Z"}]'
+  run_hook '{"tool_input":{"command":"gh issue create --title test --label \"bug,ai-created\""}}'
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "Warning" ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC20: Label enforcement - warning for gh pr create without ai-created
+# ---------------------------------------------------------------------------
+
+@test "TC20: warning emitted when gh pr create lacks ai-created label" {
+  export GH_RESPONSE='[{"createdAt":"2020-01-01T00:00:00Z"}]'
+  run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Warning" ]]
+  [[ "$output" =~ "ai-created" ]]
+}
