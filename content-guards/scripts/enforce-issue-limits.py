@@ -14,6 +14,9 @@ Hard limits (per-repo):
   - 50 total open PRs: Hard block on PR creation
   - 25 AI-created PRs: Hard block on PR creation
 
+Only AI-created items (those with the 'ai-created' label) count against
+24-hour rate limits.  Human-created issues and PRs are never rate-limited.
+
 Exit codes:
   0 = allow the command
   2 = block the command (shows stderr to Claude)
@@ -159,10 +162,14 @@ def get_pr_counts() -> tuple[int, int]:
 
 
 def _count_recent(resource: str) -> int:
-    """Count items of `resource` ('issue' or 'pr') created by @me in the last 24 hours."""
+    """Count AI-created items of `resource` ('issue' or 'pr') in the last 24 hours.
+
+    Only counts items with the 'ai-created' label so that human-created
+    issues and PRs are never counted against the rate limit.
+    """
     cmd = [
         "gh", resource, "list", "--state", "all",
-        "--author", "@me",
+        "--label", "ai-created",
         "--json", "createdAt", "--limit", "100",
     ]
     try:
@@ -233,6 +240,21 @@ def extract_flag_value(command: str, flag: str) -> str | None:
     return None
 
 
+def extract_flag_values(command: str, flag: str) -> list[str]:
+    """Extract all values of a CLI flag (e.g. --label) from a command string."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return []
+    values: list[str] = []
+    for i, token in enumerate(tokens):
+        if token == flag and i + 1 < len(tokens):
+            values.append(tokens[i + 1])
+        elif token.startswith(f"{flag}="):
+            values.append(token[len(flag) + 1 :])
+    return values
+
+
 def normalize_title(title: str) -> list[str]:
     """Strip type prefix (e.g. 'fix:', 'docs:') and return first 4 lowercase words."""
     cleaned = re.sub(r"^[a-z]+(\([^)]*\))?:\s*", "", title.strip().lower())
@@ -299,6 +321,27 @@ def check_duplicate_issue(command: str) -> None:
             _block_duplicate("issue", issue["title"], issue["number"])
 
 
+def warn_missing_ai_label(command: str) -> None:
+    """Warn if a create command is missing the 'ai-created' label.
+
+    This is a fail-open warning: if the label is missing, we print a
+    warning to stderr but still allow the command.  This addresses the
+    concern that AI-created items could bypass rate limits by omitting
+    the label.
+    """
+    labels = extract_flag_values(command, "--label")
+    # Flatten comma-separated values (e.g. --label "bug,ai-created")
+    all_labels = []
+    for label in labels:
+        all_labels.extend(l.strip() for l in label.split(","))
+    if "ai-created" not in all_labels:
+        print(
+            "Warning: This command does not include '--label ai-created'. "
+            "AI-created items should be labeled so they count toward rate limits.",
+            file=sys.stderr,
+        )
+
+
 def main() -> None:
     # Read hook input from stdin
     try:
@@ -333,6 +376,10 @@ def main() -> None:
     tier = "trusted" if is_trusted else "default"
     limits = config.get("limits", {}).get(tier, _DEFAULT_CONFIG["limits"][tier])
 
+    # --- Label enforcement warning (fail-open) ---
+    if is_issue_create or is_pr_create:
+        warn_missing_ai_label(command)
+
     # --- Duplicate detection (before rate limits) ---
     if is_pr_create:
         check_duplicate_pr(command)
@@ -354,7 +401,8 @@ def main() -> None:
         if reasons:
             block_hard_limit("Issue", reasons)
 
-        # Check 24h issue rate limit
+        # Check 24h issue rate limit (scoped to ai-created label so only
+        # AI-created issues count against the limit, not human-created ones).
         recent_issues = _count_recent("issue")
         if recent_issues >= limits["issues_24h"]:
             block_rate_limit("issues", recent_issues, limits["issues_24h"])
@@ -375,11 +423,9 @@ def main() -> None:
             block_hard_limit("PR", reasons)
 
     # --- gh pr create / gh pr edit: check 24h PR rate limit ---
-    # Note: `_count_recent` counts by `createdAt`, so `gh pr edit` on a PR
-    # that was created more than 24 hours ago does not accumulate against this
-    # limit.  Tracking edit frequency would require a separate local state
-    # file with timestamps, which is out of scope for this hook.  The rate
-    # limit therefore applies to PR *creation* only; the `gh pr edit` guard
+    # Only AI-created PRs (with 'ai-created' label) count against the limit.
+    # `_count_recent` counts by `createdAt`, so `gh pr edit` on a PR created
+    # more than 24 hours ago does not accumulate.  The `gh pr edit` guard
     # exists to catch same-session churn on newly created PRs.
     if is_pr_create or is_pr_edit:
         recent_prs = _count_recent("pr")
