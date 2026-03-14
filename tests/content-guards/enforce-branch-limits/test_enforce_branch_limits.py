@@ -4,7 +4,7 @@
 Verifies command detection, branch counting, block messages, and fail-open
 behavior.
 
-Run with: python3 content-guards/scripts/test_enforce_branch_limits.py
+Run with: python3 tests/content-guards/enforce-branch-limits/test_enforce_branch_limits.py
 """
 
 import importlib.util
@@ -13,7 +13,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT = Path(__file__).parent / "enforce-branch-limits.py"
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+SCRIPT = REPO_ROOT / "content-guards" / "scripts" / "enforce-branch-limits.py"
 
 # Import the module with hyphenated name
 spec = importlib.util.spec_from_file_location("enforce_branch_limits", str(SCRIPT))
