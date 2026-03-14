@@ -2,7 +2,7 @@
 """
 Claude Code PreToolUse hook for git branch limit enforcement.
 Blocks branch creation commands when total branches (local + remote)
-exceed the configured limit.
+reach or exceed the configured limit.
 
 Trigger commands:
   - git branch <name> (not -d/-D)
@@ -37,7 +37,10 @@ def _is_branch_create(command: str) -> bool:
     if not tokens:
         return False
 
-    # Find the git command start (skip env vars, prefixes like cd && ...)
+    # Find the first git subcommand (skip env vars, prefixes like cd && ...).
+    # NOTE: Only parses the first `git` token, so chained commands like
+    # "git status && git checkout -b foo" would only evaluate "git status".
+    # Acceptable because Claude Code issues one git command per Bash call.
     git_idx = None
     for i, tok in enumerate(tokens):
         if tok == "git":
