@@ -167,12 +167,10 @@ def main() -> None:
 
     label = resource.upper() if resource == "pr" else resource.capitalize()
 
-    # Duplicate detection (create only)
+    # Create-only checks: duplicate detection and hard limits
     if action == "create":
         _check_duplicate(resource, label, command)
 
-    # Hard limits (create only)
-    if action == "create":
         total_limit, ai_limit = HARD_LIMITS[resource]
         total, ai_created = _get_counts(resource)
 
