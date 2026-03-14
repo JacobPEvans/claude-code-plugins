@@ -115,25 +115,25 @@ run_hook() {
 # TC5: gh issue create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC5: gh issue create blocked when 5 issues created in last 24h" {
+@test "TC5: gh issue create blocked when 10 issues created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 5)"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 10)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "BLOCKED: Rate limit exceeded" ]]
-  [[ "$output" =~ "issues" ]]
+  [[ "$output" =~ "Issues" ]]
 }
 
 # ---------------------------------------------------------------------------
 # TC6: gh pr create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC6: gh pr create blocked when 5 PRs created in last 24h" {
+@test "TC6: gh pr create blocked when 10 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 5)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 10)"
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
@@ -145,10 +145,10 @@ run_hook() {
 # TC7: gh pr edit - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC7: gh pr edit blocked when 5 PRs created in last 24h" {
+@test "TC7: gh pr edit blocked when 10 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 5)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 10)"
 
   run_hook '{"tool_input":{"command":"gh pr edit 42 --title new-title"}}'
   [ "$status" -eq 2 ]
@@ -237,7 +237,7 @@ run_hook() {
 
   run_hook '{"tool_input":{"command":"gh issue create --title \"chore: update dependencies\""}}'
   [ "$status" -eq 2 ]
-  [[ "$output" =~ "BLOCKED: Duplicate issue detected" ]]
+  [[ "$output" =~ "BLOCKED: Duplicate Issue detected" ]]
   [[ "$output" =~ "#10" ]]
 }
 
