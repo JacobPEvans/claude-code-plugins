@@ -184,8 +184,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC6: blocked when local+remote unique branches >= 100" {
-  # 60 local + 60 remote (40 overlap) = 80 unique local + 20 unique remote = still under
-  # Let's use 100 unique: 50 local-only + 50 remote-only
+  # 50 local-only (local-*) + 50 remote-only (origin/remote-*) = 100 unique branches (at limit)
   export GIT_LOCAL_BRANCHES="$(gen_branches 'local-' 50)"
   export GIT_REMOTE_BRANCHES="$(gen_branches 'origin/remote-' 50)"
   run_hook '{"tool_input":{"command":"git branch new-feature"}}'
