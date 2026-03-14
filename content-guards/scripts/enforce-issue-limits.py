@@ -36,6 +36,7 @@ RATE_LIMIT_24H = 10
 _CMD_RE = re.compile(r"(?:^|\s)gh\s+(issue|pr)\s+(create|edit)(?:\s|$)")
 
 _GH_ERRORS = (
+    OSError,
     subprocess.TimeoutExpired,
     subprocess.SubprocessError,
     json.JSONDecodeError,
