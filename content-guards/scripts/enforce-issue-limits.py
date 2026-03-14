@@ -133,11 +133,12 @@ def _check_duplicate(resource: str, label: str, command: str) -> None:
 
 def _block(reason: str, details: str) -> None:
     """Print block message and exit with code 2."""
+    indented = "\n".join(f"  {line}" if line else "" for line in details.splitlines())
     print(
         f"\n{'=' * 64}\n"
         f"BLOCKED: {reason}\n"
         f"{'=' * 64}\n\n"
-        f"  {details}\n\n"
+        f"{indented}\n\n"
         f"{'=' * 64}\n",
         file=sys.stderr,
         flush=True,
@@ -158,6 +159,11 @@ def main() -> None:
 
     resource = match.group(1)  # "issue" or "pr"
     action = match.group(2)    # "create" or "edit"
+
+    # Only issue create, pr create, and pr edit have checks — skip issue edit
+    if resource == "issue" and action == "edit":
+        sys.exit(0)
+
     label = resource.upper() if resource == "pr" else resource.capitalize()
 
     # Duplicate detection (create only)
@@ -171,9 +177,9 @@ def main() -> None:
 
         reasons = []
         if total >= total_limit:
-            reasons.append(f"Total {resource}s: {total}/{total_limit} (limit reached)")
+            reasons.append(f"Total {label}s: {total}/{total_limit} (limit reached)")
         if ai_created >= ai_limit:
-            reasons.append(f"AI-created {resource}s: {ai_created}/{ai_limit} (limit reached)")
+            reasons.append(f"AI-created {label}s: {ai_created}/{ai_limit} (limit reached)")
         if reasons:
             reasons_str = "\n  ".join(reasons)
             _block(
@@ -190,7 +196,7 @@ def main() -> None:
         if recent >= RATE_LIMIT_24H:
             _block(
                 "Rate limit exceeded",
-                f"{recent} {resource}s created in the past 24 hours (limit: {RATE_LIMIT_24H}).\n\n"
+                f"{recent} {label}s created in the past 24 hours (limit: {RATE_LIMIT_24H}).\n\n"
                 "The user can re-run the blocked command directly in their\n"
                 "terminal to bypass this rate limit.",
             )
