@@ -155,15 +155,15 @@ def _count_recent(resource: str) -> int:
         return 0
 
 
-def block_rate_limit(kind: str, count: int, limit: int, command: str) -> None:
+def block_rate_limit(kind: str, count: int, limit: int) -> None:
     """Print rate limit block message and exit with code 2."""
     print(
         f"\n{'=' * 64}\n"
         f"BLOCKED: Rate limit exceeded\n"
         f"{'=' * 64}\n\n"
         f"  {limit}+ {kind} created in the past 24 hours (count: {count}).\n\n"
-        f"The user can run this command directly in their terminal to bypass:\n\n"
-        f"  {command}\n\n"
+        "The user can re-run the blocked command directly in their\n"
+        "terminal to bypass this rate limit.\n\n"
         f"{'=' * 64}\n",
         file=sys.stderr,
         flush=True,
@@ -326,7 +326,7 @@ def main() -> None:
         # Check 24h issue rate limit
         recent_issues = _count_recent("issue")
         if recent_issues >= limits["issues_24h"]:
-            block_rate_limit("issues", recent_issues, limits["issues_24h"], command)
+            block_rate_limit("issues", recent_issues, limits["issues_24h"])
 
     # --- gh pr create: check hard limits AND 24h PR rate limit ---
     if is_pr_create:
@@ -353,7 +353,7 @@ def main() -> None:
     if is_pr_create or is_pr_edit:
         recent_prs = _count_recent("pr")
         if recent_prs >= limits["prs_24h"]:
-            block_rate_limit("PRs", recent_prs, limits["prs_24h"], command)
+            block_rate_limit("PRs", recent_prs, limits["prs_24h"])
 
 
 if __name__ == "__main__":
