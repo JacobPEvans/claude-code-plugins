@@ -123,7 +123,7 @@ run_hook() {
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "BLOCKED: Rate limit exceeded" ]]
-  [[ "$output" =~ "issues" ]]
+  [[ "$output" =~ "Issues" ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ run_hook() {
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "BLOCKED: Rate limit exceeded" ]]
-  [[ "$output" =~ "prs" ]]
+  [[ "$output" =~ "PRs" ]]
 }
 
 # ---------------------------------------------------------------------------
