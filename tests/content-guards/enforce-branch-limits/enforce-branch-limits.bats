@@ -126,7 +126,7 @@ run_hook() {
 @test "TC3d: git worktree add allowed when under limit" {
   export GIT_LOCAL_BRANCHES="main"
   export GIT_REMOTE_BRANCHES="origin/main"
-  run_hook '{"tool_input":{"command":"git worktree add /tmp/wt feat/new"}}'
+  run_hook '{"tool_input":{"command":"git worktree add -b feat/new /tmp/wt main"}}'
   [ "$status" -eq 0 ]
 }
 
@@ -162,7 +162,7 @@ run_hook() {
 @test "TC4d: git worktree add blocked when at 100 branches" {
   export GIT_LOCAL_BRANCHES="$(gen_branches '' 100)"
   export GIT_REMOTE_BRANCHES=""
-  run_hook '{"tool_input":{"command":"git worktree add /tmp/wt feat/new"}}'
+  run_hook '{"tool_input":{"command":"git worktree add -b feat/new /tmp/wt main"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "BLOCKED: Branch limit exceeded" ]]
 }
