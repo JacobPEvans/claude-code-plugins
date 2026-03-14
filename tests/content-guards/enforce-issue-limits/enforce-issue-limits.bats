@@ -153,7 +153,7 @@ run_hook() {
   run_hook '{"tool_input":{"command":"gh pr edit 42 --title new-title"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "BLOCKED: Rate limit exceeded" ]]
-  [[ "$output" =~ "creating or updating" ]]
+  [[ "$output" =~ "re-run the blocked command" ]]
 }
 
 # ---------------------------------------------------------------------------

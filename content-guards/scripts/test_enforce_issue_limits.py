@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tests for enforce-issue-limits.py hook.
 
-Verifies that only 'gh issue create' commands are intercepted,
-non-gh commands pass through, and bad input is handled gracefully.
+Verifies that only 'gh issue create' and 'gh pr create/edit' commands are
+intercepted, non-gh commands pass through, and bad input is handled gracefully.
 
 Run with: python3 content-guards/scripts/test_enforce_issue_limits.py
 """
@@ -89,6 +89,18 @@ result = run(
 ok = result.returncode in (0, 2)
 status = "PASS" if ok else "FAIL"
 print(f"{status} [gh issue create flags]: exit={result.returncode} (0=fail-open, 2=blocked)")
+if not ok:
+    print(f"  Expected exit: 0 or 2, Got: {result.returncode}")
+all_pass &= ok
+
+# gh pr create triggers the gh check; when gh is unavailable, fails open (exit 0)
+# When limits are exceeded, blocks (exit 2). Either outcome is valid here.
+result = run(
+    json.dumps({"tool_input": {"command": "gh pr create --title 'Fix bug' --body 'Details'"}})
+)
+ok = result.returncode in (0, 2)
+status = "PASS" if ok else "FAIL"
+print(f"{status} [gh pr create]: exit={result.returncode} (0=fail-open, 2=blocked)")
 if not ok:
     print(f"  Expected exit: 0 or 2, Got: {result.returncode}")
 all_pass &= ok
