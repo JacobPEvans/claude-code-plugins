@@ -45,22 +45,52 @@ _GH_ERRORS = (
 )
 
 
+_DEFAULT_CONFIG = {
+    "trusted_user_ids": [],
+    "limits": {
+        "trusted": {"issues_24h": 10, "prs_24h": 20},
+        "default": {"issues_24h": 5, "prs_24h": 5},
+    },
+}
+
+
 def _load_rate_config() -> dict:
-    """Load rate limit config from .github repo or use defaults."""
-    for path in [
-        ".github/rate-limit-config.json",
-        os.path.expanduser("~/git/.github/main/.github/rate-limit-config.json"),
-    ]:
+    """Load rate limit config from .github repo or use defaults.
+
+    Only loads from the canonical shared config location to prevent
+    untrusted repos from overriding rate limits via a local file.
+    """
+    path = os.path.expanduser("~/git/.github/main/.github/rate-limit-config.json")
+    try:
+        with open(path) as f:
+            config = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return _DEFAULT_CONFIG
+
+    # Validate expected shape; fall back to defaults for missing keys
+    if not isinstance(config, dict):
+        return _DEFAULT_CONFIG
+    trusted_ids = config.get("trusted_user_ids", [])
+    # Coerce string IDs to int (JSON files may be hand-edited)
+    coerced: list[int] = []
+    for uid in trusted_ids:
         try:
-            with open(path) as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+            coerced.append(int(uid))
+        except (ValueError, TypeError):
             continue
+    limits_raw = config.get("limits", {})
+    defaults = _DEFAULT_CONFIG["limits"]
     return {
-        "trusted_user_ids": [],
+        "trusted_user_ids": coerced,
         "limits": {
-            "trusted": {"issues_24h": 10, "prs_24h": 20},
-            "default": {"issues_24h": 5, "prs_24h": 5},
+            "trusted": {
+                "issues_24h": limits_raw.get("trusted", {}).get("issues_24h", defaults["trusted"]["issues_24h"]),
+                "prs_24h": limits_raw.get("trusted", {}).get("prs_24h", defaults["trusted"]["prs_24h"]),
+            },
+            "default": {
+                "issues_24h": limits_raw.get("default", {}).get("issues_24h", defaults["default"]["issues_24h"]),
+                "prs_24h": limits_raw.get("default", {}).get("prs_24h", defaults["default"]["prs_24h"]),
+            },
         },
     }
 
@@ -161,7 +191,7 @@ def block_rate_limit(kind: str, count: int, limit: int) -> None:
         f"\n{'=' * 64}\n"
         f"BLOCKED: Rate limit exceeded\n"
         f"{'=' * 64}\n\n"
-        f"  {limit}+ {kind} created in the past 24 hours (count: {count}).\n\n"
+        f"  {count} {kind} created in the past 24 hours (limit: {limit}).\n\n"
         "The user can re-run the blocked command directly in their\n"
         "terminal to bypass this rate limit.\n\n"
         f"{'=' * 64}\n",
@@ -300,7 +330,8 @@ def main() -> None:
     config = _load_rate_config()
     user_id = _get_current_user_id()
     is_trusted = user_id in config.get("trusted_user_ids", [])
-    limits = config["limits"]["trusted" if is_trusted else "default"]
+    tier = "trusted" if is_trusted else "default"
+    limits = config.get("limits", {}).get(tier, _DEFAULT_CONFIG["limits"][tier])
 
     # --- Duplicate detection (before rate limits) ---
     if is_pr_create:
