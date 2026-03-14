@@ -92,6 +92,12 @@ def _count_recent(resource: str) -> int:
     )
 
 
+def _normalize_title(title: str) -> list[str]:
+    """Strip conventional-commit prefix and return first 4 lowercase words."""
+    cleaned = re.sub(r"^[a-z]+(\([^)]*\))?:\s*", "", title.strip().lower())
+    return cleaned.split()[:4]
+
+
 def _check_duplicate(resource: str, label: str, command: str) -> None:
     """Block if an open item has a similar title to the one being created."""
     try:
@@ -110,9 +116,7 @@ def _check_duplicate(resource: str, label: str, command: str) -> None:
     if not title:
         return
 
-    # Normalize: strip type prefix (e.g. "fix:") and take first 4 words
-    cleaned = re.sub(r"^[a-z]+(\([^)]*\))?:\s*", "", title.strip().lower())
-    proposed = cleaned.split()[:4]
+    proposed = _normalize_title(title)
     if len(proposed) < 2:
         return
 
@@ -122,13 +126,12 @@ def _check_duplicate(resource: str, label: str, command: str) -> None:
     ])
     for item in items:
         existing_title = item.get("title", "")
-        existing_cleaned = re.sub(r"^[a-z]+(\([^)]*\))?:\s*", "", existing_title.strip().lower())
-        existing_words = existing_cleaned.split()[:4]
+        existing_words = _normalize_title(existing_title)
         if len(existing_words) >= 2 and proposed == existing_words:
             _block(
                 f"Duplicate {label} detected",
                 f"Your title matches existing #{item['number']}: {existing_title!r}\n\n"
-                f"Ask the user before creating a duplicate {label.lower()}.",
+                f"Ask the user before creating a duplicate {label}.",
             )
 
 
@@ -185,8 +188,8 @@ def main() -> None:
                 f"{label} creation limit exceeded",
                 f"{reasons_str}\n\n"
                 f"Required actions:\n"
-                f"  1. Close or resolve duplicate and completed {label.lower()}s\n"
-                f"  2. Ask the user for explicit permission to create more {label.lower()}s",
+                f"  1. Close or resolve duplicate and completed {label}s\n"
+                f"  2. Ask the user for explicit permission to create more {label}s",
             )
 
     # 24h rate limit (create and edit for PRs, create only for issues)
