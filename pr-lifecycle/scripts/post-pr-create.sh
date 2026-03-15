@@ -6,10 +6,16 @@ command -v jq >/dev/null 2>&1 || exit 0
 
 input=$(cat)
 
+# Fast-path: check raw input for gh pr create before any JSON parsing.
+# This avoids jq overhead on every non-matching Bash command.
+if [[ ! "$input" =~ gh[[:space:]]+pr[[:space:]]+create ]]; then
+  exit 0
+fi
+
 # Extract the command that was executed
 command=$(echo "$input" | jq -r '.tool_input.command // empty' 2>/dev/null) || exit 0
 
-# Only trigger on gh pr create commands
+# Verify the command field actually contains gh pr create
 if [[ ! "$command" =~ gh[[:space:]]+pr[[:space:]]+create ]]; then
   exit 0
 fi
@@ -17,13 +23,11 @@ fi
 # Extract the tool result (stdout from the command)
 result=$(echo "$input" | jq -r '.tool_result // empty' 2>/dev/null) || exit 0
 
-# Check if PR was successfully created (output contains a PR URL)
-if [[ ! "$result" =~ github\.com/.*/pull/[0-9]+ ]]; then
+# Check if PR was successfully created and extract PR number in one step
+if [[ ! "$result" =~ pull/([0-9]+) ]]; then
   exit 0
 fi
-
-# Extract PR number from URL
-pr_number=$(echo "$result" | grep -oE 'pull/[0-9]+' | head -1 | cut -d/ -f2)
+pr_number="${BASH_REMATCH[1]}"
 
 # Emit systemMessage — keep it referential (DRY), delegate details to the skill
 cat <<EOF
