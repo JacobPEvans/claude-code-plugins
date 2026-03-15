@@ -188,6 +188,23 @@ Must return `0`. Then push: `git push`.
 4. Run standard workflow for each PR with feedback
 5. Verify each PR independently before moving to the next
 
+### Step 6: Monitor for New Reviews
+
+After Step 5 completes, launch a background Task agent (3-minute timeout)
+that re-checks for unresolved threads:
+
+1. Wait 60 seconds (allows time for AI reviewers to submit)
+2. Re-fetch unresolved threads (same query as Step 1a)
+3. If zero new threads: exit silently — resolution is complete
+4. If new threads found: report count, re-run Steps 1-5 on new threads,
+   then restart this Step 6 monitor
+
+The 3-minute timeout accommodates the 60-second wait plus time for
+re-fetching and resolving any new threads. This handles late-arriving
+AI reviews (Claude, Copilot, Gemini) that submit after the push in
+Step 5. The monitor restarts after each resolution cycle until a full
+60-second window passes with no new threads.
+
 ## Output Format
 
 ```text
@@ -195,7 +212,8 @@ PR #{number} - Review Feedback Summary
 Threads: {groupCount} groups ({threadCount} total) | Handled: {n} | Needs human: {n}
   Resolved via GraphQL: {n} | Verification: {0 unresolved}/{total}
 Comments: {n} since last commit | Actionable: {n} | Acknowledged: {n} | Needs human: {n}
-Status: COMPLETE | PARTIAL ({n} need attention)
+Monitor: watching for new reviews (60s window)
+Status: COMPLETE | PARTIAL ({n} need attention) | MONITORING
 ```
 
 Omit "Threads:" when zero threads; omit "Comments:" when zero comments.

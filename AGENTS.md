@@ -18,6 +18,7 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 | **git-workflows** | Command/Skill | `/rebase-pr`, `/sync-main`, `/refresh-repo`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree` | Git sync, refresh, and PR merge workflows |
 | **github-workflows** | Command/Skill | `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews` | GitHub PR/issue management workflows |
 | **infra-orchestration** | Skill | `/orchestrate-infra`, `/sync-inventory`, `/test-e2e` | Cross-repo infrastructure orchestration for Terraform and Ansible |
+| **pr-lifecycle** | PostToolUse | Bash | Automatically triggers `/finalize-pr` after `gh pr create` succeeds |
 | **process-cleanup** | PostToolUse | — | Cleanup orphaned MCP server processes on session exit |
 | **session-analytics** | Skill | `/token-breakdown` | Session token analytics via Splunk OTEL telemetry |
 
