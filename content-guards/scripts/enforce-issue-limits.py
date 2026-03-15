@@ -2,7 +2,7 @@
 """
 Claude Code PreToolUse hook for GitHub issue and PR rate limiting.
 
-Blocks `gh issue create` and `gh pr create/edit` when limits are exceeded.
+Blocks `gh issue create` and `gh pr create` when limits are exceeded.
 Uses `--author @me` for identity-based filtering (unforgeable).
 
 Hard limits (per-repo):
@@ -178,8 +178,8 @@ def main() -> None:
     resource = match.group(1)  # "issue" or "pr"
     action = match.group(2)    # "create" or "edit"
 
-    # Only issue create, pr create, and pr edit have checks — skip issue edit
-    if resource == "issue" and action == "edit":
+    # Edits modify existing items — never rate-limit them
+    if action == "edit":
         sys.exit(0)
 
     label = resource.upper() if resource == "pr" else resource.capitalize()
@@ -209,8 +209,8 @@ def main() -> None:
                 f"  2. Ask the user for explicit permission to create more {label}s",
             )
 
-    # 24h rate limit (create and edit for PRs, create only for issues)
-    if action == "create" or (resource == "pr" and action == "edit"):
+    # 24h rate limit (create only — edits are always allowed)
+    if action == "create":
         recent = _count_recent(resource, cwd=repo_dir)
         if recent >= RATE_LIMIT_24H:
             _block(
