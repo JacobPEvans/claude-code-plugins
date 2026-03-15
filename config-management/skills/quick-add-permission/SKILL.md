@@ -15,7 +15,7 @@ The command accepts optional permission(s) as arguments in flexible formats:
 /quick-add-permission
 /quick-add-permission "docker ps"
 /quick-add-permission "docker ps" "docker logs" "kubectl get"
-/quick-add-permission "Bash(docker ps:*)"
+/quick-add-permission "Bash(docker ps *)"
 ```
 
 If no arguments provided, the command will prompt interactively.
@@ -24,10 +24,10 @@ If no arguments provided, the command will prompt interactively.
 
 The command intelligently converts simple inputs to proper permission format:
 
-- `"docker ps"` -> `"Bash(docker ps:*)"`
-- `"git status"` -> `"Bash(git status:*)"`
-- `"kubectl get pods"` -> `"Bash(kubectl get pods:*)"`
-- `"Bash(docker ps:*)"` -> Used as-is (already formatted)
+- `"docker ps"` -> `"Bash(docker ps *)"`
+- `"git status"` -> `"Bash(git status *)"`
+- `"kubectl get pods"` -> `"Bash(kubectl get pods *)"`
+- `"Bash(docker ps *)"` -> Used as-is (already formatted)
 
 ## Steps
 
@@ -38,7 +38,7 @@ Sync main and create worktree with branch name: `chore/add-permissions-$(date +%
 ### 2. Gather and Format Permission Input
 
 - Parse arguments or prompt interactively
-- Convert plain text to `Bash(command:*)` format
+- Convert plain text to `Bash(command *)` format
 - Use as-is if already formatted with parentheses
 - Confirm format with user
 

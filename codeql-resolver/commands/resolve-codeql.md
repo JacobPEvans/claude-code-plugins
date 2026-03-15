@@ -2,7 +2,7 @@
 description: Analyze and resolve CodeQL alerts systematically
 model: sonnet
 author: JacobPEvans
-allowed-tools: Task, TaskOutput, Bash(gh:*), Bash(git:*), Read, Grep, Glob, TodoWrite
+allowed-tools: Task, TaskOutput, Bash(gh *), Bash(git *), Read, Grep, Glob, TodoWrite
 ---
 
 # Resolve CodeQL
@@ -44,11 +44,13 @@ gh api repos/{OWNER}/{REPO}/code-scanning/alerts \
 ```
 
 Group results by rule type:
-- `actions/missing-workflow-permissions` → Permissions category
-- `actions/expression-injection` → Expression injection category
-- Others → Generic category
+
+- `actions/missing-workflow-permissions` -> Permissions category
+- `actions/expression-injection` -> Expression injection category
+- Others -> Generic category
 
 Apply scope filter (if provided):
+
 - `type:permissions`, `type:injection`, `type:other`
 - `file:<path>` - only alerts in specific file
 
@@ -58,7 +60,7 @@ Report: N permissions, N injection, N other
 
 Based on alert classification:
 
-```
+```text
 Permissions alerts (0-N)
   ├─> Batch 1 (max 5) → codeql-permissions-auditor agent
   ├─> Batch 2 (max 5) → codeql-permissions-auditor agent
@@ -75,6 +77,7 @@ Other alerts (0-N)
 Invoke `superpowers:dispatching-parallel-agents` for parallel execution patterns.
 
 Each agent receives:
+
 - Alert numbers (array)
 - File paths affected
 - Instructions to fix, commit, and return summary
@@ -87,7 +90,8 @@ After all agents complete:
 2. Compare before/after counts
 3. Verify fixes committed to local branch
 4. Report summary:
-   ```
+
+   ```text
    CodeQL Resolution Report
    ======================
    Repository: {OWNER}/{REPO}
@@ -108,10 +112,10 @@ After all agents complete:
 
 ## Success Criteria
 
-- ✓ All permissible alerts are fixed
-- ✓ Changes are committed with descriptive messages
-- ✓ CodeQL verification confirms alerts resolved
-- ✓ No new alerts introduced by fixes
+- All permissible alerts are fixed
+- Changes are committed with descriptive messages
+- CodeQL verification confirms alerts resolved
+- No new alerts introduced by fixes
 
 ## Error Handling
 
@@ -124,5 +128,5 @@ After all agents complete:
 
 - Always use least-privilege principle for permissions
 - Expression injection fixes must follow GitHub's official guidance
-- Unclear patterns → Escalate for human review, don't guess
+- Unclear patterns -> Escalate for human review, don't guess
 - Each fix should be a separate commit per alert or file

@@ -7,7 +7,7 @@ description: >-
   and resolving threads via GraphQL. Use when you need to batch-process
   review feedback to unblock a PR merge.
 argument-hint: "[PR_NUMBER|all]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh:*), Bash(git:*), Task
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh *), Bash(git *), Task
 ---
 
 <!-- cspell:words PRRT oneline databaseId -->

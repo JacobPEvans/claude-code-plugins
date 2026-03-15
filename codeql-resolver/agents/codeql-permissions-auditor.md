@@ -3,7 +3,7 @@ name: CodeQL Permissions Auditor
 description: Analyze workflow permission issues and apply fixes
 model: haiku
 author: JacobPEvans
-allowed-tools: Read, Edit, Write, Bash(git:*), Bash(gh:*)
+allowed-tools: Read, Edit, Write, Bash(git *), Bash(gh *)
 ---
 
 # CodeQL Permissions Auditor
@@ -12,7 +12,7 @@ Fix "Workflow does not contain permissions" CodeQL alerts by analyzing and addin
 
 ## Input
 
-```
+```json
 {
   "alerts": [
     {
@@ -20,8 +20,7 @@ Fix "Workflow does not contain permissions" CodeQL alerts by analyzing and addin
       "location": ".github/workflows/ci-gate.yml",
       "line_number": 103,
       "message": "Actions job or workflow does not limit the permissions..."
-    },
-    ...
+    }
   ],
   "batch_size": 5
 }
@@ -48,19 +47,20 @@ Fix "Workflow does not contain permissions" CodeQL alerts by analyzing and addin
 
 - Scan steps for which actions/tools are used
 - Map each to required permissions:
-  - `actions/checkout` → `contents: read`
-  - `pull-requests` operations → `pull-requests: write`
-  - `issues` operations → `issues: write`
-  - `artifact` operations → `actions: read` or `contents: read`
-  - Custom actions → Inspect action.yml for required permissions
+  - `actions/checkout` -> `contents: read`
+  - `pull-requests` operations -> `pull-requests: write`
+  - `issues` operations -> `issues: write`
+  - `artifact` operations -> `actions: read` or `contents: read`
+  - Custom actions -> Inspect action.yml for required permissions
 
 ### 3. Determine Minimum Permissions
 
 Apply hierarchy:
-1. Explicit permissions in reusable workflow → Required
-2. GitHub actions used in steps → Required
-3. Script operations (curl, git commands) → Usually `contents: read`
-4. No operations at all → Empty `permissions: {}`
+
+1. Explicit permissions in reusable workflow -> Required
+2. GitHub actions used in steps -> Required
+3. Script operations (curl, git commands) -> Usually `contents: read`
+4. No operations at all -> Empty `permissions: {}`
 
 ### 4. Apply Fix
 
@@ -196,6 +196,6 @@ gate:
 
 ## References
 
-- **GitHub Actions Security**: https://docs.github.com/en/actions/security-guides
-- **Workflow Permissions**: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
-- **Real test case**: [ci-gate.yml PR #413](https://github.com/JacobPEvans/ai-assistant-instructions/pull/413) - 8 alerts fixed with this methodology
+- [GitHub Actions Security](https://docs.github.com/en/actions/security-guides)
+- [Workflow Permissions](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions)
+- [Real test case: ci-gate.yml PR #413](https://github.com/JacobPEvans/ai-assistant-instructions/pull/413) - 8 alerts fixed with this methodology
