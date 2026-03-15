@@ -50,7 +50,7 @@ def _extract_repo_dir(command: str) -> str | None:
     m = re.match(r'^\s*cd\s+("(?:[^"]+)"|\'(?:[^\']+)\'|[^\s;&]+)', command)
     if m:
         path = m.group(1).strip("'\"")
-        path = os.path.expanduser(os.path.abspath(path))
+        path = os.path.abspath(os.path.expanduser(path))
         if not os.path.isdir(path):
             return None
         return path

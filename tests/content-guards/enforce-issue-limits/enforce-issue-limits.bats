@@ -285,8 +285,9 @@ print('PASS')
 
 @test "TC16b: cd prefix with quoted path extracts correctly" {
   # Create a temp directory with a space in the name
-  local fake_repo
-  fake_repo="$(mktemp -d)/nix ai/main"
+  local temp_base
+  temp_base="$(mktemp -d)"
+  local fake_repo="$temp_base/nix ai/main"
   mkdir -p "$fake_repo"
   run python3 -c "
 import importlib.util, sys
@@ -297,7 +298,7 @@ result = mod._extract_repo_dir('cd \"$fake_repo\" && gh pr create --title test')
 assert result == '$fake_repo', f'Got {result}'
 print('PASS')
 "
-  rm -rf "$(dirname "$fake_repo")"
+  rm -rf "$temp_base"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "PASS" ]]
 }
@@ -316,7 +317,26 @@ print('PASS')
   [[ "$output" =~ "PASS" ]]
 }
 
-@test "TC16d: cd with tilde path returns None when directory does not exist" {
+@test "TC16d: cd with valid tilde path resolves to expanded absolute path" {
+  # Create a temp directory under $HOME and reference it via ~/
+  local rel_name="__bats_tilde_test_$$"
+  local abs_path="$HOME/$rel_name"
+  mkdir -p "$abs_path"
+  run python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd ~/$rel_name && gh pr create --title test')
+assert result == '$abs_path', f'Expected $abs_path, got {result}'
+print('PASS')
+"
+  rm -rf "$abs_path"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16e: cd with tilde path returns None when directory does not exist" {
   run python3 -c "
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
