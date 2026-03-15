@@ -78,9 +78,10 @@ stash. Note the current branch for restoration after each PR iteration.
 
 ## Phase 2: Resolution Loop (AUTOMATIC)
 
-**Execution strategy**: CI checks take 10+ minutes. Start monitoring them in
-the background FIRST, then fix all other issues in parallel while CI runs.
-Never block on CI when other work is available.
+**Execution strategy**: Run /simplify first (Step 2.0) so CI and CodeQL run
+against clean code. Then start CI monitoring in the background (Step 2.1)
+and fix all other issues in parallel while CI runs. Never block on CI when
+other work is available.
 
 _For multi-PR modes, Phases 2-5 execute once per PR in sequence. Check out each PR branch at the
 start of each iteration. For org-wide mode, use `repository.nameWithOwner` from Phase 1 as the
