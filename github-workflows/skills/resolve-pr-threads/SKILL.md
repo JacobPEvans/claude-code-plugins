@@ -190,18 +190,20 @@ Must return `0`. Then push: `git push`.
 
 ### Step 6: Monitor for New Reviews
 
-After Step 5 completes, launch a background Task agent (1-minute timeout)
+After Step 5 completes, launch a background Task agent (3-minute timeout)
 that re-checks for unresolved threads:
 
-1. Wait 60 seconds
+1. Wait 60 seconds (allows time for AI reviewers to submit)
 2. Re-fetch unresolved threads (same query as Step 1a)
 3. If zero new threads: exit silently — resolution is complete
 4. If new threads found: report count, re-run Steps 1-5 on new threads,
    then restart this Step 6 monitor
 
-This handles late-arriving AI reviews (Claude, Copilot, Gemini) that submit
-after the push in Step 5. The monitor restarts after each resolution cycle
-until a full 60-second window passes with no new threads.
+The 3-minute timeout accommodates the 60-second wait plus time for
+re-fetching and resolving any new threads. This handles late-arriving
+AI reviews (Claude, Copilot, Gemini) that submit after the push in
+Step 5. The monitor restarts after each resolution cycle until a full
+60-second window passes with no new threads.
 
 ## Output Format
 
