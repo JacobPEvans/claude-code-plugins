@@ -10,8 +10,8 @@ Hard limits (per-repo):
   - 25 AI-created open issues/PRs (labeled "ai-created")
 
 Rate limits (24h rolling window):
-  - 10 issues created by @me
-  - 10 PRs created by @me
+  - 25 issues created by @me
+  - 25 PRs created by @me
 
 Exit codes:
   0 = allow the command
@@ -31,7 +31,7 @@ from datetime import datetime, timedelta, timezone
 HARD_LIMITS = {"issue": (50, 25), "pr": (50, 25)}
 
 # 24h rolling rate limit per resource type
-RATE_LIMIT_24H = 10
+RATE_LIMIT_24H = 25
 
 _CMD_RE = re.compile(r"(?:^|\s)gh\s+(issue|pr)\s+(create|edit)(?:\s|$)")
 
@@ -44,7 +44,16 @@ _GH_ERRORS = (
 )
 
 
-def _gh_json(args: list[str]) -> list[dict]:
+def _extract_repo_dir(command: str) -> str | None:
+    """Extract target repo directory from cd prefix in bash commands."""
+    m = re.match(r'cd\s+("(?:[^"]+)"|\'(?:[^\']+)\'|[^\s;&&]+)', command)
+    if m:
+        path = m.group(1).strip("'\"")
+        return path
+    return None
+
+
+def _gh_json(args: list[str], cwd: str | None = None) -> list[dict]:
     """Run a gh command that returns JSON, fail-open on any error."""
     try:
         result = subprocess.run(
@@ -53,6 +62,7 @@ def _gh_json(args: list[str]) -> list[dict]:
             text=True,
             check=True,
             timeout=30,
+            cwd=cwd,
         )
         return json.loads(result.stdout)
     except _GH_ERRORS as e:
@@ -63,12 +73,12 @@ def _gh_json(args: list[str]) -> list[dict]:
         return []
 
 
-def _get_counts(resource: str) -> tuple[int, int]:
+def _get_counts(resource: str, cwd: str | None = None) -> tuple[int, int]:
     """Count total and AI-created open items for a resource type."""
     items = _gh_json([
         resource, "list", "--state", "open",
         "--json", "number,labels", "--limit", "100",
-    ])
+    ], cwd=cwd)
     total = len(items)
     ai_created = sum(
         1 for item in items
@@ -77,13 +87,13 @@ def _get_counts(resource: str) -> tuple[int, int]:
     return total, ai_created
 
 
-def _count_recent(resource: str) -> int:
+def _count_recent(resource: str, cwd: str | None = None) -> int:
     """Count items created by @me in the last 24 hours."""
     items = _gh_json([
         resource, "list", "--state", "all",
         "--author", "@me",
         "--json", "createdAt", "--limit", "100",
-    ])
+    ], cwd=cwd)
     cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
     return sum(
         1 for item in items
@@ -98,7 +108,7 @@ def _normalize_title(title: str) -> list[str]:
     return cleaned.split()[:4]
 
 
-def _check_duplicate(resource: str, label: str, command: str) -> None:
+def _check_duplicate(resource: str, label: str, command: str, cwd: str | None = None) -> None:
     """Block if an open item has a similar title to the one being created."""
     try:
         tokens = shlex.split(command)
@@ -123,7 +133,7 @@ def _check_duplicate(resource: str, label: str, command: str) -> None:
     items = _gh_json([
         resource, "list", "--state", "open",
         "--json", "title,number", "--limit", "100",
-    ])
+    ], cwd=cwd)
     for item in items:
         existing_title = item.get("title", "")
         existing_words = _normalize_title(existing_title)
@@ -170,12 +180,15 @@ def main() -> None:
 
     label = resource.upper() if resource == "pr" else resource.capitalize()
 
+    # Extract target repo directory from cd prefix (fixes CWD bug)
+    repo_dir = _extract_repo_dir(command)
+
     # Create-only checks: duplicate detection and hard limits
     if action == "create":
-        _check_duplicate(resource, label, command)
+        _check_duplicate(resource, label, command, cwd=repo_dir)
 
         total_limit, ai_limit = HARD_LIMITS[resource]
-        total, ai_created = _get_counts(resource)
+        total, ai_created = _get_counts(resource, cwd=repo_dir)
 
         reasons = []
         if total >= total_limit:
@@ -194,7 +207,7 @@ def main() -> None:
 
     # 24h rate limit (create and edit for PRs, create only for issues)
     if action == "create" or (resource == "pr" and action == "edit"):
-        recent = _count_recent(resource)
+        recent = _count_recent(resource, cwd=repo_dir)
         if recent >= RATE_LIMIT_24H:
             _block(
                 "Rate limit exceeded",

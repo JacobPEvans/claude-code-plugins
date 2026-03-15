@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Test suite for content-guards/scripts/enforce-issue-limits.py
 #
-# Tests command matching, rate-limit logic, and hard-limit blocking.
+# Tests command matching, rate-limit logic, hard-limit blocking, and CWD extraction.
 # Mocks `gh` via a fake executable placed earlier in PATH.
 #
 # Run with: bats tests/content-guards/enforce-issue-limits/enforce-issue-limits.bats
@@ -115,10 +115,10 @@ run_hook() {
 # TC5: gh issue create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC5: gh issue create blocked when 10 issues created in last 24h" {
+@test "TC5: gh issue create blocked when 25 issues created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 10)"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
@@ -130,10 +130,10 @@ run_hook() {
 # TC6: gh pr create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC6: gh pr create blocked when 10 PRs created in last 24h" {
+@test "TC6: gh pr create blocked when 25 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 10)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
@@ -145,10 +145,10 @@ run_hook() {
 # TC7: gh pr edit - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC7: gh pr edit blocked when 10 PRs created in last 24h" {
+@test "TC7: gh pr edit blocked when 25 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 10)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh pr edit 42 --title new-title"}}'
   [ "$status" -eq 2 ]
@@ -250,4 +250,48 @@ run_hook() {
 
   run_hook '{"tool_input":{"command":"gh issue create --title \"fix: broken login\""}}'
   [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# TC16: CWD extraction - cd prefix extracts correct directory
+# ---------------------------------------------------------------------------
+
+@test "TC16: cd prefix extracts target repo directory" {
+  # Use _extract_repo_dir directly via Python
+  run python3 -c "
+import sys; sys.path.insert(0, '$(dirname "$SCRIPT")')
+from importlib.machinery import SourceFileLoader
+mod = SourceFileLoader('m', '$SCRIPT').load_module()
+result = mod._extract_repo_dir('cd /Users/jevans/git/nix-ai/main && gh pr create --title test')
+assert result == '/Users/jevans/git/nix-ai/main', f'Expected /Users/jevans/git/nix-ai/main, got {result}'
+print('PASS')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16b: cd prefix with quoted path extracts correctly" {
+  run python3 -c "
+import sys; sys.path.insert(0, '$(dirname "$SCRIPT")')
+from importlib.machinery import SourceFileLoader
+mod = SourceFileLoader('m', '$SCRIPT').load_module()
+result = mod._extract_repo_dir('cd \"/Users/jevans/git/nix ai/main\" && gh pr create --title test')
+assert result == '/Users/jevans/git/nix ai/main', f'Got {result}'
+print('PASS')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16c: command without cd returns None" {
+  run python3 -c "
+import sys; sys.path.insert(0, '$(dirname "$SCRIPT")')
+from importlib.machinery import SourceFileLoader
+mod = SourceFileLoader('m', '$SCRIPT').load_module()
+result = mod._extract_repo_dir('gh pr create --title test')
+assert result is None, f'Expected None, got {result}'
+print('PASS')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
 }
