@@ -258,38 +258,64 @@ run_hook() {
 
 @test "TC16: cd prefix extracts target repo directory" {
   # Use _extract_repo_dir directly via Python
+  # Create a temp directory to act as the target repo path
+  local fake_repo
+  fake_repo="$(mktemp -d)"
   run python3 -c "
-import sys; sys.path.insert(0, '$(dirname "$SCRIPT")')
-from importlib.machinery import SourceFileLoader
-mod = SourceFileLoader('m', '$SCRIPT').load_module()
-result = mod._extract_repo_dir('cd /Users/jevans/git/nix-ai/main && gh pr create --title test')
-assert result == '/Users/jevans/git/nix-ai/main', f'Expected /Users/jevans/git/nix-ai/main, got {result}'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd $fake_repo && gh pr create --title test')
+assert result == '$fake_repo', f'Expected $fake_repo, got {result}'
 print('PASS')
 "
+  rm -rf "$fake_repo"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "PASS" ]]
 }
 
 @test "TC16b: cd prefix with quoted path extracts correctly" {
+  # Create a temp directory with a space in the name
+  local fake_repo
+  fake_repo="$(mktemp -d)/nix ai/main"
+  mkdir -p "$fake_repo"
   run python3 -c "
-import sys; sys.path.insert(0, '$(dirname "$SCRIPT")')
-from importlib.machinery import SourceFileLoader
-mod = SourceFileLoader('m', '$SCRIPT').load_module()
-result = mod._extract_repo_dir('cd \"/Users/jevans/git/nix ai/main\" && gh pr create --title test')
-assert result == '/Users/jevans/git/nix ai/main', f'Got {result}'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd \"$fake_repo\" && gh pr create --title test')
+assert result == '$fake_repo', f'Got {result}'
 print('PASS')
 "
+  rm -rf "$(dirname "$fake_repo")"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "PASS" ]]
 }
 
 @test "TC16c: command without cd returns None" {
   run python3 -c "
-import sys; sys.path.insert(0, '$(dirname "$SCRIPT")')
-from importlib.machinery import SourceFileLoader
-mod = SourceFileLoader('m', '$SCRIPT').load_module()
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
 result = mod._extract_repo_dir('gh pr create --title test')
 assert result is None, f'Expected None, got {result}'
+print('PASS')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16d: cd with tilde path returns None when directory does not exist" {
+  run python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd ~/nonexistent_path_abc123 && gh pr create --title test')
+assert result is None, f'Expected None for nonexistent tilde path, got {result}'
 print('PASS')
 "
   [ "$status" -eq 0 ]

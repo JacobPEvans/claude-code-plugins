@@ -21,6 +21,7 @@ Input: JSON from stdin with tool_input.command containing the Bash command
 """
 
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -46,9 +47,12 @@ _GH_ERRORS = (
 
 def _extract_repo_dir(command: str) -> str | None:
     """Extract target repo directory from cd prefix in bash commands."""
-    m = re.match(r'cd\s+("(?:[^"]+)"|\'(?:[^\']+)\'|[^\s;&&]+)', command)
+    m = re.match(r'^\s*cd\s+("(?:[^"]+)"|\'(?:[^\']+)\'|[^\s;&]+)', command)
     if m:
         path = m.group(1).strip("'\"")
+        path = os.path.expanduser(os.path.abspath(path))
+        if not os.path.isdir(path):
+            return None
         return path
     return None
 
