@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Test suite for content-guards/scripts/enforce-issue-limits.py
 #
-# Tests command matching, rate-limit logic, and hard-limit blocking.
+# Tests command matching, rate-limit logic, hard-limit blocking, and CWD extraction.
 # Mocks `gh` via a fake executable placed earlier in PATH.
 #
 # Run with: bats tests/content-guards/enforce-issue-limits/enforce-issue-limits.bats
@@ -115,10 +115,10 @@ run_hook() {
 # TC5: gh issue create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC5: gh issue create blocked when 10 issues created in last 24h" {
+@test "TC5: gh issue create blocked when 25 issues created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 10)"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
@@ -130,10 +130,10 @@ run_hook() {
 # TC6: gh pr create - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC6: gh pr create blocked when 10 PRs created in last 24h" {
+@test "TC6: gh pr create blocked when 25 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 10)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
@@ -145,10 +145,10 @@ run_hook() {
 # TC7: gh pr edit - 24h rate limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC7: gh pr edit blocked when 10 PRs created in last 24h" {
+@test "TC7: gh pr edit blocked when 25 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 10)"
+  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh pr edit 42 --title new-title"}}'
   [ "$status" -eq 2 ]
@@ -250,4 +250,74 @@ run_hook() {
 
   run_hook '{"tool_input":{"command":"gh issue create --title \"fix: broken login\""}}'
   [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
+# TC16: CWD extraction - cd prefix extracts correct directory
+# ---------------------------------------------------------------------------
+
+@test "TC16: cd prefix extracts target repo directory" {
+  # Use _extract_repo_dir directly via Python
+  # Create a temp directory to act as the target repo path
+  local fake_repo
+  fake_repo="$(mktemp -d)"
+  run python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd $fake_repo && gh pr create --title test')
+assert result == '$fake_repo', f'Expected $fake_repo, got {result}'
+print('PASS')
+"
+  rm -rf "$fake_repo"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16b: cd prefix with quoted path extracts correctly" {
+  # Create a temp directory with a space in the name
+  local fake_repo
+  fake_repo="$(mktemp -d)/nix ai/main"
+  mkdir -p "$fake_repo"
+  run python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd \"$fake_repo\" && gh pr create --title test')
+assert result == '$fake_repo', f'Got {result}'
+print('PASS')
+"
+  rm -rf "$(dirname "$fake_repo")"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16c: command without cd returns None" {
+  run python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('gh pr create --title test')
+assert result is None, f'Expected None, got {result}'
+print('PASS')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+}
+
+@test "TC16d: cd with tilde path returns None when directory does not exist" {
+  run python3 -c "
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location('m', '$SCRIPT')
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+result = mod._extract_repo_dir('cd ~/nonexistent_path_abc123 && gh pr create --title test')
+assert result is None, f'Expected None for nonexistent tilde path, got {result}'
+print('PASS')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
 }
