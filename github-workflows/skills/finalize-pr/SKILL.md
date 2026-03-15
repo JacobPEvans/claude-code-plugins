@@ -86,6 +86,12 @@ _For multi-PR modes, Phases 2-5 execute once per PR in sequence. Check out each 
 start of each iteration. For org-wide mode, use `repository.nameWithOwner` from Phase 1 as the
 `--repo` argument when checking out._
 
+### 2.0 Simplify Code First
+
+Invoke /simplify on all changes in the PR before any other Phase 2 work.
+This must complete before starting CI monitoring (2.1) so that CI and CodeQL
+run against the simplified code, not the pre-simplification version.
+
 Steps 2.1 and 2.2 start concurrently (2.1 is non-blocking). Steps 2.3 and 2.4 run sequentially after 2.2.
 
 ### 2.1 Start CI Monitoring (BACKGROUND)
@@ -137,11 +143,12 @@ Verify final PR state, mergeability, and check status. If fixes introduced new i
 
 Verify ALL conditions automatically and proceed directly:
 
-1. ✅ **CodeQL clean**: No open alerts in repository
+1. ✅ **CodeQL clean** (SEPARATE from CI): No open code-scanning alerts —
+   check via `gh api repos/{owner}/{repo}/code-scanning/alerts`
 2. ✅ **All threads resolved**: All review conversations addressed
 3. ✅ **No merge conflicts**: PR is mergeable
 4. ✅ **Code simplified**: All changes reviewed by /simplify
-5. ✅ **All checks pass**: `gh pr checks <PR>` all green
+5. ✅ **All CI checks pass** (SEPARATE from CodeQL): `gh pr checks <PR>` all green
 6. ✅ **Local validation**: Project linters pass
 
 **Only if ALL six pass**: Proceed to Phase 4 to update PR metadata.
@@ -182,13 +189,41 @@ Proceed to Phase 5.
 ✅ PR #{NUMBER} ready for final review!
 
 All checks passed and PR metadata is up to date.
-To merge, invoke one of:
+IMPORTANT: Do NOT merge this PR. Wait for the human to review and invoke
   /squash-merge-pr    # Squash all commits into one
   /rebase-pr          # Rebase commits onto main (preserves history)
 ```
 
 **Multi-PR mode**: Record the per-PR result (ready / blocked / needs-human). Restore the original
 branch and continue to the next PR. Do NOT emit a ready report — that happens in Phase 6.
+
+## Stop Condition — When to Return to User
+
+This skill MUST NOT return to the user until ALL of the following are true
+for EVERY targeted PR:
+
+1. **CI checks**: ALL GitHub Actions workflow runs are complete and passing
+   (`gh pr checks` shows all green)
+2. **CodeQL scans**: ALL code-scanning alerts are resolved — CodeQL runs as a
+   SEPARATE process from CI and must be checked independently via
+   `gh api repos/{owner}/{repo}/code-scanning/alerts`
+3. **Review threads**: ALL review threads are resolved (zero unresolved via
+   GraphQL query)
+4. **Merge conflicts**: PR mergeability status is MERGEABLE (not CONFLICTING)
+5. **Code simplified**: /simplify has been run on all code modifications
+6. **Local validation**: Project linters and tests pass
+7. **PR metadata**: Title, description, and linked issues are updated
+
+If ANY condition fails, loop back to Phase 2 and fix it. Do NOT report
+ready until every condition passes.
+
+CRITICAL: CodeQL is NOT part of CI checks. It runs as an independent
+GitHub code-scanning process. You must check BOTH `gh pr checks` (CI)
+AND `gh api repos/{owner}/{repo}/code-scanning/alerts` (CodeQL) separately.
+
+MERGE PROHIBITION: You are ABSOLUTELY FORBIDDEN from merging, auto-merging,
+enabling auto-merge, or approving the merge of any PR. Your sole purpose is
+to drive the PR to a mergeable state for the human to review and merge.
 
 ## Phase 6: Aggregate Report (Multi-PR Only)
 

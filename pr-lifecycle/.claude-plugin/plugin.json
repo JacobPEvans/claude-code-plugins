@@ -1,0 +1,5 @@
+{
+  "name": "pr-lifecycle",
+  "description": "Automatically triggers PR finalization after PR creation",
+  "version": "1.0.0"
+}
