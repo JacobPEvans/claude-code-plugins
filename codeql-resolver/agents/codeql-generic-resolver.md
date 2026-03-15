@@ -3,8 +3,10 @@ name: CodeQL Generic Resolver
 description: Handle non-standard CodeQL alerts with escalation for unclear patterns
 model: haiku
 author: JacobPEvans
-allowed-tools: Read, Grep, Glob, Bash(gh:*)
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(gh *), Bash(git *)
 ---
+
+<!-- cspell:words pipefail readlines -->
 
 # CodeQL Generic Resolver
 
@@ -41,6 +43,7 @@ Handle CodeQL alerts that don't fit the permissions or expression injection cate
 ### 1. Parse Alert
 
 Extract:
+
 - Rule ID/category
 - File location
 - Line number and context
@@ -50,7 +53,7 @@ Extract:
 
 Compare rule against known patterns:
 
-```
+```text
 rule_id:
   py/hardcoded-credential
   js/hardcoded-credential
@@ -71,16 +74,20 @@ rule_id:
 #### Pattern A: Hardcoded Credentials
 
 **File**: `scripts/deploy.py:42`
+
 ```python
 api_key = "sk-abc123def456"  # ALERT: Hardcoded credential
 ```
 
 **Fix**:
+
 1. Move to GitHub Secrets (or environment variable)
 2. Update code to read from env:
+
    ```python
    api_key = os.environ.get("API_KEY")
    ```
+
 3. Add to workflow using `secrets.API_KEY`
 
 **Decision**: If this is a script outside workflows, escalate to human (can't auto-add to workflow). If in workflow, apply fix.
@@ -88,6 +95,7 @@ api_key = "sk-abc123def456"  # ALERT: Hardcoded credential
 #### Pattern B: Unsafe Shell Command
 
 **File**: `.github/workflows/deploy.yml:30`
+
 ```yaml
 - run: |
     set -x
@@ -95,6 +103,7 @@ api_key = "sk-abc123def456"  # ALERT: Hardcoded credential
 ```
 
 **Fix**:
+
 ```yaml
 - run: |
     set -euo pipefail
@@ -106,12 +115,14 @@ Add `set -euo pipefail` to catch errors early.
 #### Pattern C: Resource Not Closed
 
 **File**: `scripts/backup.py:15`
+
 ```python
 f = open("data.txt")
 data = f.read()
 ```
 
 **Fix**:
+
 ```python
 with open("data.txt") as f:
     data = f.read()
@@ -122,6 +133,7 @@ Use context managers (`with` statement).
 ### 4. If Pattern Doesn't Match
 
 Return escalation:
+
 ```json
 {
   "alert_number": 25,
@@ -183,6 +195,7 @@ response = requests.post(
 ```
 
 Add to GitHub Secrets, then use in workflow:
+
 ```yaml
 - run: command
   env:
@@ -276,4 +289,5 @@ it might be using parameterized queries which are safe. Manual inspection needed
 
 **This agent operates on the principle**: "When in doubt, escalate to humans."
 
-It's better to flag an issue for human review than to incorrectly auto-fix and introduce bugs. Escalation includes detailed analysis so humans can quickly assess and take action.
+It's better to flag an issue for human review than to incorrectly auto-fix and introduce bugs.
+Escalation includes detailed analysis so humans can quickly assess and take action.
