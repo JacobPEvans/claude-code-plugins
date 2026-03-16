@@ -4,6 +4,7 @@ Claude Code plugin for PR management and issue shaping with Shape Up methodology
 
 ## Skills
 
+- **`/ship`** - Full automation: commit, push, create PR(s), and auto-finalize in one command. Never merges.
 - **`/finalize-pr`** - Finalize PRs for merge: single PR, all repo PRs (`all`), or all org PRs (`org`). Includes bot-authored PRs in all modes.
 - **`/squash-merge-pr`** - Validate PR readiness and squash merge into main (errors if not ready)
 - **`/resolve-pr-threads`** - Orchestrate resolution of PR review threads (requires superpowers plugin)
@@ -19,6 +20,7 @@ claude plugins add jacobpevans-cc-plugins/github-workflows
 ## Usage
 
 ```text
+/ship                     # Commit, push, create PR, and auto-finalize
 /finalize-pr              # Finalize PR on current branch
 /finalize-pr 42           # Finalize specific PR by number
 /finalize-pr all          # Finalize all open PRs in repo (including bots)
@@ -33,6 +35,7 @@ claude plugins add jacobpevans-cc-plugins/github-workflows
 
 | Skill | Requires | Why |
 |-------|----------|-----|
+| `/ship` | `commit-commands` plugin | Dispatches `/commit-push-pr` for PR creation |
 | `/resolve-pr-threads` | `superpowers` plugin | Sub-agents invoke `superpowers:receiving-code-review` for review feedback handling |
 | `/squash-merge-pr` | `git-workflows` plugin | Reads `/rebase-pr` Step 1 for PR validation query (single source of truth) |
 
