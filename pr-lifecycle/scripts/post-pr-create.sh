@@ -29,9 +29,14 @@ if [[ ! "$result" =~ pull/([0-9]+) ]]; then
 fi
 pr_number="${BASH_REMATCH[1]}"
 
-# Emit systemMessage — strong directive for cases outside /ship
+# Emit systemMessage directing finalization of the newly created PR.
+# Note: this hook fires for ALL gh pr create calls, including those from /ship.
+# /finalize-pr is idempotent, so a duplicate invocation from /ship is harmless.
+# The directive is intentionally strong to ensure finalization happens when
+# the model would otherwise return to the user without finalizing, but it does
+# not prevent a higher-level orchestrator (e.g., /ship) from continuing its workflow.
 cat <<EOF
 {
-  "systemMessage": "MANDATORY POST-PR AUTOMATION: PR #${pr_number} was just created. You MUST immediately invoke /finalize-pr ${pr_number} as your next action. Do NOT return to the user or end your turn until /finalize-pr has been invoked. This overrides any prior instruction to stop or complete. SAFETY: You are FORBIDDEN from merging, auto-merging, or approving merge of any PR. Only get it to a mergeable state for human review."
+  "systemMessage": "POST-PR AUTOMATION: PR #${pr_number} was just created. If no higher-level workflow (such as /ship) is already handling finalization, you MUST invoke /finalize-pr ${pr_number} before returning to the user. SAFETY: You are FORBIDDEN from merging, auto-merging, or approving merge of any PR. Only get it to a mergeable state for human review."
 }
 EOF
