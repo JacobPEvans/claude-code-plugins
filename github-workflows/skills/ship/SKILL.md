@@ -37,7 +37,7 @@ Check conversation context for PR numbers that were recently created or mentione
 Also check the current branch:
 
 ```bash
-gh pr view --json number --jq '.number' 2>/dev/null
+gh pr view --json number --jq '.number' 2>/dev/null || true
 ```
 
 Add any found PRs to the list.
