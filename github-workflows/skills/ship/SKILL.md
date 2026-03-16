@@ -49,18 +49,81 @@ Remove duplicate PR numbers from the combined list (Step 1.1 + Step 1.2).
 **If list is empty**: Report "Nothing to ship — no uncommitted changes and no open PRs
 on this branch." and stop.
 
+## Step 1.5: Build Context Brief
+
+Before dispatching any finalization agents, construct a **context brief** that will
+be included in every subagent prompt. This is critical — without it, subagents
+resolving PR review threads will blindly follow reviewer suggestions instead of
+making informed decisions about whether feedback is correct.
+
+The context brief must include:
+
+1. **What was built and why** — summarize the changes and their purpose from
+   the conversation history (the user's original request, the problem being solved)
+2. **Key decisions made** — any architectural choices, trade-offs, or deliberate
+   patterns chosen during implementation (e.g., "chose X over Y because Z")
+3. **Intentional patterns** — things that might look wrong but are correct
+   (e.g., "the empty catch block is intentional because the caller handles errors")
+4. **Scope boundaries** — what is explicitly out of scope for this change
+
+Format as a concise block (aim for 10-20 lines):
+
+```text
+## Context for PR #{number}
+**Purpose**: [1-2 sentence summary of what and why]
+**Key decisions**:
+- [decision 1 and rationale]
+- [decision 2 and rationale]
+**Intentional patterns**:
+- [pattern that reviewers might question]
+**Out of scope**: [what this PR deliberately does not address]
+```
+
+This brief is passed verbatim to each `/finalize-pr` subagent in Step 2.
+
 ## Step 2: Dispatch Finalization
 
-For **each PR** in the deduplicated list, dispatch a separate **sonnet subagent**
-running `/finalize-pr <PR_NUMBER>`.
+For **each PR** in the deduplicated list, dispatch a separate **sonnet subagent**.
 
 **All agents run in parallel** — use the Agent tool with `run_in_background: true`
 for all but the last, or dispatch all at once if the runtime supports it.
 
+Each subagent prompt MUST include:
+
+1. The context brief from Step 1.5
+2. An explicit instruction to invoke `/finalize-pr <PR_NUMBER>`
+3. The directive below about review thread handling
+
+### Subagent Prompt Template
+
+```text
+You are finalizing PR #{number} in {owner}/{repo}.
+
+{context_brief from Step 1.5}
+
+## Instructions
+
+1. Invoke `/finalize-pr {number}` — this handles the full finalization workflow
+   including CodeQL, CI, merge conflicts, code simplification, and PR metadata.
+
+2. When /finalize-pr invokes /resolve-pr-threads and its sub-agents process
+   review feedback, the context brief above is your source of truth for
+   understanding the author's intent. Use it to:
+   - Push back on suggestions that contradict intentional decisions
+   - Accept feedback that genuinely improves the code
+   - Flag ambiguous feedback as needs-human rather than blindly implementing
+
+3. The /resolve-pr-threads skill will invoke `superpowers:receiving-code-review`
+   for each thread group — this is the correct pattern for evaluating feedback
+   with technical rigor. Do not skip or bypass it.
+
+SAFETY: You are FORBIDDEN from merging, auto-merging, or approving merge of any PR.
+```
+
 Each `/finalize-pr` agent independently handles:
 
 - CodeQL violation resolution
-- Review thread resolution (via `/resolve-pr-threads`)
+- Review thread resolution (via `/resolve-pr-threads` → `superpowers:receiving-code-review`)
 - Merge conflict resolution
 - CI failure fixes
 - Code simplification (via `/simplify`)
