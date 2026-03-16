@@ -85,8 +85,8 @@ This brief is passed verbatim to each `/finalize-pr` subagent in Step 2.
 
 For **each PR** in the deduplicated list, dispatch a separate **sonnet subagent**.
 
-**All agents run in parallel** — use the Agent tool with `run_in_background: true`
-for all but the last, or dispatch all at once if the runtime supports it.
+**All agents run in parallel** — dispatch all Agent tool calls in a single response
+(multiple Agent invocations in one turn run concurrently).
 
 Each subagent prompt MUST include:
 
