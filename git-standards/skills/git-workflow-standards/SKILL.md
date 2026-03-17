@@ -35,10 +35,11 @@ Remove: `git worktree remove ~/git/<repo>/<branch>`
 Every branch with commits MUST have an associated PR.
 Orphaned branches must get a PR or be deleted.
 
-**Stale worktree**: branch merged into main, no remote branch, or PR merged
-with no uncommitted changes. Detect squash-merges:
-`gh pr list --state merged --head <branch>` then
-`git log origin/main..HEAD --oneline`.
+**Stale worktree**: A branch with a deleted remote (`[gone]`), or a merged PR
+(`gh pr list --state merged --head <branch>`) with no commits ahead of the default branch
+(`git log origin/main..HEAD --oneline` is empty). Branches with open PRs, local-only
+branches without merged PRs, and worktrees with uncommitted changes are NEVER stale.
+Use `git worktree remove` (never `--force`) — Git natively blocks removal of dirty worktrees.
 
 ## Branch Hygiene
 

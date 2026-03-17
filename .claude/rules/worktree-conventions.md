@@ -23,10 +23,10 @@ Examples:
 ## Before Creating
 
 1. Switch to main and sync: `cd ~/git/{repo-name}/main && git switch main && git pull`
-2. Clean stale worktrees (merged or `[gone]` branches):
-   - `git branch --merged main` to find merged branches
+2. Clean stale worktrees (merged PRs or `[gone]` remote branches):
+   - `gh pr list --state merged --head <branch>` to confirm PR was merged
    - `git branch -vv | grep '\[gone\]'` to find deleted remote branches
-   - `git worktree remove {path}` + `git branch -d {branch}` for each
+   - `git worktree remove {path}` (never `--force`) + `git branch -d {branch}`
    - `git worktree prune` to clean up
 
 ## After Creating

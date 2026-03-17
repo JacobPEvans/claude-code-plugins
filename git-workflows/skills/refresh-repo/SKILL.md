@@ -42,9 +42,27 @@ gh pr view NUMBER --json state,mergeable,statusCheckRollup,reviewDecision
 
 ### 4. Worktree Cleanup
 
-List worktrees, identify stale ones (branch merged or deleted), remove stale worktrees, prune.
+Only remove a worktree if it is confirmed stale.
 
-A worktree is stale if its branch no longer exists or has been merged into main.
+**Stale definition**: The branch has a merged PR (`gh pr list --state merged --head <branch>`)
+OR its remote tracking branch was deleted (`[gone]` in `git branch -vv`).
+
+Branches with open PRs, local-only branches without PRs, and worktrees with uncommitted
+changes are **NEVER** stale.
+
+For each worktree from `git worktree list`:
+
+1. Skip the default branch (main/master) and bare repo entries
+2. If the branch has an open PR, skip — it is **never** stale
+3. Check if stale: `[gone]` remote, or merged PR (`gh pr list --state merged --head <branch>`)
+   AND no commits ahead of default (`git log origin/main..HEAD --oneline` is empty)
+4. If not stale, skip
+5. Run `git worktree remove <path>` — **NEVER use `--force`**
+6. If Git blocks removal (dirty worktree), report it and skip
+7. If removed, also delete the branch: `git branch -d <branch>`.
+   If this fails (squash-merged branch not reachable from local main), investigate before using `git branch -D`
+
+Finish with `git worktree prune`.
 
 ### 5. Summary
 
