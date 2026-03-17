@@ -139,8 +139,10 @@ Check background CI results from 2.1:
 ### 2.3.5 Final Simplification
 
 After all fixes from 2.2 and 2.3 are complete, invoke /simplify once on all
-cumulative changes. This single pass replaces per-fix simplification calls,
-reducing token usage while still ensuring clean code before the health check.
+cumulative changes. Combined with Step 2.0 (pre-CI), this is the second and
+final /simplify pass — replacing the previous per-fix calls while still
+ensuring clean code before the health check. If /simplify produces changes,
+validate locally, commit, and push before proceeding to 2.4.
 
 ### 2.4 Health Check
 

@@ -23,7 +23,7 @@ git status --porcelain
 
 **If changes exist** (staged or unstaged), execute inline:
 
-1. Create branch if on main: `git checkout -b <type>/<description>` (derive from changes)
+1. Create branch if on main: `git checkout -b {type}/{description}` (derive from changes)
 2. Stage changes: `git add <relevant files>` (no `-A` — be selective)
 3. Commit with conventional commit message: `git commit -m "type: description"`
 4. Push: `git push -u origin HEAD`

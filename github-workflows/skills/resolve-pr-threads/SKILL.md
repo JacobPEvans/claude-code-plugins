@@ -24,7 +24,7 @@ fixes or provide explanations, then resolving threads via GitHub's GraphQL API.
 ```text
 /resolve-pr-threads              # Current branch PR
 /resolve-pr-threads 142          # Specific PR
-/resolve-pr-threads all          # All open PRs with unresolved threads (parallel)
+/resolve-pr-threads all          # All open PRs with unresolved threads (sequential)
 ```
 
 ## Rules
