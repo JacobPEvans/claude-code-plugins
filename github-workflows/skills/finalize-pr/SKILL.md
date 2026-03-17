@@ -21,7 +21,7 @@ No manual intervention required. For manual review-focused workflows, use `/revi
 2. **Verify all checks pass** - Report ready only when ALL conditions meet requirements
 3. **Resolve all conversations** - Automatically invoke `/resolve-pr-threads` for review threads
 4. **Fix all CodeQL violations** - Check repository and automatically fix using `/resolve-codeql`
-5. **Simplify all code changes** - Invoke /simplify after ANY code modifications
+5. **Simplify all code changes** - Invoke /simplify at Step 2.0 (before CI) and Step 2.3.5 (after all fixes)
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
 8. **Update PR metadata automatically** - Before reporting ready, update title, description, and linked issues via haiku subagent
@@ -116,25 +116,31 @@ gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
   --jq '[.[] | select(.state == "open")] | length'
 ```
 
-**If violations found**: Invoke `/resolve-codeql fix`, then /simplify, validate locally.
+**If violations found**: Invoke `/resolve-codeql fix`, validate locally.
 
 #### Review Threads
 
 Invoke `/resolve-pr-threads`. It exits cleanly when no threads exist.
-After completion, invoke /simplify and validate locally.
+After completion, validate locally.
 
 #### Merge Conflicts
 
 Check if the PR is mergeable. **If conflicts**: Fetch main, attempt merge, report unresolvable
-conflicts for user. After resolution, invoke /simplify and validate locally.
+conflicts for user. After resolution, validate locally.
 
 ### 2.3 CI Failure Fixes
 
 Check background CI results from 2.1:
 
 - **All passing**: Proceed to Phase 3
-- **Failures**: Fetch failed run logs, fix locally, invoke /simplify, validate, commit and push.
+- **Failures**: Fetch failed run logs, fix locally, validate, commit and push.
   Restart background CI monitoring and loop back to 2.2 if new issues emerged.
+
+### 2.3.5 Final Simplification
+
+After all fixes from 2.2 and 2.3 are complete, invoke /simplify once on all
+cumulative changes. This single pass replaces per-fix simplification calls,
+reducing token usage while still ensuring clean code before the health check.
 
 ### 2.4 Health Check
 

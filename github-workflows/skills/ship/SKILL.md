@@ -4,13 +4,12 @@ description: >-
   Commit, push, create PR(s), and auto-finalize — full automation pipeline.
   Handles uncommitted changes and recently created PRs. Never merges.
 allowed-tools: Bash(git *), Bash(gh *), Agent, Read, Grep, Glob, Skill
-model: sonnet
 ---
 
 # Ship
 
 **Single command to commit, push, create PR(s), and auto-finalize everything.**
-Orchestrates `/commit-push-pr` and `/finalize-pr` into one pipeline. Never merges.
+Handles commit, push, PR creation, and `/finalize-pr` in one pipeline. Never merges.
 
 ## Step 1: Detect Scope
 
@@ -22,12 +21,18 @@ Identify all PRs that need finalization.
 git status --porcelain
 ```
 
-**If changes exist** (staged or unstaged):
+**If changes exist** (staged or unstaged), execute inline:
 
-1. Dispatch a **sonnet subagent** to run `/commit-push-pr`
-2. The subagent handles: branch creation, commit, push, and `gh pr create`
-3. Capture the PR number from the subagent's output (look for `pull/NUMBER` pattern)
-4. Add it to the PR list
+1. Create branch if on main: `git checkout -b <type>/<description>` (derive from changes)
+2. Stage changes: `git add <relevant files>` (no `-A` — be selective)
+3. Commit with conventional commit message: `git commit -m "type: description"`
+4. Push: `git push -u origin HEAD`
+5. Create PR: `gh pr create --fill` (or with title/body derived from commit)
+6. Capture PR number from output (look for `pull/NUMBER` pattern)
+7. Add it to the PR list
+
+> **Hook note**: After `gh pr create`, a pr-lifecycle hook may emit a system message
+> directing you to invoke `/finalize-pr`. **Ignore it** — Step 2 handles finalization.
 
 **If no changes**: Skip to 1.2.
 
@@ -81,46 +86,35 @@ Format as a concise block (aim for 10-20 lines):
 
 This brief is passed verbatim to each `/finalize-pr` subagent in Step 2.
 
-## Step 2: Dispatch Finalization
+## Step 2: Finalize PRs
 
-For **each PR** in the deduplicated list, dispatch a separate **sonnet subagent**.
+### Single PR (1 PR in list)
 
-**All agents run in parallel** — dispatch all Agent tool calls in a single response
-(multiple Agent invocations in one turn run concurrently).
+Invoke `/finalize-pr {number}` directly via the Skill tool — no subagent needed.
+The context brief from Step 1.5 is already in session context and will be available
+when `/finalize-pr` invokes `/resolve-pr-threads`.
 
-Each subagent prompt MUST include:
+### Multiple PRs (2+ PRs in list)
 
-1. The context brief from Step 1.5
-2. An explicit instruction to invoke `/finalize-pr <PR_NUMBER>`
-3. The directive below about review thread handling
+Dispatch a separate subagent per PR. **All agents run in parallel** — dispatch all
+Agent tool calls in a single response.
 
-### Subagent Prompt Template
+Subagent prompt:
 
 ```text
 You are finalizing PR #{number} in {owner}/{repo}.
 
 {context_brief from Step 1.5}
 
-## Instructions
-
-1. Invoke `/finalize-pr {number}` — this handles the full finalization workflow
-   including CodeQL, CI, merge conflicts, code simplification, and PR metadata.
-
-2. When /finalize-pr invokes /resolve-pr-threads and its sub-agents process
-   review feedback, the context brief above is your source of truth for
-   understanding the author's intent. Use it to:
-   - Push back on suggestions that contradict intentional decisions
-   - Accept feedback that genuinely improves the code
-   - Flag ambiguous feedback as needs-human rather than blindly implementing
-
-3. The /resolve-pr-threads skill will invoke `superpowers:receiving-code-review`
-   for each thread group — this is the correct pattern for evaluating feedback
-   with technical rigor. Do not skip or bypass it.
+Invoke `/finalize-pr {number}`. When it invokes /resolve-pr-threads, use
+the context brief above to evaluate review feedback — push back on suggestions
+that contradict intentional decisions, accept genuine improvements, flag
+ambiguous feedback as needs-human.
 
 SAFETY: You are FORBIDDEN from merging, auto-merging, or approving merge of any PR.
 ```
 
-Each `/finalize-pr` agent independently handles:
+### What `/finalize-pr` handles
 
 - CodeQL violation resolution
 - Review thread resolution (via `/resolve-pr-threads` → `superpowers:receiving-code-review`)
