@@ -3,11 +3,11 @@ name: resolve-pr-threads
 description: >-
   Orchestrates resolution of GitHub PR review threads AND reads recent non-thread
   PR comments (top-level + review bodies) by grouping related feedback,
-  dispatching sub-agents that invoke superpowers:receiving-code-review,
+  processing each group sequentially inline with superpowers:receiving-code-review,
   and resolving threads via GraphQL. Use when you need to batch-process
   review feedback to unblock a PR merge.
 argument-hint: "[PR_NUMBER|all]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh *), Bash(git *), Task
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh *), Bash(git *), Skill
 ---
 
 <!-- cspell:words PRRT oneline databaseId -->
@@ -16,15 +16,15 @@ allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh *), Bash(git *), Task
 # Resolve PR Review Threads (Orchestrator)
 
 Orchestrates resolution of all unresolved PR review comments by grouping
-related threads, dispatching sub-agents to implement fixes or provide
-explanations, then resolving threads via GitHub's GraphQL API.
+related threads, processing each group sequentially inline to implement
+fixes or provide explanations, then resolving threads via GitHub's GraphQL API.
 
 ## Usage
 
 ```text
 /resolve-pr-threads              # Current branch PR
 /resolve-pr-threads 142          # Specific PR
-/resolve-pr-threads all          # All open PRs with unresolved threads (parallel)
+/resolve-pr-threads all          # All open PRs with unresolved threads (sequential)
 ```
 
 ## Rules
@@ -92,79 +92,57 @@ gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submit
 - **Group by reviewer** — combine each reviewer's comments into one group (max 5 per group)
 - Skip entirely when Steps 1c and 1d both returned zero comments
 
-### Step 3a: Dispatch Thread Group Sub-Agents
+### Step 3: Process Groups Sequentially (Inline)
 
-For each thread group, launch a `general-purpose` sub-agent. **Launch all groups in parallel.**
+**First**: Invoke `superpowers:receiving-code-review` via the Skill tool once.
+Read and follow its full pattern. This applies to all thread and comment processing below.
 
-Sub-agent prompt:
+#### 3a: Process Thread Groups
 
-```text
-You are resolving PR review threads for PR #{number} in {owner}/{repo}.
+Process each thread group **sequentially** (one group at a time, no sub-agents).
 
-Step 1 (MANDATORY): Invoke `superpowers:receiving-code-review` via the Skill tool.
-Read and follow its full pattern before proceeding. Skipping this is a skill violation.
+For each thread group:
 
-Step 2: Apply receiving-code-review to each thread below. Read the code at the
-referenced location, evaluate the feedback, and decide: implement fix, push back
-with rationale, or flag as needs-human.
+1. Read the code at the referenced location(s)
+2. Apply the receiving-code-review pattern: evaluate the feedback and decide —
+   implement fix, push back with rationale, or flag as needs-human
+3. If implementing a fix, make the change and commit (do NOT push yet)
+4. Reply to each thread:
 
-Step 3: Reply to each thread and commit changes.
-
-Threads:
-{for each thread in group}
-- Thread ID: {PRRT_xxx} | File: {path}:{line} | Reviewer: {author}
-- Comment: {body}
-- Database ID: {databaseId}
-{end for}
-
-Reply command (run directly via Bash — do NOT write a script):
+```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="your reply"
-
-{databaseId} is the NUMERIC value from the fetch response, NOT the PRRT_ node ID.
-
-Output ONE line per thread:
-PRRT_xxx: handled [commit:abc1234]
-PRRT_xxx: needs-human [reason]
-
-Commit changes but DO NOT push.
 ```
 
-### Step 3b: Dispatch Comment Group Sub-Agents
+`{databaseId}` is the NUMERIC value from the fetch response, NOT the PRRT_ node ID.
 
-Launch **in parallel with Step 3a**. One sub-agent per comment group. Skip if no comments.
+Track results per thread:
 
-Sub-agent prompt:
+- `PRRT_xxx: handled [commit:abc1234]`
+- `PRRT_xxx: needs-human [reason]`
 
-```text
-You are processing PR review comments for PR #{number} in {owner}/{repo}.
+#### 3b: Process Comment Groups
 
-Step 1 (MANDATORY): Invoke `superpowers:receiving-code-review` via the Skill tool.
-Read and follow its full pattern before proceeding. Skipping this is a skill violation.
+Process each comment group **sequentially** after all thread groups. Skip if no comments.
 
-Step 2: Apply receiving-code-review to each comment below. Determine if each is:
-actionable feedback, a question needing response, or general acknowledgment.
+For each comment group:
 
-Step 3: For each **non-thread** PR comment (top-level issue comment or review body), either implement fixes and commit, or reply via `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="..."`.
-Do **not** use this Issues comments endpoint as a fallback for review-thread replies; threaded review comments must be handled only via the dedicated thread-resolution flow and must **not** create new top-level PR comments.
-Do NOT write scripts — run gh commands directly via Bash.
+1. Apply the receiving-code-review pattern: determine if each comment is
+   actionable feedback, a question needing response, or general acknowledgment
+2. For actionable comments: implement fixes and commit (do NOT push yet)
+3. Reply via `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="..."`
 
-Comments:
-{for each comment in group}
-- Author: {author} | Date: {created_at or submitted_at}
-- Comment: {body}
-{end for}
+Do **not** use the Issues comments endpoint as a fallback for review-thread replies;
+threaded review comments must be handled only via the dedicated thread-resolution flow.
 
-Output ONE line per comment:
-COMMENT({author}, {date}): actionable [commit:abc1234]
-COMMENT({author}, {date}): acknowledged [replied]
-COMMENT({author}, {date}): needs-human [reason]
+Track results per comment:
 
-Commit changes but DO NOT push.
-```
+- `COMMENT({author}, {date}): actionable [commit:abc1234]`
+- `COMMENT({author}, {date}): acknowledged [replied]`
+- `COMMENT({author}, {date}): needs-human [reason]`
 
 ### Step 4: Resolve Threads Sequentially
 
-After all sub-agents complete, resolve each `handled` thread **one at a time** (not in parallel) to avoid cascade failures:
+After all groups are processed, resolve each `handled` thread **one at a time** (not in parallel) to avoid cascade failures:
 
 ```bash
 gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
@@ -188,22 +166,9 @@ Must return `0`. Then push: `git push`.
 4. Run standard workflow for each PR with feedback
 5. Verify each PR independently before moving to the next
 
-### Step 6: Monitor for New Reviews
-
-After Step 5 completes, launch a background Task agent (3-minute timeout)
-that re-checks for unresolved threads:
-
-1. Wait 60 seconds (allows time for AI reviewers to submit)
-2. Re-fetch unresolved threads (same query as Step 1a)
-3. If zero new threads: exit silently — resolution is complete
-4. If new threads found: report count, re-run Steps 1-5 on new threads,
-   then restart this Step 6 monitor
-
-The 3-minute timeout accommodates the 60-second wait plus time for
-re-fetching and resolving any new threads. This handles late-arriving
-AI reviews (Claude, Copilot, Gemini) that submit after the push in
-Step 5. The monitor restarts after each resolution cycle until a full
-60-second window passes with no new threads.
+This skill is a **single-pass resolver** — it processes all threads and comments found
+at invocation time, then returns. If the caller needs to handle late-arriving reviews,
+it is responsible for re-invoking this skill.
 
 ## Output Format
 
@@ -212,8 +177,7 @@ PR #{number} - Review Feedback Summary
 Threads: {groupCount} groups ({threadCount} total) | Handled: {n} | Needs human: {n}
   Resolved via GraphQL: {n} | Verification: {0 unresolved}/{total}
 Comments: {n} since last commit | Actionable: {n} | Acknowledged: {n} | Needs human: {n}
-Monitor: watching for new reviews (60s window)
-Status: COMPLETE | PARTIAL ({n} need attention) | MONITORING
+Status: COMPLETE | PARTIAL ({n} need attention)
 ```
 
 Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
