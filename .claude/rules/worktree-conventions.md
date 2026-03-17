@@ -24,9 +24,10 @@ Examples:
 
 1. Switch to main and sync: `cd ~/git/{repo-name}/main && git switch main && git pull`
 2. Clean stale worktrees (merged PRs or `[gone]` remote branches):
-   - `gh pr list --state merged --head <branch>` to confirm PR was merged
+   - `gh pr list --state merged --head {branch}` to confirm PR was merged
    - `git branch -vv | grep '\[gone\]'` to find deleted remote branches
    - `git worktree remove {path}` (never `--force`) + `git branch -d {branch}`
+   - If `git branch -d` fails (branch not merged locally, e.g. squash-merge), investigate before using `git branch -D`
    - `git worktree prune` to clean up
 
 ## After Creating

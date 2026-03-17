@@ -31,7 +31,7 @@
       "name": "git-workflows",
       "source": "./git-workflows",
       "description": "Git worktree initialization, main branch sync, repository refresh, and troubleshooting workflows",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "JacobPEvans"
       }
@@ -94,7 +94,7 @@
       "name": "git-standards",
       "source": "./git-standards",
       "description": "Git workflow standards, branch hygiene, PR creation guards, and issue linking",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "JacobPEvans"
       }

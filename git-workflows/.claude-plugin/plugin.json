@@ -1,6 +1,6 @@
 {
   "name": "git-workflows",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Git main branch sync, repository refresh, and PR merge workflows",
   "author": {
     "name": "JacobPEvans"
