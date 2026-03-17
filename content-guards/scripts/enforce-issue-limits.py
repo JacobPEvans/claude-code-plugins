@@ -30,7 +30,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 # Hard limits: (total_open, ai_created_open) per resource type
-HARD_LIMITS = {"issue": (100, 25), "pr": (15, 25)}
+HARD_LIMITS = {"issue": (100, 25), "pr": (15, 15)}
 
 # 24h rolling rate limit per resource type
 RATE_LIMIT_24H = 25

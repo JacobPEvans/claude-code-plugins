@@ -18,9 +18,15 @@ setup() {
 
   # Write a configurable fake `gh` script. Tests set GH_RESPONSE and
   # GH_EXIT_CODE before calling the script under test.
+  # GH_RESPONSE_ALL overrides the response when --state all is present
+  # (used to simulate different open vs all-state counts for rate limit tests).
   cat > "$FAKE_GH_DIR/gh" <<'EOF'
 #!/usr/bin/env bash
-echo "${GH_RESPONSE:-[]}"
+if [[ -n "${GH_RESPONSE_ALL:-}" ]] && [[ "$*" == *"--state all"* ]]; then
+  echo "$GH_RESPONSE_ALL"
+else
+  echo "${GH_RESPONSE:-[]}"
+fi
 exit "${GH_EXIT_CODE:-0}"
 EOF
   chmod +x "$FAKE_GH_DIR/gh"
@@ -89,13 +95,13 @@ run_hook() {
 # TC3: gh issue create - total issue hard limit (exit 2)
 # ---------------------------------------------------------------------------
 
-@test "TC3: gh issue create blocked when total open issues >= 50" {
-  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[]}' 50)"
+@test "TC3: gh issue create blocked when total open issues >= 100" {
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[]}' 100)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
   [[ "$output" =~ "BLOCKED: Issue creation limit exceeded" ]]
-  [[ "$output" =~ "50/50" ]]
+  [[ "$output" =~ "100/100" ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -133,7 +139,9 @@ run_hook() {
 @test "TC6: gh pr create blocked when 25 PRs created in last 24h" {
   local now
   now="$(utc_now)"
-  export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
+  # Open PRs under hard limit (14 < 15), but 25 total created in 24h (rate limit)
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[],"createdAt":"'"$now"'"}' 14)"
+  export GH_RESPONSE_ALL="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
 
   run_hook '{"tool_input":{"command":"gh pr create --title test"}}'
   [ "$status" -eq 2 ]
@@ -194,7 +202,7 @@ run_hook() {
 # ---------------------------------------------------------------------------
 
 @test "TC10: hard-limit block message does not reference missing skill path" {
-  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[]}' 50)"
+  export GH_RESPONSE="$(build_json_array '{"number":__N__,"labels":[]}' 100)"
 
   run_hook '{"tool_input":{"command":"gh issue create --title test"}}'
   [ "$status" -eq 2 ]
