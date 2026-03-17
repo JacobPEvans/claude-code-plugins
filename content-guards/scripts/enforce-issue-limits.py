@@ -6,7 +6,8 @@ Blocks `gh issue create` and `gh pr create` when limits are exceeded.
 Uses `--author @me` for identity-based filtering (unforgeable).
 
 Hard limits (per-repo):
-  - 150 total open issues/PRs
+  - 100 total open issues
+  - 15 total open PRs
   - 25 AI-created open issues/PRs (labeled "ai-created")
 
 Rate limits (24h rolling window):
@@ -29,7 +30,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 # Hard limits: (total_open, ai_created_open) per resource type
-HARD_LIMITS = {"issue": (150, 25), "pr": (150, 25)}
+HARD_LIMITS = {"issue": (100, 25), "pr": (15, 25)}
 
 # 24h rolling rate limit per resource type
 RATE_LIMIT_24H = 25
