@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.0...v1.8.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* migrate release-please settings to config file and sync VERSION ([#148](https://github.com/JacobPEvans/claude-code-plugins/issues/148)) ([d73e2bd](https://github.com/JacobPEvans/claude-code-plugins/commit/d73e2bdd5dea8f0e6ec2c4a58fe89547838add54))
+
 ## [1.8.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.7.0...v1.8.0) (2026-03-18)
 
 
