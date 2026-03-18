@@ -22,7 +22,7 @@
       "name": "content-guards",
       "source": "./content-guards",
       "description": "Combined content validation and guard plugin that merges token-validator, markdown-validator, webfetch-guard, and issue-limiter functionality",
-      "version": "1.0.0",
+      "version": "1.1.2",
       "author": {
         "name": "JacobPEvans"
       }
@@ -40,7 +40,7 @@
       "name": "github-workflows",
       "source": "./github-workflows",
       "description": "PR management, multi-repo PR finalization, and issue shaping with Shape Up methodology",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "author": {
         "name": "JacobPEvans"
       }
@@ -85,7 +85,7 @@
       "name": "process-cleanup",
       "source": "./process-cleanup",
       "description": "Cleanup orphaned MCP server processes on session exit — workaround for upstream bug #1935",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "JacobPEvans"
       }
