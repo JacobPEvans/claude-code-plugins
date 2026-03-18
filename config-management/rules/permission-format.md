@@ -2,8 +2,6 @@
 description: Permission format rules for AI tool settings — enforces Bash(command *) space-wildcard format
 globs:
   - "agentsmd/permissions/**"
-  - "**/settings.json"
-  - "**/settings.local.json"
 ---
 
 # Permission Format
@@ -36,7 +34,7 @@ Source JSON files in `agentsmd/permissions/` store bare commands with no suffix:
 
 The Nix formatter appends a space followed by `*` when generating `settings.json`. Never add `:*` or a trailing space-wildcard to source files.
 
-## Hierarchy
+## Nix-First Invocation
 
 Allow direct tool invocations from nix dev shells — not wrapper forms:
 
