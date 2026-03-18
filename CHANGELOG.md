@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.1...v1.8.2) (2026-03-18)
+
+
+### Bug Fixes
+
+* use version-file config option for VERSION instead of extra-files ([#150](https://github.com/JacobPEvans/claude-code-plugins/issues/150)) ([5dd1f41](https://github.com/JacobPEvans/claude-code-plugins/commit/5dd1f413e4ad8e7e8be3c93c26276d887db793a3))
+
 ## [1.8.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.0...v1.8.1) (2026-03-18)
 
 
