@@ -52,12 +52,12 @@ repo/
 
 | Repo | Template | Key Tools |
 | --- | --- | --- |
-| ansible-proxmox | `nix-devenv?dir=shells/ansible` | ansible, molecule, sops, age |
-| ansible-proxmox-apps | `nix-devenv?dir=shells/ansible` | + SOPS_AGE_KEY_FILE |
-| terraform-proxmox | `nix-devenv?dir=shells/terraform` | terraform, terragrunt, tfsec, trivy |
-| terraform-aws | `nix-devenv?dir=shells/terraform` | same as terraform-proxmox |
-| kubernetes-monitoring | `nix-devenv?dir=shells/kubernetes` | kubectl, helm, helmfile, k9s, kind |
-| splunk | `nix-devenv?dir=shells/splunk-dev` | uv (Python 3.9 on-demand) |
+| ansible-proxmox | `github:JacobPEvans/nix-devenv?dir=shells/ansible` | ansible, molecule, sops, age |
+| ansible-proxmox-apps | `github:JacobPEvans/nix-devenv?dir=shells/ansible` | + SOPS_AGE_KEY_FILE |
+| terraform-proxmox | `github:JacobPEvans/nix-devenv?dir=shells/terraform` | terraform, terragrunt, tfsec, trivy |
+| terraform-aws | `github:JacobPEvans/nix-devenv?dir=shells/terraform` | same as terraform-proxmox |
+| kubernetes-monitoring | `github:JacobPEvans/nix-devenv?dir=shells/kubernetes` | kubectl, helm, helmfile, k9s, kind |
+| splunk | `github:JacobPEvans/nix-devenv?dir=shells/splunk-dev` | uv (Python 3.9 on-demand) |
 
 ## Secrets Management
 
