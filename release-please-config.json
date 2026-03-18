@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "//comment-last-release-sha": "Temporary fix to unstick release-please from PR #118. Remove after the next successful release.",
   "last-release-sha": "23a86e29f01b33e2e23641ffbc7b397d49ee7888",
   "packages": {
     ".": {
@@ -10,10 +11,12 @@
         {"type": "fix", "section": "Bug Fixes"},
         {"type": "perf", "section": "Performance"},
         {"type": "breaking", "section": "Breaking Changes"},
+        {"type": "build", "section": "Build", "hidden": true},
         {"type": "chore", "section": "Miscellaneous", "hidden": true},
         {"type": "ci", "section": "CI", "hidden": true},
         {"type": "docs", "section": "Documentation", "hidden": true},
         {"type": "refactor", "section": "Refactoring", "hidden": true},
+        {"type": "style", "section": "Styles", "hidden": true},
         {"type": "test", "section": "Tests", "hidden": true}
       ],
       "extra-files": [
