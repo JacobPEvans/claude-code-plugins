@@ -15,8 +15,8 @@
         {"type": "refactor", "section": "Refactoring", "hidden": true},
         {"type": "test", "section": "Tests", "hidden": true}
       ],
+      "version-file": "VERSION",
       "extra-files": [
-        "VERSION",
         "*/.claude-plugin/plugin.json",
         {
           "type": "json",
