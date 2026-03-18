@@ -87,15 +87,6 @@
         "pattern": "^\\./agents/[a-z0-9-]+\\.md$"
       },
       "uniqueItems": true
-    },
-    "rules": {
-      "type": "array",
-      "description": "Paths to rule files (auto-loaded when plugin is active)",
-      "items": {
-        "type": "string",
-        "pattern": "^\\./rules/[a-z0-9-]+$"
-      },
-      "uniqueItems": true
     }
   }
 }

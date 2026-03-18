@@ -11,8 +11,5 @@
   "skills": [
     "./skills/sync-permissions",
     "./skills/quick-add-permission"
-  ],
-  "rules": [
-    "./rules/permission-format"
   ]
 }
