@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.8.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.0...v1.8.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* migrate release-please settings to config file and sync VERSION ([#148](https://github.com/JacobPEvans/claude-code-plugins/issues/148)) ([d73e2bd](https://github.com/JacobPEvans/claude-code-plugins/commit/d73e2bdd5dea8f0e6ec2c4a58fe89547838add54))
+
+## [1.8.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.7.0...v1.8.0) (2026-03-18)
+
+
+### Features
+
+* add plugin validation CI ([#138](https://github.com/JacobPEvans/claude-code-plugins/issues/138)) ([79a7c51](https://github.com/JacobPEvans/claude-code-plugins/commit/79a7c51657abcda547cddaf55bda37cd8a744836))
+* **config-management:** add permission-format rule ([#139](https://github.com/JacobPEvans/claude-code-plugins/issues/139)) ([110fd57](https://github.com/JacobPEvans/claude-code-plugins/commit/110fd579ee77ae7f0afd639f994775378a7cca07))
+* unified versioning via release-please extra-files ([#142](https://github.com/JacobPEvans/claude-code-plugins/issues/142)) ([e78beff](https://github.com/JacobPEvans/claude-code-plugins/commit/e78beffb990bc9a91351a1e51a52e5ba82b9584b))
+
+
+### Bug Fixes
+
+* add metadata.version to release-please extra-files ([#143](https://github.com/JacobPEvans/claude-code-plugins/issues/143)) ([ee87c76](https://github.com/JacobPEvans/claude-code-plugins/commit/ee87c7630f731b0d7cab86ebf7827d7f7672a506))
+* **ci:** grant contents: write for release-please workflow ([#141](https://github.com/JacobPEvans/claude-code-plugins/issues/141)) ([bcac4ba](https://github.com/JacobPEvans/claude-code-plugins/commit/bcac4bae5a0ee61ebc44f74b6583a40d3165a850))
+
 ## [1.6.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.5.0...v1.6.0) (2026-03-13)
 
 

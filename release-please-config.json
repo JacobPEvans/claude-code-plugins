@@ -20,6 +20,7 @@
         {"type": "test", "section": "Tests", "hidden": true}
       ],
       "extra-files": [
+        "VERSION",
         "*/.claude-plugin/plugin.json",
         {
           "type": "json",
