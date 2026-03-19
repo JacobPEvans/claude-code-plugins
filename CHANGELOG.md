@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.2...v1.8.3) (2026-03-19)
+
+
+### Bug Fixes
+
+* process /ship PRs sequentially to avoid rate limit storms ([#152](https://github.com/JacobPEvans/claude-code-plugins/issues/152)) ([a640998](https://github.com/JacobPEvans/claude-code-plugins/commit/a6409981ae4595200d75e6c8bdb93b919ce79dd6))
+
 ## [1.8.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.1...v1.8.2) (2026-03-18)
 
 
