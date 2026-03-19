@@ -11,6 +11,17 @@ allowed-tools: Bash(git *), Bash(gh *), Agent, Read, Grep, Glob, Skill
 **Single command to commit, push, create PR(s), and auto-finalize everything.**
 Handles commit, push, PR creation, and `/finalize-pr` in one pipeline. Never merges.
 
+## Rate Limit Awareness
+
+This skill orchestrates many downstream API calls via `/finalize-pr`,
+which itself invokes `/resolve-codeql`, `/resolve-pr-threads`, `/simplify`,
+and metadata updates. To avoid API rate limit errors:
+
+- **Process PRs sequentially** — never dispatch parallel subagents for multiple PRs
+- **Allow `/finalize-pr` to manage its own internal concurrency** — it can
+  run its fixes in parallel since they're scoped to a single PR
+- **Pause after PR creation** — `sleep 2` after `gh pr create` to let GitHub index
+
 ## Step 1: Detect Scope
 
 Identify all PRs that need finalization.
@@ -28,8 +39,9 @@ git status --porcelain
 3. Commit with conventional commit message: `git commit -m "type: description"`
 4. Push: `git push -u origin HEAD`
 5. Create PR: `gh pr create --fill` (or with title/body derived from commit)
-6. Capture PR number from output (look for `pull/NUMBER` pattern)
-7. Add it to the PR list
+6. **Pacing**: Run `sleep 2` after `gh pr create` to allow GitHub to index the PR
+7. Capture PR number from output (look for `pull/NUMBER` pattern)
+8. Add it to the PR list
 
 > **Hook note**: After `gh pr create`, a pr-lifecycle hook may emit a system message
 > directing you to invoke `/finalize-pr`. **Ignore it** — Step 2 handles finalization.
@@ -96,23 +108,15 @@ when `/finalize-pr` invokes `/resolve-pr-threads`.
 
 ### Multiple PRs (2+ PRs in list)
 
-Dispatch a separate subagent per PR. **All agents run in parallel** — dispatch all
-Agent tool calls in a single response.
+Process PRs **sequentially** — invoke `/finalize-pr` for each PR one at a time
+via the Skill tool. Wait for each to complete before starting the next. This
+prevents API rate limit errors from overlapping finalization cascades.
 
-Subagent prompt:
+For each PR in the list:
 
-```text
-You are finalizing PR #{number} in {owner}/{repo}.
-
-{context_brief from Step 1.5}
-
-Invoke `/finalize-pr {number}`. When it invokes /resolve-pr-threads, use
-the context brief above to evaluate review feedback — push back on suggestions
-that contradict intentional decisions, accept genuine improvements, flag
-ambiguous feedback as needs-human.
-
-SAFETY: You are FORBIDDEN from merging, auto-merging, or approving merge of any PR.
-```
+1. Invoke `/finalize-pr {number}` via the Skill tool
+2. Record the result (ready / blocked / needs-human)
+3. Proceed to the next PR
 
 ### What `/finalize-pr` handles
 

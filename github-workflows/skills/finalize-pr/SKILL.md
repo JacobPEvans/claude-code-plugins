@@ -169,7 +169,7 @@ Do not stop the batch for one blocked PR.
 ## Phase 4: Update PR Metadata
 
 Delegate to a **haiku subagent** to keep full diff out of main context.
-Steps 4.1 and 4.2 can run in parallel within the agent. Step 4.3 runs after both.
+Steps 4.1 and 4.2 run sequentially within the agent. Step 4.3 runs after both.
 
 ### 4.1 Update PR Title and Description
 
