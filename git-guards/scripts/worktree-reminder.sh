@@ -18,7 +18,7 @@ current_branch=$(git branch --show-current 2>/dev/null || echo "")
 if [[ "$(basename "$worktree_root")" == "main" ]] || [[ "$current_branch" == "main" ]]; then
     cat <<'ENDJSON'
 {
-  "systemMessage": "WARNING: You are on the main branch. You MUST run /init-worktree to create a feature branch worktree BEFORE making any changes. Do not read files for editing purposes or attempt any edits until you are in a worktree. This applies to ALL work — code changes, documentation, config files."
+  "systemMessage": "WARNING: You are on the main branch. You MUST first run /refresh-repo on this repo to sync main from remote origin (skip over any worktree/branch removal errors but ensure main is fully pulled), then run /init-worktree to create a feature branch worktree BEFORE making any changes. Do not read files for editing purposes or attempt any edits until you are in a worktree. This applies to ALL work — code changes, documentation, config files."
 }
 ENDJSON
 else

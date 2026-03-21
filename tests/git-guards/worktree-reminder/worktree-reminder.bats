@@ -78,6 +78,7 @@ run_hook_in() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ "systemMessage" ]]
   [[ "$output" =~ "WARNING" ]]
+  [[ "$output" =~ "refresh-repo" ]]
   [[ "$output" =~ "init-worktree" ]]
 }
 
@@ -94,6 +95,7 @@ run_hook_in() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ "systemMessage" ]]
   [[ "$output" =~ "WARNING" ]]
+  [[ "$output" =~ "refresh-repo" ]]
   [[ "$output" =~ "init-worktree" ]]
 }
 
