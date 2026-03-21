@@ -1,0 +1,9 @@
+{
+  "name": "pal-health",
+  "version": "1.0.0",
+  "description": "Session-start hook to warn about recent PAL MCP Doppler failures",
+  "author": {"name": "JacobPEvans"},
+  "homepage": "https://github.com/JacobPEvans/claude-code-plugins",
+  "keywords": ["pal", "mcp", "doppler", "health", "hooks"],
+  "license": "Apache-2.0"
+}
