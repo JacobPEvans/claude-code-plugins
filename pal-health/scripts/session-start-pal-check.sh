@@ -6,8 +6,8 @@ set -euo pipefail
 LOG="${XDG_STATE_HOME:-$HOME/.local/state}/doppler-mcp.log"
 
 if [ -f "$LOG" ]; then
-  last_line=$(tail -1 "$LOG" 2>/dev/null || true)
-  if echo "$last_line" | grep -q "preflight failed"; then
+  last_line=$(tail -1 "$LOG" || true)
+  if grep -q "preflight failed" <<< "$last_line"; then
     cat <<'WARN' >&2
 WARNING: PAL MCP had a recent Doppler auth failure.
   Run: doppler login && check-pal-mcp
