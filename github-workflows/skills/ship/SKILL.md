@@ -22,6 +22,20 @@ and metadata updates. To avoid API rate limit errors:
   run its fixes in parallel since they're scoped to a single PR
 - **Pause after PR creation** — `sleep 2` after `gh pr create` to let GitHub index
 
+## Step 0: Verify Working Directory
+
+Before anything else, confirm the working directory is valid:
+
+```bash
+git rev-parse --git-dir 2>/dev/null
+```
+
+**If this fails** (exits non-zero or the current directory doesn't exist), stop immediately
+and report: "Working directory is not a git repository. This usually means the worktree was
+cleaned up after a PR merge. Start a new session with `/init-worktree` to continue working."
+
+Do NOT attempt to recover, cd elsewhere, or fall through to Step 1.
+
 ## Step 1: Detect Scope
 
 Identify all PRs that need finalization.
