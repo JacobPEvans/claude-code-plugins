@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.9.0...v1.9.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* add working directory check to /ship skill ([#158](https://github.com/JacobPEvans/claude-code-plugins/issues/158)) ([f79a83f](https://github.com/JacobPEvans/claude-code-plugins/commit/f79a83fc2e1079a304783045c58616440a32a352))
+
 ## [1.9.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.3...v1.9.0) (2026-03-21)
 
 
