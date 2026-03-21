@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.3...v1.9.0) (2026-03-21)
+
+
+### Features
+
+* **git-guards:** add proactive worktree reminders via UserPromptSubmit hook ([#155](https://github.com/JacobPEvans/claude-code-plugins/issues/155)) ([ff95211](https://github.com/JacobPEvans/claude-code-plugins/commit/ff9521195276a1aa9a199697b9255e6b74ed8f21))
+
 ## [1.8.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.8.2...v1.8.3) (2026-03-19)
 
 
