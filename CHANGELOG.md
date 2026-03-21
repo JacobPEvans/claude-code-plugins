@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.9.1...v1.10.0) (2026-03-21)
+
+
+### Features
+
+* add pal-health plugin with SessionStart Doppler check ([#156](https://github.com/JacobPEvans/claude-code-plugins/issues/156)) ([7c4959c](https://github.com/JacobPEvans/claude-code-plugins/commit/7c4959cbd80f45ff5e16d504564ca40e799611e1))
+
 ## [1.9.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.9.0...v1.9.1) (2026-03-21)
 
 
