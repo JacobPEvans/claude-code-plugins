@@ -15,6 +15,7 @@
 setup() {
   REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../.." && pwd)"
   SCRIPT="$REPO_ROOT/git-guards/scripts/worktree-reminder.sh"
+  load '../../helpers/git'
 
   if [[ ! -f "$SCRIPT" ]]; then
     echo "ERROR: Script not found at $SCRIPT" >&2
@@ -27,22 +28,6 @@ setup() {
 
 teardown() {
   rm -rf "$TMPDIR_BASE"
-}
-
-# Create a minimal git repo at the given path with one committed file.
-# Sets the branch name to $2 (default: main).
-make_repo() {
-  local repo_path="$1"
-  local branch="${2:-main}"
-
-  mkdir -p "$repo_path"
-  git -C "$repo_path" init -q
-  git -C "$repo_path" config user.email "test@example.com"
-  git -C "$repo_path" config user.name "Test"
-  echo "content" > "$repo_path/tracked.txt"
-  git -C "$repo_path" add tracked.txt
-  git -C "$repo_path" commit -q -m "init"
-  git -C "$repo_path" branch -M "$branch"
 }
 
 # Run the hook from a specific directory
@@ -72,7 +57,7 @@ run_hook_in() {
 @test "TC2: worktree dir named 'main' injects systemMessage" {
   local repo_dir
   repo_dir="$TMPDIR_BASE/main"
-  make_repo "$repo_dir" "feat/some-feature"
+  make_repo "$repo_dir" "feat/some-feature" >/dev/null
 
   run_hook_in "$repo_dir"
   [ "$status" -eq 0 ]
@@ -89,7 +74,7 @@ run_hook_in() {
 @test "TC3: branch named 'main' injects systemMessage" {
   local repo_dir
   repo_dir="$TMPDIR_BASE/myrepo"
-  make_repo "$repo_dir" "main"
+  make_repo "$repo_dir" "main" >/dev/null
 
   run_hook_in "$repo_dir"
   [ "$status" -eq 0 ]
@@ -106,7 +91,7 @@ run_hook_in() {
 @test "TC4: feature branch in non-main dir outputs empty JSON" {
   local repo_dir
   repo_dir="$TMPDIR_BASE/myrepo"
-  make_repo "$repo_dir" "main"
+  make_repo "$repo_dir" "main" >/dev/null
 
   # Switch to a feature branch
   git -C "$repo_dir" checkout -q -b feat/add-feature
@@ -123,7 +108,7 @@ run_hook_in() {
 @test "TC5: dir named 'main' with branch 'main' injects systemMessage" {
   local repo_dir
   repo_dir="$TMPDIR_BASE/main"
-  make_repo "$repo_dir" "main"
+  make_repo "$repo_dir" "main" >/dev/null
 
   run_hook_in "$repo_dir"
   [ "$status" -eq 0 ]

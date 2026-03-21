@@ -16,6 +16,7 @@
 setup() {
   REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../.." && pwd)"
   SCRIPT="$REPO_ROOT/git-guards/scripts/main-branch-guard.sh"
+  load '../../helpers/git'
 
   if [[ ! -f "$SCRIPT" ]]; then
     echo "ERROR: Script not found at $SCRIPT" >&2
@@ -32,26 +33,6 @@ teardown() {
 
 run_hook() {
   run bash -c 'echo "$1" | /bin/bash "$2"' _ "$1" "$SCRIPT"
-}
-
-# Create a minimal git repo at the given path with one committed file.
-# Sets the branch name to $2 (default: main).
-# Prints the absolute path to the committed test file.
-make_repo() {
-  local repo_path="$1"
-  local branch="${2:-main}"
-
-  mkdir -p "$repo_path"
-  git -C "$repo_path" init -q
-  git -C "$repo_path" config user.email "test@example.com"
-  git -C "$repo_path" config user.name "Test"
-  echo "content" > "$repo_path/tracked.txt"
-  git -C "$repo_path" add tracked.txt
-  git -C "$repo_path" commit -q -m "init"
-  # Rename the branch to the requested name
-  git -C "$repo_path" branch -M "$branch"
-
-  echo "$repo_path/tracked.txt"
 }
 
 # ---------------------------------------------------------------------------

@@ -2,18 +2,16 @@
 # UserPromptSubmit hook - inject worktree reminder when on main branch
 # Runs on every prompt submission, checks if cwd is on main branch,
 # and if so, injects a systemMessage reminding Claude to create a worktree first.
+#
+# Note: UserPromptSubmit provides user_prompt on stdin but we don't need it.
 
-set -euo pipefail
+# Single git call: returns worktree root (line 1) and branch name (line 2).
+# Fails with exit 128 outside a git repo, producing no output.
+# Uses read instead of mapfile for bash 3.x (macOS /bin/bash) compatibility.
+_git_output=$(git rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/null) || { echo '{}'; exit 0; }
 
-# Check if we're in a git repo
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo '{}'
-    exit 0
-fi
-
-# Check if worktree directory is named "main" OR current branch is "main"
-worktree_root=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
-current_branch=$(git branch --show-current 2>/dev/null || echo "")
+worktree_root=$(echo "$_git_output" | head -1)
+current_branch=$(echo "$_git_output" | tail -1)
 
 if [[ "$(basename "$worktree_root")" == "main" ]] || [[ "$current_branch" == "main" ]]; then
     cat <<'ENDJSON'
@@ -24,4 +22,3 @@ ENDJSON
 else
     echo '{}'
 fi
-exit 0
