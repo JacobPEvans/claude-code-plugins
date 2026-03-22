@@ -9,6 +9,7 @@ description: >-
 # Post-Merge Wrap-Up
 
 Run all three steps in order. Each step is a separate skill invocation.
+After completing the steps, provide a summary of the actions taken.
 
 ## Step 1: Refresh Repository
 
@@ -43,7 +44,7 @@ has been deleted:
 **Requires**: `commit-commands` plugin (external).
 If not installed, skip this step and note it was skipped.
 
-## Step 4: Summary
+## Summary
 
 Report what was completed:
 

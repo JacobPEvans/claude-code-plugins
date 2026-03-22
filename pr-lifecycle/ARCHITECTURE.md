@@ -28,7 +28,7 @@ flowchart LR
 | Caller | Uses pr-lifecycle hook? |
 |--------|----------------------|
 | `/commit-push-pr` (commit-commands) | Yes — hook fires after `gh pr create` |
-| `/ship` (github-workflows) | No — `/ship` handles finalization directly |
+| `/ship` (github-workflows) | Yes, but its systemMessage is ignored — `/ship` invokes `/finalize-pr` directly |
 | Manual `gh pr create` | Yes — hook fires on any Bash `gh pr create` |
 
 When `/ship` is the orchestrator, it suppresses this hook's systemMessage and invokes

@@ -33,9 +33,6 @@ flowchart TD
 
     FPR -->|"Phase 2.2:\nfix CodeQL violations"| RCQ
     RCQ --> CMD
-
-    classDef ai fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
-    classDef external fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
 ```
 
 ## Data Flow

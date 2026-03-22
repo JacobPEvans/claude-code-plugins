@@ -1,6 +1,6 @@
 # content-guards — Architecture
 
-Pre-flight and post-flight content validation through 7 hooks across PreToolUse and
+Pre-flight and post-flight content validation through 6 hooks across PreToolUse and
 PostToolUse events. These run automatically on every qualifying tool call.
 
 ## Validation Pipeline

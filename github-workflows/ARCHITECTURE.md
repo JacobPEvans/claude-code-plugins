@@ -117,7 +117,7 @@ flowchart TD
         H2 -->|"Approved"| H4
     end
 
-    subgraph MERGE ["AI — On Human Command"]
+    subgraph MERGE ["AI — On Human Command (/squash-merge-pr)"]
         direction TB
         M1["Validate readiness\n(/rebase-pr Step 1 query)"]:::external
         M2["Generate squash commit"]:::ai
