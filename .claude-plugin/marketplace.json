@@ -143,6 +143,15 @@
       "author": {
         "name": "JacobPEvans"
       }
+    },
+    {
+      "name": "pal-health",
+      "source": "./pal-health",
+      "description": "Session-start hook to warn about recent PAL MCP Doppler failures",
+      "version": "1.12.1",
+      "author": {
+        "name": "JacobPEvans"
+      }
     }
   ]
 }
