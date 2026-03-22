@@ -9,5 +9,5 @@ __pycache__/
 dist/
 build/
 
-# Generated content from Claude Code plugins (retrospectives, local reports)
-.claude/skills/
+# Generated content from retrospecting skill (local session reports)
+.claude/skills/retrospecting/
