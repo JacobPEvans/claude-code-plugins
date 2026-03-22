@@ -49,11 +49,15 @@ If not installed, skip this step and note it was skipped.
 ## Step 4: Follow-Up Session Prompt
 
 After the retrospective completes (or is skipped), generate a follow-up prompt
-for the next session. Review the **entire conversation history** to build this.
+for the next session. Scan the conversation history in **reverse chronological
+order**, stopping when no new items appear for ~10 consecutive messages. Most
+unfinished work surfaces near the end of a session.
 
-### 4a: Gather Unfinished Work
+### 4a + 4b: Gather Unfinished Work and Session Issues (parallel)
 
-Scan the session for:
+Scan simultaneously for both categories:
+
+**Unfinished work** (4a):
 
 - **Incomplete tasks** — anything started but not finished, or marked as TODO/FIXME
   during this session
@@ -62,9 +66,7 @@ Scan the session for:
 - **Future work identified** — any issues, improvements, or ideas called out
   during the session as "later", "follow-up", "out of scope", or similar
 
-### 4b: Gather Session Issues
-
-Collect **every** problem encountered during the session:
+**Session issues** (4b):
 
 - Errors (build failures, test failures, runtime errors)
 - Warnings (linter warnings, deprecation notices, compiler warnings)
