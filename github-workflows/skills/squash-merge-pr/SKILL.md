@@ -45,10 +45,42 @@ Generate:
 
 Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 
-## Step 3: Execute Squash Merge
+Store the title in a shell variable and write the body to a temp file using the Write tool
+(avoids shell quoting issues with multi-line text):
 
 ```bash
-gh pr merge {pr} --squash --delete-branch --subject "{title}" --body "{body}"
+SQUASH_TITLE="<generated title>"
+SQUASH_BODY_FILE=$(mktemp)
+```
+
+Use the Write tool to write the generated body text to the path stored in `$SQUASH_BODY_FILE`.
+
+## Step 3: Execute Squash Merge
+
+Capture the branch name before merging (needed for cleanup):
+
+```bash
+BRANCH=$(gh pr view {pr} --json headRefName --jq '.headRefName')
+```
+
+Merge without `--delete-branch` (avoids `git switch` failure in bare+worktree repos):
+
+```bash
+gh pr merge {pr} --squash --subject "$SQUASH_TITLE" --body-file "$SQUASH_BODY_FILE"
+rm -f "$SQUASH_BODY_FILE"
+```
+
+Delete the remote branch explicitly:
+
+```bash
+git push origin --delete "$BRANCH"
+```
+
+Clean up local worktree and branch refs (both are safe no-ops if absent):
+
+```bash
+git worktree remove "$(git rev-parse --show-toplevel)/../$BRANCH" 2>/dev/null || true
+git branch -d "$BRANCH" 2>/dev/null || true
 ```
 
 ## Step 4: Sync Main
@@ -56,6 +88,7 @@ gh pr merge {pr} --squash --delete-branch --subject "{title}" --body "{body}"
 ```bash
 git switch main
 git pull origin main
+git worktree prune
 ```
 
 ## Integration
