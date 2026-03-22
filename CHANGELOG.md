@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.10.1...v1.11.0) (2026-03-22)
+
+
+### Features
+
+* align all skills with agentskills.io specification ([958b0a7](https://github.com/JacobPEvans/claude-code-plugins/commit/958b0a71fe0b8425be8bfe9758cd2580885dab08))
+
 ## [1.10.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.10.0...v1.10.1) (2026-03-22)
 
 
