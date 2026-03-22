@@ -5,13 +5,11 @@ on:
     branches: ["**"]
     paths:
       - "**/skills/*/SKILL.md"
-      - ".github/skills/**"
       - ".github/workflows/validate-skills.yml"
   pull_request:
     branches: [main]
     paths:
       - "**/skills/*/SKILL.md"
-      - ".github/skills/**"
       - ".github/workflows/validate-skills.yml"
 
 permissions:
@@ -68,28 +66,3 @@ jobs:
             exit 1
           fi
           echo "All skills within progressive disclosure limits"
-
-      - name: Verify .github/skills symlinks
-        run: |
-          failed=0
-          for link in .github/skills/*/; do
-            link_name="${link%/}"
-            if [ -L "$link_name" ]; then
-              if [ ! -e "$link_name/SKILL.md" ]; then
-                echo "::error::Broken symlink: $link_name"
-                failed=1
-              fi
-            fi
-          done
-          # Check all skills have a symlink
-          for skill_dir in $(find . -name "SKILL.md" -path "*/skills/*" -not -path "./.github/*" -exec dirname {} \;); do
-            skill_name=$(basename "$skill_dir")
-            if [ ! -L ".github/skills/$skill_name" ]; then
-              echo "::error::Missing .github/skills/$skill_name symlink for $skill_dir"
-              failed=1
-            fi
-          done
-          if [ "$failed" -eq 1 ]; then
-            exit 1
-          fi
-          echo "All .github/skills symlinks valid"
