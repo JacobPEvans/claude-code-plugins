@@ -8,3 +8,6 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# Generated content from retrospecting skill (local session reports)
+.claude/skills/retrospecting/

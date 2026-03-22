@@ -30,6 +30,7 @@
     "sarif",
     "pipefail",
     "permissioned",
-    "permissioning"
+    "permissioning",
+    "pycache"
   ]
 }
