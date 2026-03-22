@@ -80,13 +80,13 @@ Find and remove the local worktree by branch name (works in any repo layout):
 
 ```bash
 WORKTREE_PATH=$(git worktree list --porcelain | awk -v b="refs/heads/$BRANCH" '/^worktree/{p=$2} $0=="branch "b{print p}')
-[ -n "$WORKTREE_PATH" ] && git worktree remove "$WORKTREE_PATH" 2>/dev/null || true
+[ -n "$WORKTREE_PATH" ] && git worktree remove "$WORKTREE_PATH" || true
 ```
 
 Delete the local branch ref (safe no-op if absent):
 
 ```bash
-git branch -d "$BRANCH" 2>/dev/null || true
+git branch -d "$BRANCH" || true
 ```
 
 ## Step 4: Sync Main
