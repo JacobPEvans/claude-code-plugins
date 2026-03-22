@@ -18,8 +18,13 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 | **git-workflows** | Command/Skill | `/rebase-pr`, `/sync-main`, `/refresh-repo`, `/wrap-up`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree` | Git sync, refresh, and PR merge workflows |
 | **github-workflows** | Command/Skill | `/ship`, `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews` | GitHub PR/issue management workflows |
 | **infra-orchestration** | Skill | `/orchestrate-infra`, `/sync-inventory`, `/test-e2e` | Cross-repo infrastructure orchestration for Terraform and Ansible |
+| **code-standards** | Skill | `/code-quality-standards`, `/review-standards` | Code quality standards, documentation formatting, testing philosophy, and review guidelines |
+| **git-standards** | Skill | `/git-workflow-standards`, `/pr-standards` | Git workflow standards, branch hygiene, PR creation guards, and issue linking |
+| **infra-standards** | Skill | `/infrastructure-standards` | Infrastructure standards for Proxmox, Terraform, Ansible including deployment pipeline and secrets management |
+| **pal-health** | SessionStart | — | Warns on session start if PAL MCP had a recent Doppler auth failure |
 | **pr-lifecycle** | PostToolUse | Bash | Automatically triggers `/finalize-pr` after `gh pr create` succeeds |
 | **process-cleanup** | PostToolUse | — | Cleanup orphaned MCP server processes on session exit |
+| **project-standards** | Skill | `/agentsmd-authoring`, `/workspace-standards`, `/skills-registry` | AgentsMD authoring standards, workspace management, and skills/tools registry lookup |
 | **session-analytics** | Skill | `/token-breakdown` | Session token analytics via Splunk OTEL telemetry |
 
 ## Multi-Model Delegation

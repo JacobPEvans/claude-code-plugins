@@ -68,6 +68,23 @@ Cross-repo infrastructure orchestration for Terraform and Ansible workflows.
 - **Skills**: `/orchestrate-infra`, `/sync-inventory`, `/test-e2e`
 - **Purpose**: Coordinate infrastructure changes across multiple repositories
 
+### Standards Plugins
+
+On-demand skill-based plugins that load specific standards as context.
+
+| Plugin | Skills | Coverage |
+|--------|--------|----------|
+| **code-standards** | `/code-quality-standards`, `/review-standards` | Code quality, documentation, testing, review guidelines |
+| **git-standards** | `/git-workflow-standards`, `/pr-standards` | Branching, PR creation, issue linking |
+| **infra-standards** | `/infrastructure-standards` | Proxmox, Terraform, Ansible deployment |
+| **project-standards** | `/agentsmd-authoring`, `/workspace-standards`, `/skills-registry` | AgentsMD authoring, workspace, skills registry |
+
+### pal-health
+
+Warns on session start if PAL MCP had a recent Doppler auth failure.
+
+- **Type**: SessionStart hook
+
 ### process-cleanup
 
 Cleanup orphaned MCP server processes on session exit.
@@ -94,14 +111,19 @@ claude plugins add jacobpevans-cc-plugins/<plugin-name>
 **Available plugins**:
 
 - `jacobpevans-cc-plugins/ai-delegation`
+- `jacobpevans-cc-plugins/code-standards`
 - `jacobpevans-cc-plugins/codeql-resolver`
 - `jacobpevans-cc-plugins/config-management`
 - `jacobpevans-cc-plugins/content-guards`
 - `jacobpevans-cc-plugins/git-guards`
+- `jacobpevans-cc-plugins/git-standards`
 - `jacobpevans-cc-plugins/git-workflows`
 - `jacobpevans-cc-plugins/github-workflows`
 - `jacobpevans-cc-plugins/infra-orchestration`
+- `jacobpevans-cc-plugins/infra-standards`
+- `jacobpevans-cc-plugins/pal-health`
 - `jacobpevans-cc-plugins/process-cleanup`
+- `jacobpevans-cc-plugins/project-standards`
 - `jacobpevans-cc-plugins/session-analytics`
 
 ### Local Development
@@ -112,14 +134,19 @@ Clone this repository and link plugins:
 git clone https://github.com/JacobPEvans/claude-code-plugins.git
 cd claude-code-plugins
 claude plugins link ./ai-delegation
+claude plugins link ./code-standards
 claude plugins link ./codeql-resolver
 claude plugins link ./config-management
 claude plugins link ./content-guards
 claude plugins link ./git-guards
+claude plugins link ./git-standards
 claude plugins link ./git-workflows
 claude plugins link ./github-workflows
 claude plugins link ./infra-orchestration
+claude plugins link ./infra-standards
+claude plugins link ./pal-health
 claude plugins link ./process-cleanup
+claude plugins link ./project-standards
 claude plugins link ./session-analytics
 ```
 
