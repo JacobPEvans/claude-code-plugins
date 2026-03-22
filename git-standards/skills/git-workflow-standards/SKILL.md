@@ -88,3 +88,9 @@ contradictions, or security-sensitive code.
 | `git show :2:<file>` | HEAD (your branch) version |
 | `git show :3:<file>` | Incoming (their branch) version |
 | `git merge --abort` | Abort and return to pre-merge state |
+
+## Related Skills
+
+- **sync-main** (git-workflows) — Syncs main and merges into current or all PR branches
+- **refresh-repo** (git-workflows) — Full repo sync including PR status and worktree cleanup
+- **pr-standards** (git-standards) — PR creation guards, issue linking, and review standards

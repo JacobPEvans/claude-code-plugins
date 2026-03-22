@@ -47,3 +47,7 @@ Command -> Agent -> Skill pattern:
 
 - Agents: `permissions-analyzer`, `permissions-syncer`
 - Skill: `permission-patterns` (safety classification, deduplication, token-efficient extraction)
+
+## Related Skills
+
+- quick-add-permission (config-management)

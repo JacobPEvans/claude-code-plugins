@@ -62,3 +62,7 @@ Create PR within 60s of first commit -> fix CI -> resolve threads -> 60s quiet p
 ## Resilience
 
 Failed sub-agent: log, emit blocked event, continue. Rate limited: wait 30s, retry once, move on.
+
+## Related Skills
+
+- delegate-to-ai (ai-delegation)

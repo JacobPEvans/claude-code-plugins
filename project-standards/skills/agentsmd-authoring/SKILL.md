@@ -77,3 +77,8 @@ Vendor directories contain symlinks only. All canonical content lives in
 
 Rules in `agentsmd/rules/` auto-load every session via `.claude/rules`
 symlink. Keep rules focused and under 1,000 tokens.
+
+## Related Skills
+
+- **skills-registry** (project-standards) — Use when looking up available tools, skills, commands, agents, or plugins
+- **workspace-standards** (project-standards) — Use when setting up or managing multi-repo workspaces

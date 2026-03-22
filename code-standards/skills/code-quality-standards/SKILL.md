@@ -71,3 +71,8 @@ Slack, Splunk alerts, email. Silent dashboards are not monitoring.
 - Link to other docs instead of duplicating (DRY).
 - Keep docs concise — AI-first, humans second.
 - All Markdown validated by `markdownlint-cli2` via pre-commit hooks.
+
+## Related Skills
+
+- **review-standards** (code-standards) — Use when performing formal code review on PRs
+- **pr-standards** (git-standards) — PR & issue standards, PR guards, issue linking

@@ -73,3 +73,8 @@ git diff HEAD~1   # See what the hook is trying to fix
 - Do NOT use `git commit --no-verify` to skip hooks
 - Do NOT force-push over hook auto-fixes
 - Do NOT assume the hook is wrong - it's usually a legitimate formatting issue
+
+## Related Skills
+
+- **troubleshoot-rebase** (git-workflows) — Diagnose and recover from git rebase failures
+- **troubleshoot-worktree** (git-workflows) — Troubleshoot git worktree, branch, and refname issues

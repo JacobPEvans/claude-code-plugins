@@ -31,3 +31,9 @@ When reviewing code, prioritize:
 Focus on likely failures, not theoretical edge cases. Do not reject based on
 contrived scenarios unlikely in practice. Balance security with usability —
 overly restrictive permissions that impede workflows are themselves a failure.
+
+## Related Skills
+
+- **code-quality-standards** (code-standards) — Use when writing or reviewing code and documentation
+- **pr-standards** (git-standards) — PR & issue standards, PR guards, issue linking
+- **finalize-pr** (github-workflows) — Manage your PR through the full author flow

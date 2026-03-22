@@ -1,8 +1,9 @@
 ---
 name: codeql-permission-classification
 description: Permission requirements for GitHub Actions
-version: "1.0.0"
-author: JacobPEvans
+metadata:
+  version: "1.0.0"
+  author: JacobPEvans
 ---
 
 # CodeQL Permission Classification
@@ -13,7 +14,7 @@ Single source of truth for GitHub Actions permission requirements.
 
 GitHub Actions provides these permission scopes:
 
-```
+```text
 contents            # Read/write repository content (checkout, tags, releases)
 pull-requests       # Read/write PR comments, reviews, assignments
 issues              # Read/write issue comments, labels, projects
@@ -40,30 +41,37 @@ security-events     # Read/write code scanning and secret scanning results
 ## Decision Tree
 
 **Q1: Does your job use `actions/checkout`?**
+
 - YES → Add `contents: read`
 - NO  → Continue to Q2
 
 **Q2: Does your job modify repository (create PR, tag, release)?**
+
 - YES → Add `contents: write`
 - NO  → Continue to Q3
 
 **Q3: Does your job post comments to PR or issues?**
+
 - YES → Add `pull-requests: write` (PR) or `issues: write` (issues)
 - NO  → Continue to Q4
 
 **Q4: Does your job modify deployments?**
+
 - YES → Add `deployments: write`
 - NO  → Continue to Q5
 
 **Q5: Does your job use `github.rest` API?**
+
 - YES → Add permission for the API endpoint you're calling
 - NO  → Continue to Q6
 
 **Q6: Does your job call a reusable workflow?**
+
 - YES → Add union of ALL permissions needed by that workflow's jobs
 - NO  → Continue to Q7
 
 **Q7: Is your job just aggregating results with no API access?**
+
 - YES → Add `permissions: {}` (empty - no token needed)
 - NO  → You probably missed something. Review again.
 
@@ -118,6 +126,7 @@ comment:
 ### Example 4: Reusable Workflow Call
 
 If `.github/workflows/_validate.yml` contains:
+
 ```yaml
 jobs:
   validate:
@@ -128,6 +137,7 @@ jobs:
 ```
 
 Then the caller must declare:
+
 ```yaml
 validate:
   permissions:
@@ -156,6 +166,7 @@ gate:
 **Why**: The reusable workflow's nested jobs inherit the permissions from the caller's `GITHUB_TOKEN`, so the caller must declare everything the callee needs.
 
 **Example mismatch** (WRONG):
+
 ```yaml
 # ci-gate.yml
 validate:
@@ -172,6 +183,7 @@ jobs:
 ```
 
 **Correct**:
+
 ```yaml
 # ci-gate.yml
 validate:
@@ -184,10 +196,12 @@ validate:
 ## GitHub Token Default Behavior
 
 **Without explicit permissions:**
+
 - **Public repos**: Defaults to `GITHUB_TOKEN: read-all` (dangerous!)
 - **Private repos**: Defaults to `GITHUB_TOKEN: read-write` (very dangerous!)
 
 **With explicit permissions**:
+
 - Uses minimum required scope (safe, follows least-privilege)
 - Auditable - others can see exactly what tokens can access
 - CodeQL approves (no "missing permissions" alert)
@@ -195,6 +209,7 @@ validate:
 ## Common Mistakes
 
 ❌ **Mistake 1**: Forgetting PR/issues permissions
+
 ```yaml
 # WRONG - Creates comment but no permission
 comment:
@@ -205,6 +220,7 @@ comment:
 ```
 
 ✅ **Correct**:
+
 ```yaml
 comment:
   permissions:
@@ -216,6 +232,7 @@ comment:
 ```
 
 ❌ **Mistake 2**: Not declaring union of reusable workflow permissions
+
 ```yaml
 # WRONG - Reusable workflow's jobs need more permissions
 my-job:
@@ -225,6 +242,7 @@ my-job:
 ```
 
 ✅ **Correct**:
+
 ```yaml
 my-job:
   permissions:
@@ -233,7 +251,8 @@ my-job:
   uses: ./.github/workflows/_validate.yml
 ```
 
-❌ **Mistake 3**: Over-permissioning
+❌ **Mistake 3**: Excessive permissions
+
 ```yaml
 # WRONG - Too much permission
 build:
@@ -245,6 +264,7 @@ build:
 ```
 
 ✅ **Correct** (least-privilege):
+
 ```yaml
 build:
   permissions:
@@ -257,12 +277,14 @@ build:
 ## Testing Your Permissions
 
 Run CodeQL scan locally:
+
 ```bash
 codeql database create my_db --language=actions --source-root=.
 codeql database analyze my_db actions/security-and-quality.qls --format=sarif-latest --output=results.sarif
 ```
 
 Or wait for GitHub to scan and check:
+
 ```bash
 gh pr checks  # See if CodeQL permission alerts appear
 ```
@@ -272,3 +294,7 @@ gh pr checks  # See if CodeQL permission alerts appear
 - [GitHub Actions: Permissions](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions)
 - [GitHub Actions: Default GITHUB_TOKEN Permissions](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
 - [GitHub Actions: Calling Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
+
+## Related Skills
+
+- github-workflow-security-patterns (codeql-resolver)

@@ -41,3 +41,8 @@ Define and monitor monthly budgets per environment.
 - **Create**: Initialize with standard templates (README, .gitignore, LICENSE).
 - **Maintain**: Review dependencies, update docs, optimize costs.
 - **Retire**: Document, archive, clean up.
+
+## Related Skills
+
+- **agentsmd-authoring** (project-standards) — Use when editing agentsmd files, creating skills/agents/rules, or working in ai-assistant-instructions
+- **skills-registry** (project-standards) — Use when looking up available tools, skills, commands, agents, or plugins

@@ -183,3 +183,9 @@ Blocked — needs human (1):
 # Multi-PR: uncommitted changes create new PR, existing PR also finalized
 /ship
 ```
+
+## Related Skills
+
+- finalize-pr (github-workflows) — invoked by ship to drive each PR to mergeable state
+- squash-merge-pr (github-workflows) — merge a PR after ship reports it ready
+- resolve-pr-threads (github-workflows) — invoked internally via finalize-pr to resolve review threads

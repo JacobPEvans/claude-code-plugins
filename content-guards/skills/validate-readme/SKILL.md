@@ -65,3 +65,7 @@ optional_sections:
 
 - `required_sections`: `Installation`, `Usage`
 - `optional_sections`: `Contributing`, `License`, `API`
+
+## Related Skills
+
+- code-quality-standards (code-standards) — broader code quality standards that include documentation requirements

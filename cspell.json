@@ -2,7 +2,9 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "agentskills",
     "agentic",
+    "commitlintrc",
     "toolsets",
     "backdoors",
     "unshallow",
@@ -24,6 +26,10 @@
     "labelfield",
     "mvexpand",
     "mvcount",
-    "mvfilter"
+    "mvfilter",
+    "sarif",
+    "pipefail",
+    "permissioned",
+    "permissioning"
   ]
 }

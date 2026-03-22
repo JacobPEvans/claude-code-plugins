@@ -130,3 +130,10 @@ Exception: explicit requests like
 ```
 
 Every issue MUST have explicit, checkbox-format acceptance criteria.
+
+## Related Skills
+
+- **review-standards** (code-standards) — Code review process and standards
+- **rebase-pr** (git-workflows) — Rebase-merge workflow for merging approved PRs
+- **finalize-pr** (github-workflows) — Finalize PR state before merging
+- **git-workflow-standards** (git-standards) — Branch and worktree conventions that feed into PRs
