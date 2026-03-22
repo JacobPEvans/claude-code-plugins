@@ -70,16 +70,22 @@ gh pr merge {pr} --squash --subject "$SQUASH_TITLE" --body-file "$SQUASH_BODY_FI
 rm -f "$SQUASH_BODY_FILE"
 ```
 
-Delete the remote branch explicitly:
+Delete the remote branch (GitHub may have auto-deleted it on merge — `|| true` handles that):
 
 ```bash
-git push origin --delete "$BRANCH"
+git push origin --delete "$BRANCH" || true
 ```
 
-Clean up local worktree and branch refs (both are safe no-ops if absent):
+Find and remove the local worktree by branch name (works in any repo layout):
 
 ```bash
-git worktree remove "$(git rev-parse --show-toplevel)/../$BRANCH" 2>/dev/null || true
+WORKTREE_PATH=$(git worktree list --porcelain | awk -v b="refs/heads/$BRANCH" '/^worktree/{p=$2} $0=="branch "b{print p}')
+[ -n "$WORKTREE_PATH" ] && git worktree remove "$WORKTREE_PATH" 2>/dev/null || true
+```
+
+Delete the local branch ref (safe no-op if absent):
+
+```bash
 git branch -d "$BRANCH" 2>/dev/null || true
 ```
 
