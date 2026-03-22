@@ -2,6 +2,8 @@
 
 Claude Code plugin for PR management and issue shaping with Shape Up methodology.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams and the master ship pipeline.
+
 ## Skills
 
 - **`/ship`** - Full automation: commit, push, create PR(s), and auto-finalize in one command. Never merges.

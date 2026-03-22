@@ -2,6 +2,8 @@
 
 Content validation and guard hooks via PostToolUse.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
+
 ## Features
 
 - **markdown-validator**: Validates markdown with markdownlint and cspell
@@ -9,6 +11,17 @@ Content validation and guard hooks via PostToolUse.
 - **webfetch-guard**: Blocks outdated year references in web queries
 - **readme-validator**: Checks README files for required sections and badge health
 - **issue-limiter**: Prevents GitHub issue backlog overflow with 24h rate limiting
+
+## Usage
+
+No manual invocation required. All hooks activate automatically:
+
+- **token-validator** — blocks files exceeding token limits (PreToolUse: Write, Edit)
+- **webfetch-guard** — blocks outdated year references in web queries (PreToolUse: WebFetch, WebSearch)
+- **issue-limiter** — rate limits `gh issue create` and `gh pr create` (PreToolUse: Bash)
+- **branch-limiter** — limits concurrent open branches (PreToolUse: Bash)
+- **markdown-validator** — runs markdownlint + cspell after writes (PostToolUse: Write, Edit)
+- **readme-validator** — checks README required sections after writes (PostToolUse: Write, Edit)
 
 ## Installation
 

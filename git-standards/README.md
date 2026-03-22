@@ -2,6 +2,8 @@
 
 Git workflow standards, branch hygiene, PR creation guards, and issue linking.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
+
 ## Skills
 
 - **`/git-workflow-standards`** - Branch management, worktrees, merge conflicts, syncing

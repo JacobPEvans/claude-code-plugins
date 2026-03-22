@@ -2,6 +2,8 @@
 
 Code quality standards, documentation formatting, testing philosophy, and review guidelines.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
+
 ## Skills
 
 - **`/code-quality-standards`** - Code quality, language rules, testing philosophy, documentation format
