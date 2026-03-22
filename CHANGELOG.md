@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.11.0...v1.12.0) (2026-03-22)
+
+
+### Features
+
+* add architecture diagrams, wrap-up skill, remove symlink registry ([fd0e74c](https://github.com/JacobPEvans/claude-code-plugins/commit/fd0e74ce21499162e30006d3205bdf017fe3cbe5))
+
 ## [1.11.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.10.1...v1.11.0) (2026-03-22)
 
 
