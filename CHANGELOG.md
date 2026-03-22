@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.10.0...v1.10.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* close git-guards bypass allowing direct commits to main ([4edae25](https://github.com/JacobPEvans/claude-code-plugins/commit/4edae2567b535c84ecadcbdbb70d227987d68b3e))
+
 ## [1.10.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.9.1...v1.10.0) (2026-03-21)
 
 
