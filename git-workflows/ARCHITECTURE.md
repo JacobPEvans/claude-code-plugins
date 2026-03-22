@@ -73,7 +73,7 @@ flowchart LR
         clean_gone["/clean_gone"]:::external
     end
 
-    subgraph builtin["Built-in"]
+    subgraph builtin["AI analysis + gh issue list"]
         follow_up["Follow-up prompt\ngeneration"]:::ai
     end
 

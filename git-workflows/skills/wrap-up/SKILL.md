@@ -80,8 +80,8 @@ Split the gathered items into two buckets:
 
 1. **Next-session prompt** — items that are small enough to complete in a single
    focused session (roughly 1–3 tasks). Combine related items where possible.
-2. **GitHub issues** — everything else. Before creating new issues:
-   - Search existing open issues for duplicates or related items
+2. **GitHub issues** — everything else. Before recommending new issues:
+   - Search existing open issues with `gh issue list --state open` for duplicates
    - If a matching issue exists, recommend updating it instead of creating a new one
    - Consolidate related items into a single issue when they share a root cause
    - Each recommended issue should include a clear title, description, and
@@ -119,7 +119,6 @@ If no follow-up items are found, state that explicitly — do not fabricate work
 
 ## Related Skills
 
-- **refresh-repo** (git-workflows) — Full repo sync including PR status and worktree cleanup
 - **shape-issues** (github-workflows) — Shape and create well-structured GitHub issues
 
 ## Summary
