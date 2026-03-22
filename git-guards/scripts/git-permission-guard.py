@@ -80,6 +80,10 @@ DENY_GH = [
 # Regex patterns checked ONLY for gh commands - catches flag-based bypasses
 # that token-prefix matching in DENY_GH cannot detect.
 # Each pattern is (regex, reason_why_denied, context_specific_guidance).
+# Git subcommands blocked when on the main branch — closes the full
+# commit chain (stage → commit → push) that bypassed main-branch-guard
+BLOCKED_ON_MAIN = {"add", "commit", "push"}
+
 DENY_GH_REGEX = [
     (r"pr\s+merge\s+.*--admin\b",
      "bypasses all branch protection rules including required status checks",
@@ -340,10 +344,7 @@ def main():
                 if re.match(r"core\.hooksPath\s*(?:=|$)", subcmd_tokens[i + 1], re.IGNORECASE):
                     deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
-        # Block git add/commit/push on main branch - prevents the full
-        # commit chain that bypassed main-branch-guard for file edits
-        blocked_on_main = {"add", "commit", "push"}
-        if sub_tokens and sub_tokens[0] in blocked_on_main and _is_on_main_branch():
+        if sub_tokens and sub_tokens[0] in BLOCKED_ON_MAIN and _is_on_main_branch():
             deny(
                 f"'git {sub_tokens[0]}' is not allowed on the main branch. "
                 "Run `/init-worktree` to create a feature branch first."
