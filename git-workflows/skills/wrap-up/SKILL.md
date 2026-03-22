@@ -128,9 +128,9 @@ Report what was completed:
 ```text
 Wrap-Up Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Refresh:           done or skipped
-  Retrospective:     done or skipped
-  Branch cleanup:    done or skipped
-  Follow-up prompt:  done or skipped
+  Refresh:          done or skipped
+  Retrospective:    done or skipped
+  Branch cleanup:   done or skipped
+  Follow-up prompt: done or skipped
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
