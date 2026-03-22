@@ -117,3 +117,9 @@ Terraform outputs feed Ansible dynamic inventory:
 - Terraform owns IP assignment (derived from VMID) and port assignment
 - Ansible consumes but never overrides these values
 - Changes to IPs/ports must originate in terraform-proxmox
+
+## Related Skills
+
+- **orchestrate-infra** (infra-orchestration) — Master orchestrator for cross-repo infrastructure with dependency graph dispatch
+- **sync-inventory** (infra-orchestration) — Export Terraform inventory and distribute to Ansible repositories
+- **test-e2e** (infra-orchestration) — End-to-end infrastructure pipeline validation across Terraform and Ansible repos

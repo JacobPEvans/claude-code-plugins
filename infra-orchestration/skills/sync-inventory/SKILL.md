@@ -49,3 +49,9 @@ Run `ansible-inventory --list -i inventory/hosts.yml` in each target repo to con
 - If terraform output fails, report the error and stop
 - If any Ansible repo is missing, skip it and warn
 - If inventory validation fails, report which repo failed
+
+## Related Skills
+
+- **orchestrate-infra** (infra-orchestration) — Master orchestrator for cross-repo infrastructure with dependency graph dispatch
+- **test-e2e** (infra-orchestration) — End-to-end infrastructure pipeline validation across Terraform and Ansible repos
+- **infrastructure-standards** (infra-standards) — Use when working on infrastructure repos (terraform, ansible, kubernetes, proxmox, nix devShells)

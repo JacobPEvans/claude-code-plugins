@@ -1,8 +1,9 @@
 ---
 name: token-breakdown
 description: Analyze current Claude Code session token usage via Splunk. Shows per-model, per-tool, and subagent token breakdown with cache efficiency metrics.
-version: "1.0.0"
-author: JacobPEvans
+metadata:
+  version: "1.0.0"
+  author: JacobPEvans
 ---
 
 # Token Breakdown
@@ -232,3 +233,7 @@ Keep analysis to 3-5 bullet points max. Data speaks for itself.
 - Token counts come from the Anthropic API response `usage` object — they are exact, not estimates
 - The Splunk MCP Server App has a 1-minute query timeout and 1000-event max per query
 - Our queries use `stats` aggregation so results are small summary rows — well within limits
+
+## Related Skills
+
+This is a standalone analytics skill. It is useful alongside any development workflow skill that involves active Claude Code sessions.

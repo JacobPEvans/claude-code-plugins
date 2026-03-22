@@ -95,3 +95,9 @@ git worktree remove "<path>" --force
 git fetch origin
 git worktree add "<new-path>" "<branch>"
 ```
+
+## Related Skills
+
+- **troubleshoot-rebase** (git-workflows) — Diagnose and recover from git rebase failures
+- **troubleshoot-precommit** (git-workflows) — Troubleshoot pre-commit hook failures
+- **refresh-repo** (git-workflows) — Full repo sync including worktree cleanup

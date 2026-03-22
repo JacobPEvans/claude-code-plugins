@@ -1,7 +1,8 @@
 ---
 name: rebase-pr
 description: Local rebase-merge workflow for pull requests with signed commits
-version: 2.0.0
+metadata:
+  version: 2.0.0
 ---
 
 # rebase-pr
@@ -211,3 +212,10 @@ git push --force-with-lease origin {branch}
 ```
 
 This commonly occurs with release-please CHANGELOG.md entries that don't conform to markdownlint rules.
+
+## Related Skills
+
+- **squash-merge-pr** (github-workflows) — Squash merge after rebase-pr prepares the branch
+- **finalize-pr** (github-workflows) — Full PR finalization pipeline that may invoke rebase-pr
+- **sync-main** (git-workflows) — Syncs main branch, often needed before rebasing
+- **pr-standards** (git-standards) — PR creation and review standards

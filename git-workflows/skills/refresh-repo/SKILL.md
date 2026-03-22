@@ -73,3 +73,9 @@ Report: PRs assessed as merge-ready (if any), branches cleaned up, worktrees rem
 **DO NOT** skip the PR check just because you're on main. The user may have multiple open PRs from different branches.
 
 Always run `gh pr list --author @me --state open` to find work that needs merging.
+
+## Related Skills
+
+- **sync-main** (git-workflows) — Syncs main and merges into current or all PR branches
+- **rebase-pr** (git-workflows) — Rebase-merge workflow for merging individual PRs
+- **git-workflow-standards** (git-standards) — Worktree structure and branch hygiene conventions

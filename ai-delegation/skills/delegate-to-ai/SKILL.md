@@ -47,3 +47,7 @@ Delegate when Claude is not the best tool:
 
 When `localOnlyMode` is enabled or `--local` flag is passed, all tasks route to Ollama models.
 No cloud API calls are made.
+
+## Related Skills
+
+- auto-maintain (ai-delegation)

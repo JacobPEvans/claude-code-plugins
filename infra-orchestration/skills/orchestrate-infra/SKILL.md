@@ -53,3 +53,9 @@ All repos use Doppler for runtime secrets: `doppler run -- <command>`. Never har
 ## Error Handling
 
 If any phase fails, report the failure and stop dependent phases. Independent repos continue in parallel.
+
+## Related Skills
+
+- **sync-inventory** (infra-orchestration) — Export Terraform inventory and distribute to Ansible repositories
+- **test-e2e** (infra-orchestration) — End-to-end infrastructure pipeline validation across Terraform and Ansible repos
+- **infrastructure-standards** (infra-standards) — Use when working on infrastructure repos (terraform, ansible, kubernetes, proxmox, nix devShells)

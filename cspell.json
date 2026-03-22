@@ -24,6 +24,10 @@
     "labelfield",
     "mvexpand",
     "mvcount",
-    "mvfilter"
+    "mvfilter",
+    "sarif",
+    "pipefail",
+    "permissioned",
+    "permissioning"
   ]
 }

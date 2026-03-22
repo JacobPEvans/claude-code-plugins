@@ -4,7 +4,8 @@ description: >-
   Validate PR merge-readiness and squash merge into main. Errors if PR is not
   ready — use /finalize-pr first to fix issues. Use after /finalize-pr reports
   ready. Handles single PR from argument or current branch.
-argument-hint: "[PR_NUMBER]"
+metadata:
+  argument-hint: "[PR_NUMBER]"
 ---
 
 # Squash Merge PR
@@ -65,3 +66,9 @@ Invoke after `/finalize-pr` reports ready:
 /squash-merge-pr          # Current branch PR
 /squash-merge-pr 42       # Specific PR number
 ```
+
+## Related Skills
+
+- finalize-pr (github-workflows) — drives PR to mergeable state before squash-merge-pr is invoked
+- rebase-pr (git-workflows) — alternative merge strategy that preserves commit history
+- pr-standards (git-standards) — PR authoring and review standards

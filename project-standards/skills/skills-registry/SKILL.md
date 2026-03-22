@@ -75,3 +75,8 @@ All plugins sourced from `jacobpevans-cc-plugins`.
 | Fix CI failures | `ci-fixer` | agent | Fix CI on PRs |
 | Implement issues | `issue-resolver` | agent | For shaped issues |
 | Review documentation | `docs-reviewer` | agent | Markdown validation |
+
+## Related Skills
+
+- **agentsmd-authoring** (project-standards) — Use when editing agentsmd files, creating skills/agents/rules, or working in ai-assistant-instructions
+- **workspace-standards** (project-standards) — Use when setting up or managing multi-repo workspaces

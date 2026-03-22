@@ -69,3 +69,9 @@ Report per-stage, per-repo pass/fail status:
 ## Error Handling
 
 Stage failures in Terraform block all subsequent stages. Ansible stage failures are independent per-repo.
+
+## Related Skills
+
+- **orchestrate-infra** (infra-orchestration) — Master orchestrator for cross-repo infrastructure with dependency graph dispatch
+- **sync-inventory** (infra-orchestration) — Export Terraform inventory and distribute to Ansible repositories
+- **infrastructure-standards** (infra-standards) — Use when working on infrastructure repos (terraform, ansible, kubernetes, proxmox, nix devShells)

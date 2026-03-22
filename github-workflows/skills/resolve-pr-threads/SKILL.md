@@ -6,8 +6,9 @@ description: >-
   processing each group sequentially inline with superpowers:receiving-code-review,
   and resolving threads via GraphQL. Use when you need to batch-process
   review feedback to unblock a PR merge.
-argument-hint: "[PR_NUMBER|all]"
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash(gh *), Bash(git *), Skill
+metadata:
+  argument-hint: "[PR_NUMBER|all]"
 ---
 
 <!-- cspell:words PRRT oneline databaseId -->
@@ -195,3 +196,9 @@ Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
 | `since` filter returns all comments | Invalid date format | Verify ISO 8601 format |
 | Reviews endpoint returns empty | No reviews submitted | Proceed with threads only |
 | `\!` in jq expression | Claude Code Bash escapes `!` | Use `(.x == y &#124; not)` or `.x &#124; length > 0` instead of `!=` |
+
+## Related Skills
+
+- finalize-pr (github-workflows) — orchestrator that invokes resolve-pr-threads as part of PR finalization
+- trigger-ai-reviews (github-workflows) — triggers AI reviewers whose feedback is resolved by this skill
+- pr-standards (git-standards) — PR authoring and review standards

@@ -63,3 +63,7 @@ Report: worktree, branch, permissions added, files modified, next steps.
 - Sync across all AI tools
 - Maintain alphabetical ordering
 - Skip duplicates, verify JSON
+
+## Related Skills
+
+- sync-permissions (config-management)

@@ -5,7 +5,8 @@ description: >-
   review threads, merge conflicts, and CI failures. Handles single PR (current
   branch or by number), all open PRs in the repo, or all open PRs across the org.
   Includes bot-authored PRs in all modes.
-argument-hint: "[PR_NUMBER | all | org]"
+metadata:
+  argument-hint: "[PR_NUMBER | all | org]"
 ---
 
 <!-- cspell:words worktree oneline -->
@@ -290,3 +291,11 @@ Phase 1: Derive org owner, enumerate repos, collect and merge all open PRs
 Phases 2-5: Loop over each PR sequentially
 Phase 6: Aggregate report with --repo-qualified merge commands for ready PRs
 ```
+
+## Related Skills
+
+- squash-merge-pr (github-workflows) — squash merge a PR after finalize-pr reports ready
+- resolve-pr-threads (github-workflows) — invoked internally to resolve review threads
+- rebase-pr (git-workflows) — alternative merge strategy after finalize-pr reports ready
+- pr-standards (git-standards) — PR authoring and review standards
+- code-quality-standards (code-standards) — code quality guidelines applied during fixes
