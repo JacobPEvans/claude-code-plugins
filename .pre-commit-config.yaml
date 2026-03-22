@@ -1,0 +1,90 @@
+# =============================================================================
+# Pre-commit Configuration
+# =============================================================================
+# Foundation hooks for local development. Install with:
+#   pip install pre-commit && pre-commit install --hook-type commit-msg --hook-type pre-push
+#
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+# =============================================================================
+
+repos:
+  # ---------------------------------------------------------------------------
+  # Base hooks - standard file hygiene
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        name: Validate YAML syntax
+      - id: check-json
+        name: Validate JSON syntax
+      - id: end-of-file-fixer
+        name: Fix end-of-file newlines
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: check-case-conflict
+        name: Check for case conflicts
+      - id: check-merge-conflict
+        name: Check for merge conflict markers
+      - id: mixed-line-ending
+        name: Normalize line endings
+        args: [--fix=lf]
+
+  # ---------------------------------------------------------------------------
+  # Markdown linting
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.20.0
+    hooks:
+      - id: markdownlint-cli2
+        name: Lint markdown files
+
+  # ---------------------------------------------------------------------------
+  # Spell checking
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v9.6.0
+    hooks:
+      - id: cspell
+        name: Check spelling
+
+  # ---------------------------------------------------------------------------
+  # Commit message validation (commit-msg stage)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.24.0
+    hooks:
+      - id: commitlint
+        name: Validate commit message format
+        stages: [commit-msg]
+        additional_dependencies: ["@commitlint/config-conventional@20.4.1"]
+
+  - repo: https://github.com/commit-check/commit-check
+    rev: v2.4.1
+    hooks:
+      - id: check-branch
+        name: Check branch naming conventions
+        stages: [pre-push]
+
+  # ---------------------------------------------------------------------------
+  # File size enforcement
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        name: Check file sizes
+        args: ['--maxkb=10', '--enforce-all']
+
+  # ---------------------------------------------------------------------------
+  # Agent Skills validation (agentskills.io spec)
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: validate-skills
+        name: Validate agent skills (agentskills.io)
+        entry: bash -c 'for d in $(find . -name "SKILL.md" -path "*/skills/*" -not -path "./.github/*" -exec dirname {} \;); do agentskills validate "$d" || exit 1; done'
+        language: system
+        pass_filenames: false
+        files: 'skills/.*SKILL\.md$'

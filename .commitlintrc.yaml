@@ -1,0 +1,56 @@
+# =============================================================================
+# Commitlint Configuration
+# =============================================================================
+# Enforces conventional commit message format.
+# Only overrides that differ from @commitlint/config-conventional defaults.
+# Reference: https://commitlint.js.org/
+# =============================================================================
+
+parserPreset:
+  parserOpts:
+    # Intentionally excludes `!` before `:` to block breaking change markers.
+    # Major version bumps are human-initiated only via .release-please-manifest.json.
+    headerPattern: "^(\\w+)(?:\\(([\\w\\$\\.\\-\\* ]*)\\))?: (.*)$"
+    headerCorrespondence:
+      - type
+      - scope
+      - subject
+
+extends:
+  - "@commitlint/config-conventional"
+
+rules:
+  # Custom type list matching CONTRIBUTING.md (adds breaking, removes build/revert/style)
+  type-enum:
+    - 2
+    - always
+    - - feat
+      - fix
+      - docs
+      - chore
+      - ci
+      - test
+      - refactor
+      - perf
+      - breaking
+
+  # Promote leading-blank rules from warning (default) to error
+  body-leading-blank:
+    - 2
+    - always
+  footer-leading-blank:
+    - 2
+    - always
+
+  # Warn (not error) on long body lines; v20+ ignores lines containing URLs
+  body-max-line-length:
+    - 1
+    - always
+    - 100
+
+# NOTE: The headerPattern blocks `!` before `:` (e.g., `feat!:`), but the
+# `BREAKING CHANGE:` footer in commit bodies can still trigger major bumps.
+# Commitlint has no built-in rule to selectively block specific footers.
+# The _release-please.yml workflow guard catches this at PR time by closing
+# any release PR that proposes a major version bump.
+helpUrl: "https://www.conventionalcommits.org/"
