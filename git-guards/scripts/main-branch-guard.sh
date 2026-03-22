@@ -19,10 +19,9 @@ fi
 # Get the directory containing the file
 file_dir=$(dirname "$file_path")
 
-# Check if the file is tracked within a git repository.
-# This correctly handles untracked files and non-repo directories.
-if ! (cd "$file_dir" 2>/dev/null && git ls-files --error-unmatch "$(basename "$file_path")" >/dev/null 2>&1); then
-    # Not in a git repo OR file is not tracked. Allow operation.
+# Check if the file is inside a git repository (tracked or not).
+# Files outside git repos (e.g., ~/.claude/plans/) are always allowed.
+if ! (cd "$file_dir" 2>/dev/null && git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
     exit 0
 fi
 

@@ -7,8 +7,10 @@ Most Bash commands are not git/gh - early exit is critical for performance.
 """
 
 import json
+import os
 import re
 import shlex
+import subprocess
 import sys
 
 # Patterns checked against ALL commands (not git-specific)
@@ -110,6 +112,31 @@ WRONG_MUTATIONS = {
         ),
     ),
 }
+
+
+def _is_on_main_branch() -> bool:
+    """Check if current working directory is on the main branch.
+
+    Uses two-stage detection matching main-branch-guard.sh:
+    1. Worktree directory name == "main" (fast, convention-based)
+    2. Current branch name == "main" (fallback, git-based)
+
+    Returns False (fail-open) on any error.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=2,
+        )
+        if result.returncode == 0 and os.path.basename(result.stdout.strip()) == "main":
+            return True
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True, text=True, timeout=2,
+        )
+        return result.returncode == 0 and result.stdout.strip() == "main"
+    except (subprocess.SubprocessError, OSError):
+        return False
 
 
 def deny(reason: str) -> None:
@@ -312,6 +339,15 @@ def main():
             if tok == "-c" and i + 1 < len(subcmd_tokens):
                 if re.match(r"core\.hooksPath\s*(?:=|$)", subcmd_tokens[i + 1], re.IGNORECASE):
                     deny("This command bypasses configured hooks. Fix the underlying issue instead.")
+
+        # Block git add/commit/push on main branch - prevents the full
+        # commit chain that bypassed main-branch-guard for file edits
+        blocked_on_main = {"add", "commit", "push"}
+        if sub_tokens and sub_tokens[0] in blocked_on_main and _is_on_main_branch():
+            deny(
+                f"'git {sub_tokens[0]}' is not allowed on the main branch. "
+                "Run `/init-worktree` to create a feature branch first."
+            )
 
     # Check DENY_GH patterns (token prefix match on gh subcommand)
     if is_gh:
