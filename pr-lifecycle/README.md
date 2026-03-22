@@ -2,6 +2,8 @@
 
 PostToolUse hook that automatically triggers `/finalize-pr` after `gh pr create` succeeds.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
+
 ## Installation
 
 Installed automatically via the `jacobpevans-cc-plugins` flake input. The `development.nix`

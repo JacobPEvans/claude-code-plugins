@@ -49,7 +49,7 @@ Combined git security and workflow protection via PreToolUse hooks.
 Git main branch sync, repository refresh, and PR merge workflows.
 
 - **Type**: Command/Skill-based plugin
-- **Skills**: `/sync-main`, `/refresh-repo`, `/rebase-pr`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree`
+- **Skills**: `/sync-main`, `/refresh-repo`, `/rebase-pr`, `/wrap-up`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree`
 - **Purpose**: Maintain linear git history and keep branches in sync
 
 ### github-workflows
@@ -122,6 +122,29 @@ claude plugins link ./infra-orchestration
 claude plugins link ./process-cleanup
 claude plugins link ./session-analytics
 ```
+
+## Usage
+
+Plugins activate automatically after installation. Hook-based plugins (git-guards,
+content-guards, pr-lifecycle, process-cleanup) intercept tool calls with no manual
+invocation. Skill-based plugins provide slash commands:
+
+```text
+/ship                     # Full automation: commit, push, PR, finalize
+/finalize-pr              # Drive PR to merge-ready state
+/squash-merge-pr          # Validate and squash merge
+/refresh-repo             # Sync main, check PRs, cleanup worktrees
+/wrap-up                  # Post-merge cleanup + retrospective
+/resolve-codeql           # Fix CodeQL security alerts
+/delegate-to-ai           # Route tasks to external AI models
+```
+
+## Architecture
+
+Each development lifecycle plugin includes an `ARCHITECTURE.md` with mermaid diagrams
+showing cross-plugin integration. See
+[`github-workflows/ARCHITECTURE.md`](github-workflows/ARCHITECTURE.md) for the master
+ship pipeline diagram covering the full PR lifecycle.
 
 ## Plugin Structure
 

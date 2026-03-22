@@ -2,6 +2,8 @@
 
 AgentsMD authoring standards, workspace management, and skills/tools registry lookup.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
+
 ## Skills
 
 - **`/agentsmd-authoring`** - File structure, token targets, two-tier architecture, frontmatter templates

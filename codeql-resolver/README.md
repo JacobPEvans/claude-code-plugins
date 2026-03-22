@@ -2,6 +2,8 @@
 
 A Claude Code plugin that provides systematic analysis and resolution of CodeQL alerts in GitHub Actions workflows.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for cross-plugin integration diagrams.
+
 ## Overview
 
 **CodeQL Resolver** implements a three-tier command→agent→skill architecture for managing GitHub security scanning alerts:
