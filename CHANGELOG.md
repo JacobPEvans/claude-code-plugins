@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.12.0...v1.12.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* **squash-merge-pr:** worktree-safe merge, temp-file bodies, robust cleanup ([10cbfb8](https://github.com/JacobPEvans/claude-code-plugins/commit/10cbfb8e372e25b948ca3bedb7c08e1ff4adeda8))
+
 ## [1.12.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.11.0...v1.12.0) (2026-03-22)
 
 
