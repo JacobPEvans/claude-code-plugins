@@ -1,6 +1,6 @@
 {
   "name": "git-workflows",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Git main branch sync, repository refresh, and PR merge workflows",
   "author": {
     "name": "JacobPEvans"
@@ -14,6 +14,7 @@
     "./skills/rebase-pr",
     "./skills/troubleshoot-rebase",
     "./skills/troubleshoot-precommit",
-    "./skills/troubleshoot-worktree"
+    "./skills/troubleshoot-worktree",
+    "./skills/wrap-up"
   ]
 }
