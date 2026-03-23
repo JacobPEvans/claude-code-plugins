@@ -5,8 +5,7 @@ description: "End-of-session cleanup after PR merge: refresh repo, run quick ret
 
 # Post-Merge Wrap-Up
 
-Run all four steps in order. Steps 1–3 are separate skill invocations; Step 4 is built-in analysis.
-After completing the steps, provide a summary of the actions taken.
+Run all four steps in order (Steps 1–3 are separate skill invocations; Step 4 is built-in analysis) and provide a summary of actions taken.
 
 ## Step 1: Refresh Repository
 
@@ -26,8 +25,7 @@ Invoke `/retrospecting quick` to capture a brief session retrospective:
 - Key decisions and outcomes
 - Actionable improvements
 
-**Requires**: `claude-retrospective` plugin (external).
-If not installed, skip this step and note it was skipped.
+**Requires**: `claude-retrospective` plugin (external). If not installed, skip this step and note it was skipped.
 
 ## Step 3: Clean Gone Branches
 
@@ -37,13 +35,14 @@ Invoke `/clean_gone` to remove any local branches whose remote tracking branch h
 - Remove associated worktrees
 - Delete the local branches
 
-**Requires**: `commit-commands` plugin (external).
-If not installed, skip this step and note it was skipped.
+**Requires**: `commit-commands` plugin (external). If not installed, skip this step and note it was skipped.
 
 ## Step 4: Follow-Up Session Prompt
 
 After the retrospective completes (or is skipped), generate a follow-up prompt for the next session.
+
 Scan the conversation history in **reverse chronological order**, stopping when no new items appear for ~10 consecutive messages.
+
 Most unfinished work surfaces near the end of a session.
 
 ### 4a + 4b: Gather Unfinished Work and Session Issues (parallel)
@@ -85,8 +84,7 @@ Follow-Up Session Prompt
 
 Recommended prompt for next session:
 ──────────────────────────────
-<A ready-to-paste prompt covering the 1–3 quick-win tasks identified above.
- Be specific: reference file paths, function names, error messages, etc.>
+<A ready-to-paste prompt covering the 1–3 quick-win tasks identified above. Be specific: reference file paths, function names, error messages, etc.>
 ──────────────────────────────
 
 Recommended GitHub Issues:
