@@ -1,3 +1,10 @@
+---
+description: Enforce agentskills.io spec compliance for all SKILL.md files
+globs:
+  - "**/skills/**/SKILL.md"
+  - "**/SKILL.md"
+---
+
 # Agent Skill Spec Compliance
 
 All skills MUST pass `agentskills validate` ([agentskills.io spec](https://agentskills.io/specification)).
