@@ -1,15 +1,11 @@
 ---
 name: wrap-up
-description: >-
-  End-of-session cleanup after PR merge: refresh repo, run quick retrospective,
-  and clean gone branches. Combines /refresh-repo, /retrospecting quick, and
-  /clean_gone into a single post-merge workflow.
+description: "End-of-session cleanup after PR merge: refresh repo, run quick retrospective, clean gone branches, and generate a follow-up session prompt. Combines /refresh-repo, /retrospecting quick, and /clean_gone into a single post-merge workflow, then triages remaining work into a next-session prompt and GitHub issues."
 ---
 
 # Post-Merge Wrap-Up
 
-Run all three steps in order. Each step is a separate skill invocation.
-After completing the steps, provide a summary of the actions taken.
+Run all four steps in order (Steps 1–3 are separate skill invocations; Step 4 is built-in analysis) and provide a summary of actions taken.
 
 ## Step 1: Refresh Repository
 
@@ -29,20 +25,87 @@ Invoke `/retrospecting quick` to capture a brief session retrospective:
 - Key decisions and outcomes
 - Actionable improvements
 
-**Requires**: `claude-retrospective` plugin (external).
-If not installed, skip this step and note it was skipped.
+**Requires**: `claude-retrospective` plugin (external). If not installed, skip this step and note it was skipped.
 
 ## Step 3: Clean Gone Branches
 
-Invoke `/clean_gone` to remove any local branches whose remote tracking branch
-has been deleted:
+Invoke `/clean_gone` to remove any local branches whose remote tracking branch has been deleted:
 
 - Identify branches marked `[gone]`
 - Remove associated worktrees
 - Delete the local branches
 
-**Requires**: `commit-commands` plugin (external).
-If not installed, skip this step and note it was skipped.
+**Requires**: `commit-commands` plugin (external). If not installed, skip this step and note it was skipped.
+
+## Step 4: Follow-Up Session Prompt
+
+After the retrospective completes (or is skipped), generate a follow-up prompt for the next session.
+
+Scan the conversation history in **reverse chronological order**, stopping when no new items appear for ~10 consecutive messages.
+
+Most unfinished work surfaces near the end of a session.
+
+### 4a + 4b: Gather Unfinished Work and Session Issues (parallel)
+
+Scan simultaneously for both categories:
+
+**Unfinished work** (4a):
+
+- **Incomplete tasks** — anything started but not finished, or marked as TODO/FIXME during this session
+- **Items needing production-readiness** — code that works but needs hardening, tests, error handling, or documentation before it is production-ready
+- **Future work identified** — any issues, improvements, or ideas called out during the session as "later", "follow-up", "out of scope", or similar
+
+**Session issues** (4b):
+
+- Errors (build failures, test failures, runtime errors)
+- Warnings (linter warnings, deprecation notices, compiler warnings)
+- Flaky or unreliable behavior observed
+- Workarounds applied that should be properly fixed
+- Tool or dependency issues encountered
+
+### 4c: Triage Into Prompt vs GitHub Issues
+
+Split the gathered items into two buckets:
+
+1. **Next-session prompt** — items that are small enough to complete in a single focused session (roughly 1–3 tasks). Combine related items where possible.
+2. **GitHub issues** — everything else. Before recommending new issues:
+   - Search existing open issues with `gh issue list --state open` for duplicates
+   - If a matching issue exists, recommend updating it instead of creating a new one
+   - Consolidate related items into a single issue when they share a root cause
+   - Each recommended issue should include a clear title, description, and acceptance criteria
+
+### 4d: Output the Follow-Up Prompt
+
+Present the results in this format:
+
+```text
+Follow-Up Session Prompt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Recommended prompt for next session:
+──────────────────────────────
+<A ready-to-paste prompt covering the 1–3 quick-win tasks identified above. Be specific: reference file paths, function names, error messages, etc.>
+──────────────────────────────
+
+Recommended GitHub Issues:
+──────────────────────────────
+1. <Title> — <one-line summary> [new | update #123]
+2. <Title> — <one-line summary> [new | update #456]
+   ...
+──────────────────────────────
+
+Session Issues Log:
+──────────────────────────────
+- <error/warning/issue encountered, with context>
+- ...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+If no follow-up items are found, state that explicitly — do not fabricate work.
+
+## Related Skills
+
+- **shape-issues** (github-workflows) — Shape and create well-structured GitHub issues
 
 ## Summary
 
@@ -51,8 +114,9 @@ Report what was completed:
 ```text
 Wrap-Up Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Refresh:        done or skipped
-  Retrospective:  done or skipped
-  Branch cleanup:  done or skipped
+  Refresh:          done or skipped
+  Retrospective:    done or skipped
+  Branch cleanup:   done or skipped
+  Follow-up prompt: done or skipped
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

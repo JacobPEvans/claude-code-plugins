@@ -42,6 +42,7 @@ flowchart TD
     wrap_up -->|"Step 1"| refresh_repo
     wrap_up -->|"Step 2"| retrospecting
     wrap_up -->|"Step 3"| clean_gone
+    wrap_up -->|"Step 4"| follow_up["Follow-up prompt\n(built-in)"]:::ai
 
     rebase_pr -->|"Step 1 GraphQL\nshared source of truth"| squash_merge
 
@@ -72,9 +73,14 @@ flowchart LR
         clean_gone["/clean_gone"]:::external
     end
 
+    subgraph builtin["AI analysis + gh issue list"]
+        follow_up["Follow-up prompt\ngeneration"]:::ai
+    end
+
     wrap_up -->|"1. sync + readiness check"| refresh_repo
     wrap_up -->|"2. session retrospective"| retrospecting
     wrap_up -->|"3. prune gone branches"| clean_gone
+    wrap_up -->|"4. follow-up prompt"| follow_up
 ```
 
 ## Shared Validation Pattern
