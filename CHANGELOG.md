@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.0.0...v2.1.0) (2026-03-23)
+
+
+### Features
+
+* **wrap-up:** add follow-up session prompt generation ([b5feae6](https://github.com/JacobPEvans/claude-code-plugins/commit/b5feae65ac0e89fa799389cb023eb2ba71a3ba0e))
+
 ## [2.0.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v1.12.1...v2.0.0) (2026-03-23)
 
 
