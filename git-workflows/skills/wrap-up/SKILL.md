@@ -5,9 +5,8 @@ description: "End-of-session cleanup after PR merge: refresh repo, run quick ret
 
 # Post-Merge Wrap-Up
 
-Run all four steps in order. Steps 1–3 are separate skill invocations;
-Step 4 is built-in analysis. After completing the steps, provide a summary of
-the actions taken.
+Run all four steps in order. Steps 1–3 are separate skill invocations; Step 4 is built-in analysis.
+After completing the steps, provide a summary of the actions taken.
 
 ## Step 1: Refresh Repository
 
@@ -32,8 +31,7 @@ If not installed, skip this step and note it was skipped.
 
 ## Step 3: Clean Gone Branches
 
-Invoke `/clean_gone` to remove any local branches whose remote tracking branch
-has been deleted:
+Invoke `/clean_gone` to remove any local branches whose remote tracking branch has been deleted:
 
 - Identify branches marked `[gone]`
 - Remove associated worktrees
@@ -44,10 +42,9 @@ If not installed, skip this step and note it was skipped.
 
 ## Step 4: Follow-Up Session Prompt
 
-After the retrospective completes (or is skipped), generate a follow-up prompt
-for the next session. Scan the conversation history in **reverse chronological
-order**, stopping when no new items appear for ~10 consecutive messages. Most
-unfinished work surfaces near the end of a session.
+After the retrospective completes (or is skipped), generate a follow-up prompt for the next session.
+Scan the conversation history in **reverse chronological order**, stopping when no new items appear for ~10 consecutive messages.
+Most unfinished work surfaces near the end of a session.
 
 ### 4a + 4b: Gather Unfinished Work and Session Issues (parallel)
 
