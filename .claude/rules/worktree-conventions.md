@@ -1,3 +1,7 @@
+---
+description: Git worktree path and branch naming conventions for this project
+---
+
 # Worktree Conventions
 
 When creating git worktrees, follow these project-specific conventions instead of
