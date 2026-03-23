@@ -1,10 +1,6 @@
 ---
 name: wrap-up
-description: >-
-  End-of-session cleanup after PR merge: refresh repo, run quick retrospective,
-  clean gone branches, and generate a follow-up session prompt. Combines
-  /refresh-repo, /retrospecting quick, and /clean_gone into a single post-merge
-  workflow, then triages remaining work into a next-session prompt and GitHub issues.
+description: "End-of-session cleanup after PR merge: refresh repo, run quick retrospective, clean gone branches, and generate a follow-up session prompt. Combines /refresh-repo, /retrospecting quick, and /clean_gone into a single post-merge workflow, then triages remaining work into a next-session prompt and GitHub issues."
 ---
 
 # Post-Merge Wrap-Up
@@ -59,12 +55,9 @@ Scan simultaneously for both categories:
 
 **Unfinished work** (4a):
 
-- **Incomplete tasks** — anything started but not finished, or marked as TODO/FIXME
-  during this session
-- **Items needing production-readiness** — code that works but needs hardening,
-  tests, error handling, or documentation before it is production-ready
-- **Future work identified** — any issues, improvements, or ideas called out
-  during the session as "later", "follow-up", "out of scope", or similar
+- **Incomplete tasks** — anything started but not finished, or marked as TODO/FIXME during this session
+- **Items needing production-readiness** — code that works but needs hardening, tests, error handling, or documentation before it is production-ready
+- **Future work identified** — any issues, improvements, or ideas called out during the session as "later", "follow-up", "out of scope", or similar
 
 **Session issues** (4b):
 
@@ -78,14 +71,12 @@ Scan simultaneously for both categories:
 
 Split the gathered items into two buckets:
 
-1. **Next-session prompt** — items that are small enough to complete in a single
-   focused session (roughly 1–3 tasks). Combine related items where possible.
+1. **Next-session prompt** — items that are small enough to complete in a single focused session (roughly 1–3 tasks). Combine related items where possible.
 2. **GitHub issues** — everything else. Before recommending new issues:
    - Search existing open issues with `gh issue list --state open` for duplicates
    - If a matching issue exists, recommend updating it instead of creating a new one
    - Consolidate related items into a single issue when they share a root cause
-   - Each recommended issue should include a clear title, description, and
-     acceptance criteria
+   - Each recommended issue should include a clear title, description, and acceptance criteria
 
 ### 4d: Output the Follow-Up Prompt
 
