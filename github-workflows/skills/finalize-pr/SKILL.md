@@ -197,7 +197,7 @@ branch and continue to the next PR. Do NOT emit a ready report — that happens 
 ## Stop Condition
 
 MUST NOT return until ALL conditions pass for EVERY targeted PR:
-CI green, CodeQL clean, threads resolved, no conflicts, code simplified, local lint passes, metadata updated.
+CI green, CodeQL clean, threads resolved, no conflicts, code simplified, local linters and tests pass, metadata updated.
 If ANY fails, loop back to Phase 2. CRITICAL: CodeQL is SEPARATE from CI — check both independently.
 
 **MERGE PROHIBITION**: FORBIDDEN from merging, auto-merging, enabling auto-merge, or approving any PR.
