@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.1.0...v2.2.0) (2026-03-24)
+
+
+### Features
+
+* optimize workflow pipeline sequencing ([#182](https://github.com/JacobPEvans/claude-code-plugins/issues/182)) ([40b9666](https://github.com/JacobPEvans/claude-code-plugins/commit/40b966655b9a053624342a5c94fbfdfd7aaa5b50))
+
 ## [2.1.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.0.0...v2.1.0) (2026-03-23)
 
 
