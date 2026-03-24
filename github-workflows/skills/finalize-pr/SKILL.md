@@ -45,7 +45,7 @@ Steps 1.1–1.4 run sequentially.
 
 ### 1.2 Discover PRs
 
-- **Single/current-branch**: Resolve PR number from current branch, skip to Phase 2.
+- **Single/current-branch**: Resolve PR number from current branch, proceed to Phase 1.5.
 - **Repo-wide (`all`)**: List all open PRs (limit 50) with number, title, author, headRefName.
 - **Org-wide (`org`)**: Enumerate repos, list open PRs per repo (limit 50 each, 50 total cap), include `repository` field.
 
@@ -64,7 +64,7 @@ If invoked via `/ship`, a context brief is already in session context — skip t
 If invoked standalone, build a lightweight brief from:
 
 1. PR description: `gh pr view {number} --json body --jq '.body'`
-2. Commit log: `git log --oneline origin/main..HEAD`
+2. Commit log relative to PR base: `BASE=$(gh pr view {number} --json baseRefName --jq '.baseRefName') && git log --oneline origin/$BASE..HEAD`
 
 Synthesize purpose, key changes, and intentional patterns into a 5-10 line block.
 This informs `/resolve-pr-threads` (Phase 2.2) when evaluating reviewer feedback.
