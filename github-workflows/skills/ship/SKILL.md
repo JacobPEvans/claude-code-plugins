@@ -3,7 +3,7 @@ name: ship
 description: >-
   Commit, push, create PR(s), and auto-finalize — full automation pipeline.
   Handles uncommitted changes and recently created PRs. Never merges.
-allowed-tools: Bash(git *), Bash(gh *), Agent, Read, Grep, Glob, Skill
+allowed-tools: Bash(git *), Bash(gh *), Bash(pre-commit *), Bash(npm run lint*), Bash(make lint*), Agent, Read, Grep, Glob, Skill
 ---
 
 # Ship
