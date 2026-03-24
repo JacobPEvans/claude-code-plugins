@@ -135,7 +135,6 @@ flowchart TD
         W3["/clean_gone\n(commit-commands, external)"]:::external
         W4["Summary report"]:::ai
 
-        W1 & W2
         W1 --> W3 --> W4
         W2 --> W4
     end
