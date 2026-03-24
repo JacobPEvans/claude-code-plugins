@@ -51,11 +51,17 @@ git status --porcelain
 1. Create branch if on main: `git checkout -b {type}/{description}` (derive from changes)
 2. Stage changes: `git add <relevant files>` (no `-A` — be selective)
 3. Commit with conventional commit message: `git commit -m "type: description"`
-4. Push: `git push -u origin HEAD`
-5. Create PR: `gh pr create --fill` (or with title/body derived from commit)
-6. **Pacing**: Run `sleep 2` after `gh pr create` to allow GitHub to index the PR
-7. Capture PR number from output (look for `pull/NUMBER` pattern)
-8. Add it to the PR list
+4. **Simplify**: Invoke /simplify on all changes in the commit. If /simplify produces
+   changes, stage them and amend the commit (`git commit --amend --no-edit`) — keep
+   clean history for the first push.
+5. **Validate locally**: Run project linters/tests if available (check for `pre-commit run --all-files`,
+   `npm run lint`, `make lint`, etc.). If failures are found, fix them and amend the commit.
+   Skip this step if no lint command is discoverable.
+6. Push: `git push -u origin HEAD`
+7. Create PR: `gh pr create --fill` (or with title/body derived from commit)
+8. **Pacing**: Run `sleep 2` after `gh pr create` to allow GitHub to index the PR
+9. Capture PR number from output (look for `pull/NUMBER` pattern)
+10. Add it to the PR list
 
 > **Hook note**: After `gh pr create`, a pr-lifecycle hook may emit a system message
 > directing you to invoke `/finalize-pr`. **Ignore it** — Step 2 handles finalization.
