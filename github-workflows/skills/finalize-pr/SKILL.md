@@ -22,7 +22,7 @@ No manual intervention required. For manual review-focused workflows, use `/revi
 2. **Verify all checks pass** - Report ready only when ALL conditions meet requirements
 3. **Resolve all conversations** - Automatically invoke `/resolve-pr-threads` for review threads
 4. **Fix all CodeQL violations** - Check repository and automatically fix using `/resolve-codeql`
-5. **Simplify all code changes** - Invoke /simplify at Step 2.0 (before CI) and Step 2.3.5 (after all fixes)
+5. **Simplify all code changes** - Invoke /simplify at Step 2.3.5 (after all fixes). Pre-push simplification is handled by `/ship`.
 6. **Validate locally before pushing** - Run project linters and tests
 7. **Monitor CI early, block last** - Start CI monitoring in background immediately, but fix other issues while it runs
 8. **Update PR metadata automatically** - Before reporting ready, update title, description, and linked issues via haiku subagent
@@ -32,67 +32,53 @@ No manual intervention required. For manual review-focused workflows, use `/revi
 
 ## Phase 1: PR Discovery and Targeting
 
-Parse the argument to determine mode, then discover and confirm the target set.
-Steps 1.1 through 1.4 run sequentially.
+Steps 1.1–1.4 run sequentially.
 
 ### 1.1 Parse Argument
 
 | Argument | Mode | Target |
 |---|---|---|
 | _(none)_ | Current branch | Single PR on current branch |
-| `42` (a number) | Single PR | PR #42 |
+| `42` | Single PR | PR #42 |
 | `all` | Repo-wide | All open PRs in current repo |
 | `org` | Org-wide | All open PRs across all repos in current org |
 
 ### 1.2 Discover PRs
 
-**Single/current-branch mode**: Resolve the PR number from the current branch, then skip to Phase 2.
-
-**Repo-wide (`all`) mode**: List all open PRs (limit 50) with number, title, author, and headRefName.
-
-**Org-wide (`org`) mode**: Enumerate all repos in the org, then for each repo list open PRs (limit 50
-per repo) including the `repository` field (needed for checkout and merge commands). Merge all results
-sorted by PR number, capped at 50 total. Emit a warning and continue if any repo cannot be listed.
+- **Single/current-branch**: Resolve PR number from current branch, proceed to Phase 1.5.
+- **Repo-wide (`all`)**: List all open PRs (limit 50) with number, title, author, headRefName.
+- **Org-wide (`org`)**: Enumerate repos, list open PRs per repo (limit 50 each, 50 total cap), include `repository` field.
 
 ### 1.3 Tag Bot PRs
 
-For each discovered PR, check if `author.login` ends with `[bot]`
-(e.g., `dependabot[bot]`, `github-actions[bot]`, `claude[bot]`).
-Tag these as `[bot]` in the discovery list for reporting purposes only — they are
-processed identically to human-authored PRs.
+Tag PRs where `author.login` ends with `[bot]` for reporting. Process identically to human PRs.
 
 ### 1.4 Confirm Batch (Multi-PR Only)
 
-For `all` and `org` modes, display the discovery list before proceeding:
+Display discovery list before proceeding. Verify working tree is clean (if dirty, ask user to commit/stash). Note current branch for restoration.
 
-```text
-Found N open PRs:
-  #42  feat: add user auth          (alice)
-  #43  chore: bump dependencies     [bot] (dependabot[bot])
-  #58  fix: resolve edge case       [bot] (claude[bot])
+## Phase 1.5: Build Context Brief (if not provided)
 
-Proceeding to finalize all N PRs sequentially.
-```
+If invoked via `/ship`, a context brief is already in session context — skip this step.
 
-Verify the working tree is clean before proceeding. If dirty, report and ask the user to commit or
-stash. Note the current branch for restoration after each PR iteration.
+If invoked standalone, build a lightweight brief from:
+
+1. PR description: `gh pr view {number} --json body --jq '.body'`
+2. Commit log relative to PR base: `BASE=$(gh pr view {number} --json baseRefName --jq '.baseRefName') && git log --oneline origin/$BASE..HEAD`
+
+Synthesize purpose, key changes, and intentional patterns into a 5-10 line block.
+This informs `/resolve-pr-threads` (Phase 2.2) when evaluating reviewer feedback.
 
 ## Phase 2: Resolution Loop (AUTOMATIC)
 
-**Execution strategy**: Run /simplify first (Step 2.0) so CI and CodeQL run
-against clean code. Then start CI monitoring in the background (Step 2.1)
-and fix all other issues in parallel while CI runs. Never block on CI when
-other work is available.
+**Execution strategy**: Start CI monitoring in the background (Step 2.1) and
+fix all other issues in parallel while CI runs. Never block on CI when other
+work is available. Pre-push simplification is handled by `/ship`; within this
+skill, /simplify runs once at Step 2.3.5 after all fixes are applied.
 
 _For multi-PR modes, Phases 2-5 execute once per PR in sequence. Check out each PR branch at the
 start of each iteration. For org-wide mode, use `repository.nameWithOwner` from Phase 1 as the
 `--repo` argument when checking out._
-
-### 2.0 Simplify Code First
-
-Invoke /simplify on all changes in the PR before any other Phase 2 work.
-This must complete before starting CI monitoring (2.1) so that CI and CodeQL
-run against the simplified code, not the pre-simplification version.
 
 Steps 2.1 and 2.2 start concurrently (2.1 is non-blocking). Steps 2.3 and 2.4 run sequentially after 2.2.
 
@@ -140,10 +126,11 @@ Check background CI results from 2.1:
 ### 2.3.5 Final Simplification
 
 After all fixes from 2.2 and 2.3 are complete, invoke /simplify once on all
-cumulative changes. Combined with Step 2.0 (pre-CI), this is the second and
-final /simplify pass — replacing the previous per-fix calls while still
-ensuring clean code before the health check. If /simplify produces changes,
-validate locally, commit, and push before proceeding to 2.4.
+cumulative changes. This is the single /simplify pass within `/finalize-pr` —
+it catches any code introduced by fix iterations (CodeQL fixes, CI fixes,
+review thread implementations) that wasn't part of the original pre-push
+simplification. If /simplify produces changes, validate locally, commit,
+and push before proceeding to 2.4.
 
 ### 2.4 Health Check
 
@@ -207,90 +194,25 @@ IMPORTANT: Do NOT merge this PR. Wait for the human to review and invoke
 **Multi-PR mode**: Record the per-PR result (ready / blocked / needs-human). Restore the original
 branch and continue to the next PR. Do NOT emit a ready report — that happens in Phase 6.
 
-## Stop Condition — When to Return to User
+## Stop Condition
 
-This skill MUST NOT return to the user until ALL of the following are true
-for EVERY targeted PR:
+MUST NOT return until ALL conditions pass for EVERY targeted PR:
+CI green, CodeQL clean, threads resolved, no conflicts, code simplified, local linters and tests pass, metadata updated.
+If ANY fails, loop back to Phase 2. CRITICAL: CodeQL is SEPARATE from CI — check both independently.
 
-1. **CI checks**: ALL GitHub Actions workflow runs are complete and passing
-   (`gh pr checks` shows all green)
-2. **CodeQL scans**: ALL code-scanning alerts are resolved — CodeQL runs as a
-   SEPARATE process from CI and must be checked independently via
-   `gh api repos/{owner}/{repo}/code-scanning/alerts`
-3. **Review threads**: ALL review threads are resolved (zero unresolved via
-   GraphQL query)
-4. **Merge conflicts**: PR mergeability status is MERGEABLE (not CONFLICTING)
-5. **Code simplified**: /simplify has been run on all code modifications
-6. **Local validation**: Project linters and tests pass
-7. **PR metadata**: Title, description, and linked issues are updated
-
-If ANY condition fails, loop back to Phase 2 and fix it. Do NOT report
-ready until every condition passes.
-
-CRITICAL: CodeQL is NOT part of CI checks. It runs as an independent
-GitHub code-scanning process. You must check BOTH `gh pr checks` (CI)
-AND `gh api repos/{owner}/{repo}/code-scanning/alerts` (CodeQL) separately.
-
-MERGE PROHIBITION: You are ABSOLUTELY FORBIDDEN from merging, auto-merging,
-enabling auto-merge, or approving the merge of any PR. Your sole purpose is
-to drive the PR to a mergeable state for the human to review and merge.
+**MERGE PROHIBITION**: FORBIDDEN from merging, auto-merging, enabling auto-merge, or approving any PR.
 
 ## Phase 6: Aggregate Report (Multi-PR Only)
 
-After processing all PRs, emit a summary. For org-wide mode, merge commands must include `--repo`
-since PR numbers are scoped per-repository; use `repository.nameWithOwner` from Phase 1 discovery.
-
-```text
-PR Finalization Summary
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ✅  #42  feat: add user auth          (alice)         [owner/repo]
-  ✅  #58  fix: resolve edge case       [bot] (claude[bot])  [owner/repo]
-  ⛔  #43  chore: bump dependencies     [bot] (dependabot[bot])  [owner/repo]  — unresolvable conflict
-
-Ready to merge (2):
-  gh pr merge 42 --squash --repo owner/repo
-  gh pr merge 58 --squash --repo owner/repo
-
-Blocked — needs human (1):
-  #43  chore: bump dependencies  — unresolvable conflict in package-lock.json
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-For repo-wide (`all`) mode, `--repo` may be omitted since all PRs share the current repo.
-
-Wait for explicit user merge commands.
+After processing all PRs, emit a summary listing ready PRs with merge commands
+and blocked PRs with reasons. For org-wide mode, include `--repo` on merge
+commands. Wait for explicit user merge commands.
 
 ## Workflow
 
-Use this skill ONLY after a PR already exists. To create a PR first, use `gh pr create`.
-
-```text
-Single PR (PR already created):
-/finalize-pr                (current branch)
-/finalize-pr <PR_NUMBER>    (by number)
-  ↓
-Phase 1: Resolve PR number
-Phase 2: Resolution Loop (automatic fixes)
-Phase 3: Pre-Handoff Verification
-Phase 4: Update PR Metadata
-Phase 5: Report ready (wait for user)
-  ↓
-User invokes: /squash-merge-pr or /rebase-pr
-
-Repo-wide:
-/finalize-pr all
-  ↓
-Phase 1: Discover all open PRs (including bots), confirm batch
-Phases 2-5: Loop over each PR sequentially
-Phase 6: Aggregate report with merge commands for ready PRs
-
-Org-wide:
-/finalize-pr org
-  ↓
-Phase 1: Derive org owner, enumerate repos, collect and merge all open PRs
-Phases 2-5: Loop over each PR sequentially
-Phase 6: Aggregate report with --repo-qualified merge commands for ready PRs
-```
+Use ONLY after a PR exists. Phases: 1 (discover) → 1.5 (context brief) →
+2 (fix loop) → 3 (verify) → 4 (metadata) → 5 (report ready).
+For `all`/`org` modes: Phases 2-5 loop per PR, Phase 6 aggregates results.
 
 ## Related Skills
 

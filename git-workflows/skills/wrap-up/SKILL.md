@@ -5,7 +5,9 @@ description: "End-of-session cleanup after PR merge: refresh repo, run quick ret
 
 # Post-Merge Wrap-Up
 
-Run all four steps in order (Steps 1–3 are separate skill invocations; Step 4 is built-in analysis) and provide a summary of actions taken.
+Run Steps 1 and 2 **in parallel** (they are independent). Step 3 starts as soon as
+Step 1 completes (depends on its remote prune). Step 4 runs after all prior steps finish.
+Provide a summary of actions taken.
 
 ## Step 1: Refresh Repository
 

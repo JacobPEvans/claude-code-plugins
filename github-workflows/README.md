@@ -37,7 +37,7 @@ claude plugins add jacobpevans-cc-plugins/github-workflows
 
 | Skill | Requires | Why |
 |-------|----------|-----|
-| `/ship` | `commit-commands` plugin | Dispatches `/commit-push-pr` for PR creation |
+| `/ship` | `/simplify` skill | Invokes /simplify pre-push for code cleanup |
 | `/resolve-pr-threads` | `superpowers` plugin | Sub-agents invoke `superpowers:receiving-code-review` for review feedback handling |
 | `/squash-merge-pr` | `git-workflows` plugin | Reads `/rebase-pr` Step 1 for PR validation query (single source of truth) |
 

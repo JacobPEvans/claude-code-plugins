@@ -35,7 +35,7 @@ flowchart TD
     TAR["/trigger-ai-reviews"]:::ai
     SI["/shape-issues"]:::ai
 
-    CPR["/commit-push-pr\n(commit-commands, external)"]:::external
+    CPR["Commit + /simplify + validate\n+ push + PR create (inline)"]:::ai
     RCQ["/resolve-codeql\n(codeql-resolver)"]:::external
     SIMP["/simplify\n(external)"]:::external
     RBP["/rebase-pr Step 1\n(git-workflows)"]:::external
@@ -47,7 +47,8 @@ flowchart TD
     SHIP -->|"invokes"| CPR
     SHIP -->|"invokes"| FPR
 
-    FPR -->|"Phase 2.0 + 2.3.5"| SIMP
+    SHIP -->|"pre-push"| SIMP
+    FPR -->|"Phase 2.3.5"| SIMP
     FPR -->|"Phase 2.2"| RCQ
     FPR -->|"Phase 2.2"| RPT
 
@@ -78,7 +79,7 @@ flowchart TD
         direction TB
         S0["Verify working directory"]:::ai
         S1["Detect uncommitted changes"]:::ai
-        S2["Invoke /commit-push-pr\n(commit-commands, external)"]:::external
+        S2["Commit, /simplify, validate,\npush, PR create (inline)"]:::ai
         S3["Build context brief\n(purpose, decisions, scope)"]:::ai
         S4["pr-lifecycle hook fires\npost-pr-create.sh"]:::hook
         S5["Invoke /finalize-pr\n(sequential per PR)"]:::ai
@@ -86,7 +87,7 @@ flowchart TD
         subgraph FINALIZE ["AI — /finalize-pr phases"]
             direction TB
             F1["Phase 1: Discover + confirm PRs"]:::ai
-            F20["Phase 2.0: /simplify\npre-CI code cleanup"]:::external
+            F15["Phase 1.5: Build context brief\n(if standalone invocation)"]:::ai
             F21["Phase 2.1: Start CI monitoring\n(background Task agent)"]:::ai
             F22A["Phase 2.2a: Fix CodeQL\n/resolve-codeql (codeql-resolver)"]:::external
             F22B["Phase 2.2b: Fix review threads\n/resolve-pr-threads"]:::ai
@@ -100,7 +101,7 @@ flowchart TD
         end
 
         S0 --> S1 --> S2 --> S3 --> S4 --> S5
-        S5 --> F1 --> F20 --> F21
+        S5 --> F1 --> F15 --> F21
         F21 --> F22A & F22B & F22C
         F22A & F22B & F22C --> F23 --> F235 --> F24 --> F3 --> F4 --> F5
     end
@@ -134,7 +135,8 @@ flowchart TD
         W3["/clean_gone\n(commit-commands, external)"]:::external
         W4["Summary report"]:::ai
 
-        W1 --> W2 --> W3 --> W4
+        W1 --> W3 --> W4
+        W2 --> W4
     end
 
     F5 --> H1
