@@ -64,7 +64,7 @@ run_hook_in() {
   [[ "$output" =~ "systemMessage" ]]
   [[ "$output" =~ "WARNING" ]]
   [[ "$output" =~ "refresh-repo" ]]
-  [[ "$output" =~ "init-worktree" ]]
+  [[ "$output" =~ "using-git-worktrees" ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -81,7 +81,7 @@ run_hook_in() {
   [[ "$output" =~ "systemMessage" ]]
   [[ "$output" =~ "WARNING" ]]
   [[ "$output" =~ "refresh-repo" ]]
-  [[ "$output" =~ "init-worktree" ]]
+  [[ "$output" =~ "using-git-worktrees" ]]
 }
 
 # ---------------------------------------------------------------------------

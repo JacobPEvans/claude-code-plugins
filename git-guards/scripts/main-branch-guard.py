@@ -100,7 +100,7 @@ def main() -> None:
         deny(
             f"BLOCKED: File '{file_path}' is in the main worktree. "
             "Editing files on the main branch is not allowed.\n\n"
-            "Run `/init-worktree` to create a feature branch.",
+            "Create a worktree using `/superpowers:using-git-worktrees`.",
         )
 
     current_branch = get_current_branch(file_path)
@@ -108,7 +108,7 @@ def main() -> None:
         deny(
             f"BLOCKED: Current branch is 'main'. "
             "Editing files on the main branch is not allowed.\n\n"
-            "Run `/init-worktree` to create a feature branch.",
+            "Create a worktree using `/superpowers:using-git-worktrees`.",
         )
 
     sys.exit(0)

@@ -347,7 +347,7 @@ def main():
         if sub_tokens and sub_tokens[0] in BLOCKED_ON_MAIN and _is_on_main_branch():
             deny(
                 f"'git {sub_tokens[0]}' is not allowed on the main branch. "
-                "Run `/init-worktree` to create a feature branch first."
+                "Create a worktree using `/superpowers:using-git-worktrees`."
             )
 
     # Check DENY_GH patterns (token prefix match on gh subcommand)
