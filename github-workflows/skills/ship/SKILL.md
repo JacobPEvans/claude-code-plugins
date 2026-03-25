@@ -32,7 +32,7 @@ git rev-parse --git-dir 2>/dev/null
 
 **If this fails** (exits non-zero or the current directory doesn't exist), stop immediately
 and report: "Working directory is not a git repository. This usually means the worktree was
-cleaned up after a PR merge. Start a new session with `/init-worktree` to continue working."
+cleaned up after a PR merge. Start a new session and create a worktree using `/superpowers:using-git-worktrees` to continue working."
 
 Do NOT attempt to recover, cd elsewhere, or fall through to Step 1.
 

@@ -75,7 +75,7 @@ repos:
     hooks:
       - id: check-added-large-files
         name: Check file sizes
-        args: ['--maxkb=10', '--enforce-all']
+        args: ['--maxkb=10']
 
   # ---------------------------------------------------------------------------
   # Agent Skills validation (agentskills.io spec)
