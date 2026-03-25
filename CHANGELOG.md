@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.2.0...v2.2.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* **git-guards:** replace stale /init-worktree references with /superpowers:using-git-worktrees ([#184](https://github.com/JacobPEvans/claude-code-plugins/issues/184)) ([5648500](https://github.com/JacobPEvans/claude-code-plugins/commit/56485008bce959f3be1ee52a8cacf27ad50c4cd9))
+
 ## [2.2.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.1.0...v2.2.0) (2026-03-24)
 
 
