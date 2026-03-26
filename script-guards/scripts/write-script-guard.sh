@@ -52,7 +52,7 @@ fi
 # --- Stage 2: Evaluate suspected scripts ---
 
 # Check if path contains allowed directories
-allowed_dirs="/scripts/ /hooks/ /.github/ /tests/ /test/ /plugin /.claude/plugins/"
+allowed_dirs="/scripts/ /hooks/ /.github/ /tests/ /test/ /plugins/ /.claude/plugins/"
 for dir in $allowed_dirs; do
     if [[ "$file_path" == *"$dir"* ]]; then
         exit 0
