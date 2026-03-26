@@ -22,16 +22,7 @@ fi
 # Check for implementation keywords (case-insensitive)
 prompt_lower=$(echo "$prompt" | tr '[:upper:]' '[:lower:]')
 
-keywords="create write build implement add make generate automate script function helper utility tool wrapper"
-found=false
-for keyword in $keywords; do
-    if echo "$prompt_lower" | grep -qw "$keyword"; then
-        found=true
-        break
-    fi
-done
-
-if [[ "$found" == true ]]; then
+if echo "$prompt_lower" | grep -qwE 'create|write|build|implement|add|make|generate|automate|script|function|helper|utility|tool|wrapper'; then
     jq -n '{
         systemMessage: "Before implementing: check if a native tool, CLI, module, or existing function handles this. Use Context7 MCP for library docs. Check the direct-execution alternatives table. Script files are blocked by hooks unless placed in scripts/, hooks/, .github/, or tests/ directories."
     }'

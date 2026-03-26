@@ -20,7 +20,7 @@ if [[ -z "$command" ]]; then
 fi
 
 # Check for file-writing patterns to script files
-if echo "$command" | grep -qE '(cat|tee|echo|printf)\s+(>>?|>)\s+\S+\.(sh|py|rb|pl|js|bash)'; then
+if echo "$command" | grep -qE '(cat|tee|echo|printf)\s+>>?\s+\S+\.(sh|py|rb|pl|js|bash)'; then
     jq -n '{
         hookSpecificOutput: {
             hookEventName: "PreToolUse",
