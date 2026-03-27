@@ -38,6 +38,9 @@ case "$file_path" in
     */scripts/*|*/hooks/*|*/.github/*|*/tests/*|*/test/*|*/plugins/*|*/.claude/plugins/*) exit 0 ;;
 esac
 
+# Expand ~ to $HOME for path normalization (Claude Code may pass ~ paths)
+file_path="${file_path/#\~/$HOME}"
+
 # Check if file already exists (editing existing scripts is fine)
 if [[ -f "$file_path" ]]; then
     exit 0

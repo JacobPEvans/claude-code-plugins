@@ -43,11 +43,20 @@ fi
 # --- Check .yml/.yaml files for complex inline bash ---
 if [[ "$extension" == "yml" ]] || [[ "$extension" == "yaml" ]]; then
     # Check for multiline run blocks (run: | or run: >)
-    # Uses [[:space:]] for BSD sed/grep compatibility on macOS
+    # Uses [[:space:]] for BSD compatibility on macOS
     if echo "$new_string" | grep -qE 'run:[[:space:]]*[|>]'; then
-        # Count lines in the run block (from run: marker to next unindented line)
-        run_block_lines=$(echo "$new_string" \
-            | sed -n '/run:[[:space:]]*[|>]/,/^[^ ]/p' | wc -l)
+        # Count run-block lines using indentation-aware awk (handles indented YAML steps)
+        run_block_lines=$(printf '%s\n' "$new_string" | awk '
+            /run:[[:space:]]*[|>]/ {
+                match($0, /^[[:space:]]*/); base = RLENGTH; counting = 1; n = 0; next
+            }
+            counting {
+                match($0, /^[[:space:]]*/);
+                if (RLENGTH <= base && $0 !~ /^[[:space:]]*$/) { counting = 0 }
+                else n++
+            }
+            END { print n+0 }
+        ')
 
         if [[ "$run_block_lines" -gt 5 ]]; then
             jq -n --arg fp "$file_path" '{
