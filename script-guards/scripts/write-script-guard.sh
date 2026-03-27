@@ -10,12 +10,10 @@
 
 set -euo pipefail
 
-# Read JSON input from stdin
+# Read JSON input from stdin (fail-open if jq fails)
 input=$(cat)
-
-# Extract file_path and content using jq (fail-open if jq fails)
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null) || { exit 0; }
-content=$(echo "$input" | jq -r '.tool_input.content // empty' 2>/dev/null) || { exit 0; }
+file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null) || exit 0
+content=$(echo "$input" | jq -r '.tool_input.content // empty' 2>/dev/null) || exit 0
 
 # If no file path, allow (fail-open)
 if [[ -z "$file_path" ]]; then
@@ -24,40 +22,21 @@ fi
 
 # --- Stage 1: Fast pattern check ---
 
-# Extract file extension (lowercase)
-extension="${file_path##*.}"
-extension=$(echo "$extension" | tr '[:upper:]' '[:lower:]')
-
-# Known script extensions
-script_extensions="sh py rb pl js bash zsh fish"
-is_script_ext=false
-for ext in $script_extensions; do
-    if [[ "$extension" == "$ext" ]]; then
-        is_script_ext=true
-        break
-    fi
-done
-
-# Check for shebang in content
-has_shebang=false
-if [[ "$content" == "#!"* ]]; then
-    has_shebang=true
-fi
+# Extract file extension (lowercase, tr for macOS bash 3.x compatibility)
+extension=$(echo "${file_path##*.}" | tr '[:upper:]' '[:lower:]')
 
 # If NOT a script extension AND no shebang, allow immediately (most files exit here)
-if [[ "$is_script_ext" == false ]] && [[ "$has_shebang" == false ]]; then
-    exit 0
-fi
+case "$extension" in
+    sh|py|rb|pl|js|bash|zsh|fish) ;;  # fall through to stage 2
+    *) [[ "$content" == "#!"* ]] || exit 0 ;;
+esac
 
 # --- Stage 2: Evaluate suspected scripts ---
 
-# Check if path contains allowed directories
-allowed_dirs="/scripts/ /hooks/ /.github/ /tests/ /test/ /plugins/ /.claude/plugins/"
-for dir in $allowed_dirs; do
-    if [[ "$file_path" == *"$dir"* ]]; then
-        exit 0
-    fi
-done
+# Allow files in known script directories
+case "$file_path" in
+    */scripts/*|*/hooks/*|*/.github/*|*/tests/*|*/test/*|*/plugins/*|*/.claude/plugins/*) exit 0 ;;
+esac
 
 # Check if file already exists (editing existing scripts is fine)
 if [[ -f "$file_path" ]]; then
