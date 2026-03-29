@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.2.1...v2.3.0) (2026-03-29)
+
+
+### Features
+
+* add script-guards plugin for runtime script prevention ([#189](https://github.com/JacobPEvans/claude-code-plugins/issues/189)) ([7f32cb2](https://github.com/JacobPEvans/claude-code-plugins/commit/7f32cb2671636d008017a9fd5013493b5a0ee696))
+
 ## [2.2.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.2.0...v2.2.1) (2026-03-25)
 
 
