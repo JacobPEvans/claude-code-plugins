@@ -48,7 +48,7 @@ if [[ "$current_branch" == "main" ]]; then
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: ("BLOCKED: You are in the main worktree. Editing files in the main worktree is not allowed.\n\nCreate a worktree using `/superpowers:using-git-worktrees`.")
+        permissionDecisionReason: ("BLOCKED: File '\''\($path)'\'' is in the main worktree. Editing files in the main worktree is not allowed.\n\nCreate a worktree using `/superpowers:using-git-worktrees`.")
       }
     }' >&2
     exit 2

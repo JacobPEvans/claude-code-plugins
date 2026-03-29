@@ -106,7 +106,7 @@ def main() -> None:
     current_branch = get_current_branch(file_path)
     if current_branch == "main":
         deny(
-            "BLOCKED: You are in the main worktree. "
+            f"BLOCKED: File '{file_path}' is in the main worktree. "
             "Editing files in the main worktree is not allowed.\n\n"
             "Create a worktree using `/superpowers:using-git-worktrees`.",
         )
