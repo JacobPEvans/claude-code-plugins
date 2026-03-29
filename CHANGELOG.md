@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.0...v2.3.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* **git-guards:** replace 'branch' with 'worktree' in error messages ([#191](https://github.com/JacobPEvans/claude-code-plugins/issues/191)) ([d4bbc9f](https://github.com/JacobPEvans/claude-code-plugins/commit/d4bbc9f7ff02d06f21b6c9447581a7341b0b68c7))
+
 ## [2.3.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.2.1...v2.3.0) (2026-03-29)
 
 
