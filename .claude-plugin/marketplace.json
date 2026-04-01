@@ -152,6 +152,15 @@
       "author": {
         "name": "JacobPEvans"
       }
+    },
+    {
+      "name": "script-guards",
+      "source": "./script-guards",
+      "description": "Prevents unnecessary script generation - enforces research-first, native-tool-first patterns via PreToolUse and UserPromptSubmit hooks",
+      "version": "2.3.1",
+      "author": {
+        "name": "JacobPEvans"
+      }
     }
   ]
 }
