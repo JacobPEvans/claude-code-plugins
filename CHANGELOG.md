@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.1...v2.3.2) (2026-04-01)
+
+
+### Bug Fixes
+
+* register script-guards in marketplace.json and align version ([#193](https://github.com/JacobPEvans/claude-code-plugins/issues/193)) ([1210120](https://github.com/JacobPEvans/claude-code-plugins/commit/12101207ee613f4e6e24366dd4574b5c87ded070))
+
 ## [2.3.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.0...v2.3.1) (2026-03-29)
 
 
