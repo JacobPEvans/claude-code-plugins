@@ -26,6 +26,7 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 | **process-cleanup** | PostToolUse | — | Cleanup orphaned MCP server processes on session exit |
 | **project-standards** | Skill | `/agentsmd-authoring`, `/workspace-standards`, `/skills-registry` | AgentsMD authoring standards, workspace management, and skills/tools registry lookup |
 | **session-analytics** | Skill | `/token-breakdown` | Session token analytics via Splunk OTEL telemetry |
+| **skill-guards** | UserPromptSubmit | — | Ensures fresh execution of skills on every invocation |
 
 ## Multi-Model Delegation
 

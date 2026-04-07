@@ -161,6 +161,15 @@
       "author": {
         "name": "JacobPEvans"
       }
+    },
+    {
+      "name": "skill-guards",
+      "source": "./skill-guards",
+      "description": "Ensures fresh execution of skills on every invocation via UserPromptSubmit hook",
+      "version": "2.3.2",
+      "author": {
+        "name": "JacobPEvans"
+      }
     }
   ]
 }

@@ -5,6 +5,9 @@ description: "End-of-session cleanup after PR merge: refresh repo, run quick ret
 
 # Post-Merge Wrap-Up
 
+> **State warning**: Branch state, remote tracking, and PR status change between
+> invocations. Re-run all git/gh commands from Step 1.
+
 Run Steps 1 and 2 **in parallel** (they are independent). Step 3 starts as soon as
 Step 1 completes (depends on its remote prune). Step 4 runs after all prior steps finish.
 Provide a summary of actions taken.

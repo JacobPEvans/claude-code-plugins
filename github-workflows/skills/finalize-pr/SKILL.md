@@ -16,6 +16,10 @@ metadata:
 **FULLY AUTOMATIC** - Fully automates PR finalization: monitor, fix, prepare for merge. Assumes PR already exists.
 No manual intervention required. For manual review-focused workflows, use `/review-pr`.
 
+> **State warning**: Automated reviewers (CodeQL, Copilot, AI reviews) post
+> asynchronously. CI may have re-run. Merge conflicts may have appeared.
+> Re-fetch live PR state from Step 1.
+
 ## Critical Rules
 
 1. **Wait for user approval to merge** - Report ready status, then pause for user merge command
