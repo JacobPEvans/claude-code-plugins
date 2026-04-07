@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.2...v2.3.3) (2026-04-07)
+
+
+### Bug Fixes
+
+* add --force to all git fetch commands for floating tag compatibility ([#199](https://github.com/JacobPEvans/claude-code-plugins/issues/199)) ([5266532](https://github.com/JacobPEvans/claude-code-plugins/commit/5266532895c266250a3ed2ac601b0735952984c0))
+
 ## [2.3.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.1...v2.3.2) (2026-04-01)
 
 
