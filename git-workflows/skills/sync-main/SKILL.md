@@ -26,8 +26,8 @@ or all open PR branches when using the `all` parameter.
 
 1. **Verify state**: `git branch --show-current`, `git status --porcelain`
    - STOP if on main or uncommitted changes
-2. **Find and sync main**: `cd ~/git/<repo>/main && git fetch --all --prune && git pull`
-3. **Check for updates**: `git fetch origin main`
+2. **Find and sync main**: `cd ~/git/<repo>/main && git fetch --all --prune --force && git pull`
+3. **Check for updates**: `git fetch origin main --force`
 4. **Report**: Show commits behind with `git log --oneline HEAD..origin/main` (informational only)
 5. **Merge**: `git merge origin/main --no-edit`
    - If already up-to-date: skip to step 7 and report
