@@ -52,7 +52,7 @@ git worktree add ~/git/<repo>/main main
 ### Branch Worktree Not Found
 
 ```bash
-git fetch origin <branch> --force
+git fetch origin --force <branch>
 git worktree add ~/git/<repo>/<branch> <branch>
 ```
 
