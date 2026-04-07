@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.3...v2.4.0) (2026-04-07)
+
+
+### Features
+
+* add AI merge gate and Copilot setup ([#197](https://github.com/JacobPEvans/claude-code-plugins/issues/197)) ([6f1e1d7](https://github.com/JacobPEvans/claude-code-plugins/commit/6f1e1d784187f449dcd14341b962a9259194331d))
+
 ## [2.3.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.2...v2.3.3) (2026-04-07)
 
 
