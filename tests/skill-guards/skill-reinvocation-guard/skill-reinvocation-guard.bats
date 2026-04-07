@@ -21,10 +21,10 @@ setup() {
   fi
 }
 
-# Run the hook with a given prompt string
+# Run the hook with a given prompt string (uses jq for safe JSON construction)
 run_hook_with_prompt() {
   local prompt="$1"
-  run bash -c "echo '{\"tool_input\":{\"prompt\":\"$prompt\"}}' | /bin/bash '$SCRIPT'"
+  run bash -c 'jq -n --arg p "$1" "{tool_input:{prompt:\$p}}" | /bin/bash "$2"' -- "$prompt" "$SCRIPT"
 }
 
 # ---------------------------------------------------------------------------
