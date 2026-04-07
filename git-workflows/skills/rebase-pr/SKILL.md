@@ -90,7 +90,7 @@ query {
 
 ```bash
 cd ~/git/{repo}/main
-git fetch origin main
+git fetch origin --force main
 git pull origin main
 ```
 
@@ -100,7 +100,7 @@ For remote-only branches (Renovate, Dependabot, etc.):
 
 ```bash
 # NEVER use FETCH_HEAD — always create from origin/{branch}
-git fetch origin {branch}
+git fetch origin --force {branch}
 git branch {branch} origin/{branch}
 ```
 

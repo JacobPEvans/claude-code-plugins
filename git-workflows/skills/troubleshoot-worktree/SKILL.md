@@ -52,14 +52,14 @@ git worktree add ~/git/<repo>/main main
 ### Branch Worktree Not Found
 
 ```bash
-git fetch origin <branch>
+git fetch origin --force <branch>
 git worktree add ~/git/<repo>/<branch> <branch>
 ```
 
 ### Branch Not Found
 
 ```bash
-git fetch origin
+git fetch origin --force
 git branch -a | grep -i "<branch>"
 ```
 
@@ -84,15 +84,15 @@ echo "<folder>/" >> .gitignore
 MAIN_PATH=$(git worktree list | grep '\[main\]' | awk '{print $1}')
 BRANCH_PATH=$(git worktree list | grep '\[<branch>\]' | awk '{print $1}')
 
-cd "$BRANCH_PATH" && git fetch origin && git reset --hard origin/<branch>
-cd "$MAIN_PATH" && git fetch origin && git reset --hard origin/main
+cd "$BRANCH_PATH" && git fetch origin --force && git reset --hard origin/<branch>
+cd "$MAIN_PATH" && git fetch origin --force && git reset --hard origin/main
 ```
 
 ## Recovery: Fresh Worktree
 
 ```bash
 git worktree remove "<path>" --force
-git fetch origin
+git fetch origin --force
 git worktree add "<new-path>" "<branch>"
 ```
 
