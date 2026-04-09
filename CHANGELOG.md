@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.4.0...v2.5.0) (2026-04-09)
+
+
+### Features
+
+* add skill-guards plugin to enforce fresh execution on every skill invocation ([#196](https://github.com/JacobPEvans/claude-code-plugins/issues/196)) ([dbc60c6](https://github.com/JacobPEvans/claude-code-plugins/commit/dbc60c65f464128379fda984bdb3b4a3fee4a5a3))
+
 ## [2.4.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.3.3...v2.4.0) (2026-04-07)
 
 
