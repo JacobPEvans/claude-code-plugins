@@ -14,6 +14,9 @@ Validates PR readiness and executes squash merge. If the PR is not ready,
 errors immediately and suggests `/finalize-pr` to fix issues. Never fixes
 issues — only merges.
 
+> **State warning**: Branch state, remote tracking, and PR status change between
+> invocations. Re-run all git/gh commands from Step 1.
+
 ## Critical Rules
 
 - **Never fix issues** — only merge. If PR isn't ready, error and suggest `/finalize-pr`

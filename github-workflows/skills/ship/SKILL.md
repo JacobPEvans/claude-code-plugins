@@ -11,6 +11,10 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(pre-commit *), Bash(npm run lint*),
 **Single command to commit, push, create PR(s), and auto-finalize everything.**
 Handles commit, push, PR creation, and `/finalize-pr` in one pipeline. Never merges.
 
+> **State warning**: Automated reviewers (CodeQL, Copilot, AI reviews) post
+> asynchronously. CI may have re-run. Merge conflicts may have appeared.
+> Re-fetch live PR state from Step 1.
+
 ## Rate Limit Awareness
 
 This skill orchestrates many downstream API calls via `/finalize-pr`,

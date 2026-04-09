@@ -8,6 +8,9 @@ description: Check PR merge readiness, sync local repo, and cleanup stale worktr
 Check open PR merge-readiness status, sync the local repository, and cleanup stale worktrees.
 **Note**: Does not automatically merge PRs - only reports readiness status for each PR.
 
+> **State warning**: Branch state, remote tracking, and PR status change between
+> invocations. Re-run all git/gh commands from Step 1.
+
 ## Steps
 
 ### 1. Identify Open PRs

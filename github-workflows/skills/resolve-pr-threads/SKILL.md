@@ -20,6 +20,9 @@ Orchestrates resolution of all unresolved PR review comments by grouping
 related threads, processing each group sequentially inline to implement
 fixes or provide explanations, then resolving threads via GitHub's GraphQL API.
 
+> **State warning**: Thread IDs and resolution status change as reviews arrive.
+> Re-fetch all open threads — cached thread lists from earlier are unreliable.
+
 ## Usage
 
 ```text

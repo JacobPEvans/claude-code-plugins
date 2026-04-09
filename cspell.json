@@ -37,6 +37,7 @@
     "ENDJSON",
     "RLENGTH",
     "unrecognised",
-    "tokenisation"
+    "tokenisation",
+    "reinvocation"
   ]
 }
