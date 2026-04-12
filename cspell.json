@@ -7,6 +7,7 @@
   ],
   "words": [
     "addcoltotals",
+    "agentics",
     "agentskills",
     "aouei",
     "devshell",
@@ -14,6 +15,7 @@
     "dotdirs",
     "endjson",
     "fakeof",
+    "githubnext",
     "labelfield",
     "lintable",
     "mvcount",
@@ -35,5 +37,5 @@
     "unrecognised",
     "zshexit"
   ],
-  "ignorePaths": [".git", "node_modules", "*.lock"]
+  "ignorePaths": [".git", ".github/aw/imports", ".github/workflows/*.lock.yml", "node_modules", "*.lock"]
 }
