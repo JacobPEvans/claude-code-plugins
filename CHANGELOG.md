@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.5.0...v2.6.0) (2026-04-12)
+
+
+### Features
+
+* **cspell:** migrate to shared org-wide dictionary hierarchy ([34c08ed](https://github.com/JacobPEvans/claude-code-plugins/commit/34c08ed47c0d539f6e7fc6b24fd2a73d9057a5a9))
+
 ## [2.5.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.4.0...v2.5.0) (2026-04-09)
 
 
