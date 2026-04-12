@@ -21,8 +21,10 @@ repos:
         name: Validate JSON syntax
       - id: end-of-file-fixer
         name: Fix end-of-file newlines
+        exclude: '^\.github/(aw/imports/|workflows/.*\.lock\.yml$)'
       - id: trailing-whitespace
         name: Trim trailing whitespace
+        exclude: '^\.github/(aw/imports/|workflows/.*\.lock\.yml$)'
       - id: check-case-conflict
         name: Check for case conflicts
       - id: check-merge-conflict
@@ -39,6 +41,7 @@ repos:
     hooks:
       - id: markdownlint-cli2
         name: Lint markdown files
+        exclude: '^\.github/(aw/imports/|workflows/.*\.lock\.yml$)'
 
   # ---------------------------------------------------------------------------
   # Spell checking
@@ -48,6 +51,7 @@ repos:
     hooks:
       - id: cspell
         name: Check spelling
+        exclude: '^\.github/(aw/imports/|workflows/.*\.lock\.yml$)'
         additional_dependencies:
           - "@cspell/dict-aws@4.0.17"
           - "@cspell/dict-bash@4.2.2"
@@ -94,6 +98,7 @@ repos:
       - id: check-added-large-files
         name: Check file sizes
         args: ['--maxkb=10']
+        exclude: '^\.github/(aw/imports/|workflows/.*\.lock\.yml$)'
 
   # ---------------------------------------------------------------------------
   # Agent Skills validation (agentskills.io spec)
