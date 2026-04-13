@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.0...v3.0.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* recompile gh-aw workflows with v0.68.1 ([506b6eb](https://github.com/JacobPEvans/claude-code-plugins/commit/506b6eb11745f8b0c7227a15762055169a8a3297))
+
 ## [3.0.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v2.6.0...v3.0.0) (2026-04-12)
 
 
