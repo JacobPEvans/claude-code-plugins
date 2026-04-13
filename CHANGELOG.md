@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.1...v3.0.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* add automation bots to AI Moderator skip-bots ([#222](https://github.com/JacobPEvans/claude-code-plugins/issues/222)) ([45558f9](https://github.com/JacobPEvans/claude-code-plugins/commit/45558f915d1a43874906046a51d5900b7ba547b6))
+
 ## [3.0.1](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.0...v3.0.1) (2026-04-13)
 
 
