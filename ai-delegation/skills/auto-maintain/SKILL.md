@@ -29,9 +29,9 @@ gh pr list --author @me --state open --json number | jq length
 1. SCAN - Gather state (PR-focus: only PRs; Normal: all)
 2. PRIORITIZE:
    1. PRs behind main (/sync-main)
-   2. Failing CI (/fix-pr-ci)
-   3. Review comments (/resolve-pr-review-thread)
-   4. PRs ready to merge (/git-refresh) - Report readiness, do NOT merge
+   2. Failing CI (/finalize-pr)
+   3. Review comments (/resolve-pr-threads)
+   4. PRs ready to merge (/refresh-repo) - Report readiness, do NOT merge
    --- BLOCKED IN PR-FOCUS MODE ---
    5-10. Bugs, issues, code analysis, docs, tests, deps
 3. DISPATCH - Use subagents (parallel in PR-focus, sequential otherwise; invoke `superpowers:dispatching-parallel-agents`)
