@@ -23,13 +23,15 @@ Delegate when Claude is not the best tool:
 | Task Type | Cloud Model | Local Model | Route |
 | --- | --- | --- | --- |
 | Research (single) | Gemini 3 Pro | mlx-community/Qwen3-235B-A22B-4bit | Bifrost |
-| Research (multi) | Multiple | mlx-community/Qwen3-235B-A22B-4bit | PAL clink |
+| Research (multi) | Multiple | mlx-community/Qwen3-235B-A22B-4bit¹ | PAL clink |
 | Complex Coding | Claude Opus | mlx-community/Qwen3.5-122B-A10B-4bit | native subagent |
 | Fast Tasks | Claude Sonnet | mlx-community/Qwen3.5-27B-4bit | Bifrost |
 | Code Review | Multi-model | mlx-community/Qwen3.5-27B-4bit | PAL consensus |
 | Architecture | Claude Opus | mlx-community/Qwen3-235B-A22B-4bit | native subagent |
 
 **Bifrost endpoint**: `http://localhost:30080/v1/chat/completions` (OpenAI-compatible)
+
+¹ In local-only mode, `PAL clink` (multi-model) falls back to this single best local model.
 
 ## PAL MCP Tools (multi-model only)
 
@@ -47,7 +49,8 @@ All other PAL tools have native Claude Code equivalents — use Bifrost or nativ
 
 ## Local-Only Mode
 
-When `localOnlyMode` is enabled or `--local` flag is passed, route all tasks through Bifrost to the local MLX inference server. No cloud API calls are made.
+When `localOnlyMode` is enabled or `--local` flag is passed, route all tasks through
+Bifrost to the local MLX inference server (overrides native subagent rows). No cloud API calls are made.
 
 ## Related Skills
 
