@@ -32,6 +32,11 @@ def main():
     )
     text_lower = text.lower()
 
+    # Strip well-known identifier patterns that legitimately contain years but
+    # are NOT year references (e.g. CVE-2025-43356, MS-2024-001).
+    # This prevents false-positive blocks on security advisories and similar IDs.
+    sanitized = re.sub(r"\bcve-\d{4}-\d+\b", "", text_lower, flags=re.IGNORECASE)
+
     now = datetime.now()
     current_year = now.year
     current_month = now.month
@@ -43,10 +48,10 @@ def main():
     else:
         blocked_years = [current_year - 1, current_year - 2]
 
-    # Find blocked year in text using word boundaries
+    # Find blocked year in sanitized text using word boundaries
     blocked_year = None
     for year in blocked_years:
-        if re.search(rf"\b{year}\b", text_lower):
+        if re.search(rf"\b{year}\b", sanitized):
             blocked_year = year
             break
 
@@ -69,8 +74,8 @@ def main():
         )
         return
 
-    # Warn if current year is referenced (using word boundaries)
-    if re.search(rf"\b{current_year}\b", text_lower):
+    # Warn if current year is referenced (using word boundaries, after CVE strip)
+    if re.search(rf"\b{current_year}\b", sanitized):
         date_str = now.strftime("%B %d, %Y")
         reason = (
             f"WARNING: You're searching with the current year ({current_year}).\n\n"

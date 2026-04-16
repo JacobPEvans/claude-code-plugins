@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# cspell:ignore webfetch
 # Test suite for content-guards/scripts/webfetch-guard.py
 #
 # Tests tool name filtering, blocked year detection, and current year warnings.
@@ -101,4 +102,26 @@ run_hook() {
   run_hook '{"tool_name":"WebFetch","tool_input":{"url":"https://docs.python.org/3/","prompt":"explain decorators"}}'
   [ "$status" -eq 0 ]
   [ -z "$output" ]
+}
+
+# ---------------------------------------------------------------------------
+# TC8: CVE identifiers containing a blocked year are allowed (not year refs)
+# ---------------------------------------------------------------------------
+
+@test "TC8: WebSearch with CVE ID containing blocked year is allowed" {
+  run_hook '{"tool_name":"WebSearch","tool_input":{"query":"CVE-'"$BLOCKED_YEAR"'-43356 vulnerability details"}}'
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "deny" ]]
+}
+
+@test "TC8b: WebFetch NVD URL containing CVE ID with blocked year is allowed" {
+  run_hook '{"tool_name":"WebFetch","tool_input":{"url":"https://nvd.nist.gov/vuln/detail/CVE-'"$BLOCKED_YEAR"'-43356","prompt":"extract severity"}}'
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "deny" ]]
+}
+
+@test "TC8c: WebSearch with multiple CVE IDs containing blocked year is allowed" {
+  run_hook '{"tool_name":"WebSearch","tool_input":{"query":"CVE-'"$BLOCKED_YEAR"'-43356 CVE-'"$BLOCKED_YEAR"'-47183 security advisory"}}'
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "deny" ]]
 }
