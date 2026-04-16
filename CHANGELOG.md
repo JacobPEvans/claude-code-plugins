@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.4](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.3...v3.0.4) (2026-04-16)
+
+
+### Bug Fixes
+
+* **ai-delegation,github-workflows:** align with PAL policy and fix refs ([#230](https://github.com/JacobPEvans/claude-code-plugins/issues/230)) ([aaed31d](https://github.com/JacobPEvans/claude-code-plugins/commit/aaed31de4824daf364ae4be8ab4afa9fdf0a9bd3))
+
 ## [3.0.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.2...v3.0.3) (2026-04-16)
 
 
