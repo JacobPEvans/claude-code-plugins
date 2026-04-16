@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.2...v3.0.3) (2026-04-16)
+
+
+### Bug Fixes
+
+* **content-guards:** strip CVE identifiers before year-blocking in webfetch-guard ([#229](https://github.com/JacobPEvans/claude-code-plugins/issues/229)) ([4307c2a](https://github.com/JacobPEvans/claude-code-plugins/commit/4307c2ab6e4ec074617fca576e8781c34e5ceaa6))
+
 ## [3.0.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.1...v3.0.2) (2026-04-13)
 
 
