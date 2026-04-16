@@ -3,6 +3,8 @@ name: shape-issues
 description: Shape raw ideas into actionable GitHub Issues using Shape Up methodology
 ---
 
+<!-- cspell:ignore roksechs timebox -->
+
 # Shape Issues
 
 Iterative issue exploration and shaping process that transforms rough ideas into well-defined,
@@ -16,7 +18,7 @@ time-boxed GitHub Issues using Shape Up methodology and continuous discovery pri
 2. **Solution Sketching**: Brainstorm approaches, set scope boundaries, identify risks
 3. **Issue Formation**: Problem statement, timebox, solution sketch, rabbit holes
 4. **Betting Table**: Prioritize by timebox, balance portfolio, set circuit breakers
-5. **Issue Crafting**: Create GitHub Issues with size labels, handoff to `/resolve-issues`
+5. **Issue Crafting**: Create GitHub Issues with size labels, add `ready-for-dev` label for developer pickup
 
 ## Sizing
 
@@ -47,7 +49,7 @@ Rabbit Holes (complexity traps), Done Looks Like (acceptance criteria).
 /shape-issues
 ```
 
-**Workflow**: `/shape-issues` -> `/resolve-issues` -> `/review-pr` -> `/resolve-pr-review-thread`
+**Workflow**: `/shape-issues` -> implementation -> `/ship`
 
 ## Related Skills
 
