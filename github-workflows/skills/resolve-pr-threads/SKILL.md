@@ -11,7 +11,6 @@ metadata:
   argument-hint: "[PR_NUMBER|all]"
 ---
 
-<!-- cspell:words PRRT oneline databaseId -->
 <!-- markdownlint-disable MD013 -->
 
 # Resolve PR Review Threads (Orchestrator)

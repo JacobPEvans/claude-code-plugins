@@ -6,8 +6,6 @@ author: JacobPEvans
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(gh *), Bash(git *)
 ---
 
-<!-- cspell:words pipefail readlines -->
-
 # CodeQL Generic Resolver
 
 Handle CodeQL alerts that don't fit the permissions or expression injection categories by analyzing, attempting common fixes, and escalating unclear cases.

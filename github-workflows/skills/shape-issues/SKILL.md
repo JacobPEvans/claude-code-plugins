@@ -3,8 +3,6 @@ name: shape-issues
 description: Shape raw ideas into actionable GitHub Issues using Shape Up methodology
 ---
 
-<!-- cspell:ignore roksechs timebox -->
-
 # Shape Issues
 
 Iterative issue exploration and shaping process that transforms rough ideas into well-defined,

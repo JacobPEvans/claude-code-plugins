@@ -1,4 +1,3 @@
-<!-- cspell:words PRRT DOABCDEF databaseId -->
 <!-- markdownlint-disable MD013 -->
 
 # GraphQL Queries for PR Review Threads

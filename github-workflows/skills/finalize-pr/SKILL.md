@@ -9,8 +9,6 @@ metadata:
   argument-hint: "[PR_NUMBER | all | org]"
 ---
 
-<!-- cspell:words worktree oneline -->
-
 # Finalize PR
 
 **FULLY AUTOMATIC** - Fully automates PR finalization: monitor, fix, prepare for merge. Assumes PR already exists.
