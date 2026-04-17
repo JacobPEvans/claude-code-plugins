@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.6](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.5...v3.0.6) (2026-04-17)
+
+
+### Bug Fixes
+
+* **content-guards:** remove cspell entirely ([e1d3852](https://github.com/JacobPEvans/claude-code-plugins/commit/e1d38523944ea2ecca6fc8b4dbac6c161d2331f1))
+
 ## [3.0.5](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.4...v3.0.5) (2026-04-17)
 
 
