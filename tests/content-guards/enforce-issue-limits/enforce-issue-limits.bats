@@ -163,12 +163,12 @@ run_hook() {
   [ "$status" -eq 0 ]
 }
 
-@test "TC7b: gh pr edit with --body-file is always allowed" {
+@test "TC7b: gh pr edit with --body is always allowed" {
   local now
   now="$(utc_now)"
   export GH_RESPONSE="$(build_json_array '{"createdAt":"'"$now"'"}' 25)"
 
-  run_hook '{"tool_input":{"command":"gh pr edit 126 --body-file /tmp/pr-body.md"}}'
+  run_hook '{"tool_input":{"command":"gh pr edit 126 --body \"updated description\""}}'
   [ "$status" -eq 0 ]
 }
 
