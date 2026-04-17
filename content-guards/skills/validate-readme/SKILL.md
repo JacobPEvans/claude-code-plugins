@@ -7,8 +7,6 @@ description: >-
   is checked on-demand via WebFetch.
 ---
 
-<!-- cspell:words validator -->
-
 # Validate README
 
 Run a comprehensive audit of all README.md files in the current repository.

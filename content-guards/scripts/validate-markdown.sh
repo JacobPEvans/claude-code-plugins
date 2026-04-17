@@ -2,7 +2,7 @@
 # PostToolUse hook: Validate markdown files after Write/Edit operations
 #
 # This hook runs automatically after Write or Edit tool calls.
-# It validates .md files with markdownlint-cli2 and cspell.
+# It validates .md files with markdownlint-cli2.
 #
 # Exit codes:
 #   0 - Success (validation passed or not a markdown file)
@@ -130,16 +130,6 @@ EOF
   } 2>&1 ); then
     errors+=("markdownlint-cli2 failed:")
     errors+=("$markdownlint_output")
-  fi
-fi
-
-# Run cspell (must cd to file's directory for config resolution)
-if command -v cspell &>/dev/null; then
-  cspell_dir="$(dirname -- "$file_path")"
-  cspell_file="$(basename -- "$file_path")"
-  if ! cspell_output=$(cd "$cspell_dir" && cspell --no-progress --no-must-find-files "$cspell_file" 2>&1); then
-    errors+=("cspell failed:")
-    errors+=("$cspell_output")
   fi
 fi
 

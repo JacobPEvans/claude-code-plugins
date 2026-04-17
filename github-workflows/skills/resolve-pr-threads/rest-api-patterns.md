@@ -1,4 +1,3 @@
-<!-- cspell:words PRRT PRRC DOABCDEF databaseId -->
 <!-- markdownlint-disable MD013 -->
 
 # REST API Patterns for PR Review Thread Replies

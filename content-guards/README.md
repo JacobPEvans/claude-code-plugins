@@ -6,7 +6,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
 
 ## Features
 
-- **markdown-validator**: Validates markdown with markdownlint and cspell
+- **markdown-validator**: Validates markdown with markdownlint
 - **token-validator**: Enforces configurable file token limits
 - **webfetch-guard**: Blocks outdated year references in web queries
 - **readme-validator**: Checks README files for required sections and badge health
@@ -20,7 +20,7 @@ No manual invocation required. All hooks activate automatically:
 - **webfetch-guard** — blocks outdated year references in web queries (PreToolUse: WebFetch, WebSearch)
 - **issue-limiter** — rate limits `gh issue create` and `gh pr create` (PreToolUse: Bash)
 - **branch-limiter** — limits concurrent open branches (PreToolUse: Bash)
-- **markdown-validator** — runs markdownlint + cspell after writes (PostToolUse: Write, Edit)
+- **markdown-validator** — runs markdownlint after writes (PostToolUse: Write, Edit)
 - **readme-validator** — checks README required sections after writes (PostToolUse: Write, Edit)
 
 ## Installation
@@ -34,7 +34,6 @@ claude plugins add jacobpevans-cc-plugins/content-guards
 - `jq` - JSON processing
 - `atc` - Token counting tool
 - `markdownlint-cli2` - Markdown linting
-- `cspell` - Spell checking
 - `gh` - GitHub CLI
 
 ## Testing

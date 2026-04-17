@@ -1,5 +1,4 @@
 #!/usr/bin/env bats
-# cspell:ignore webfetch
 # Test suite for content-guards/scripts/webfetch-guard.py
 #
 # Tests tool name filtering, blocked year detection, and current year warnings.

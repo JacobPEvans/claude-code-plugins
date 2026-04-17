@@ -44,7 +44,7 @@ flowchart TD
 | webfetch-guard | PreToolUse | WebFetch, WebSearch | Blocks outdated year references in queries |
 | issue-limiter | PreToolUse | Bash | Rate limits `gh issue create` and `gh pr create` |
 | branch-limiter | PreToolUse | Bash | Limits concurrent open branches |
-| markdown-validator | PostToolUse | Write, Edit | Runs markdownlint + cspell on written files |
+| markdown-validator | PostToolUse | Write, Edit | Runs markdownlint on written files |
 | readme-validator | PostToolUse | Write, Edit | Checks README required sections and badges |
 
 ## Where Guards Fire

@@ -30,7 +30,5 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 
 ## Multi-Model Delegation
 
-<!-- cspell:words Ollama -->
-
 Use `/delegate-to-ai` to route tasks to external AI models (Gemini, local Ollama, etc.) via PAL MCP.
 Useful for research, code review consensus, and multi-model validation. See the `ai-delegation` plugin.
