@@ -177,10 +177,10 @@ Steps 4.1 and 4.2 run sequentially within the agent. Step 4.3 runs after both.
 
 ### 4.3 Apply Updates
 
-After 4.1 and 4.2 complete, apply directly — no temp files:
+After 4.1 and 4.2 complete, apply title and body together — no temp files:
 
 ```bash
-gh pr edit {number} --body "$(cat <<'EOF'
+gh pr edit {number} --title "generated title" --body "$(cat <<'EOF'
 ... generated body ...
 EOF
 )"
