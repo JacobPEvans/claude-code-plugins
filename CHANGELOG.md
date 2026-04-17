@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.5](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.4...v3.0.5) (2026-04-17)
+
+
+### Bug Fixes
+
+* **github-workflows:** replace --body-file temp files with inline heredoc ([#233](https://github.com/JacobPEvans/claude-code-plugins/issues/233)) ([d175a24](https://github.com/JacobPEvans/claude-code-plugins/commit/d175a242aaa7ef92e02800cd7142f9f8dc4bcb47))
+
 ## [3.0.4](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.3...v3.0.4) (2026-04-16)
 
 
