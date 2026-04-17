@@ -22,6 +22,7 @@
     "mvexpand",
     "mvfilter",
     "nullglob",
+    "oneline",
     "pids",
     "recognises",
     "reinvocation",

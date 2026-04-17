@@ -177,8 +177,16 @@ Steps 4.1 and 4.2 run sequentially within the agent. Step 4.3 runs after both.
 
 ### 4.3 Apply Updates
 
-After 4.1 and 4.2 complete, write the body to a temp file and apply with `gh pr edit --body-file`
-(safer than inline for multiline content).
+After 4.1 and 4.2 complete, apply directly — no temp files:
+
+```bash
+gh pr edit {number} --body "$(cat <<'EOF'
+... generated body ...
+EOF
+)"
+```
+
+Single-quoted `'EOF'` prevents shell expansion. Closing `EOF` must be alone on its own line with no leading whitespace.
 
 Proceed to Phase 5.
 

@@ -48,15 +48,11 @@ Generate:
 
 Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 
-Store the title in a shell variable and write the body to a temp file using the Write tool
-(avoids shell quoting issues with multi-line text):
+Store the title in a shell variable:
 
 ```bash
 SQUASH_TITLE="<generated title>"
-SQUASH_BODY_FILE=$(mktemp)
 ```
-
-Use the Write tool to write the generated body text to the path stored in `$SQUASH_BODY_FILE`.
 
 ## Step 3: Execute Squash Merge
 
@@ -66,12 +62,17 @@ Capture the branch name before merging (needed for cleanup):
 BRANCH=$(gh pr view {pr} --json headRefName --jq '.headRefName')
 ```
 
-Merge without `--delete-branch` (avoids `git switch` failure in bare+worktree repos):
+Merge without `--delete-branch` (avoids `git switch` failure in bare+worktree repos).
+Use a heredoc for the body — no temp files:
 
 ```bash
-gh pr merge {pr} --squash --subject "$SQUASH_TITLE" --body-file "$SQUASH_BODY_FILE"
-rm -f "$SQUASH_BODY_FILE"
+gh pr merge {pr} --squash --subject "$SQUASH_TITLE" --body "$(cat <<'EOF'
+... generated body ...
+EOF
+)"
 ```
+
+Single-quoted `'EOF'` prevents shell expansion. Closing `EOF` must be alone on its own line with no leading whitespace.
 
 Delete the remote branch (GitHub may have auto-deleted it on merge — `|| true` handles that):
 
