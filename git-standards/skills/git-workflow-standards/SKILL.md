@@ -35,11 +35,12 @@ Remove: `git worktree remove ~/git/<repo>/<branch>`
 Every branch with commits MUST have an associated PR.
 Orphaned branches must get a PR or be deleted.
 
-**Stale worktree**: A branch with a deleted remote (`[gone]`), or a merged PR
-(`gh pr list --state merged --head <branch>`) with no commits ahead of the default branch
-(`git log origin/main..HEAD --oneline` is empty). Branches with open PRs, local-only
-branches without merged PRs, and worktrees with uncommitted changes are NEVER stale.
-Use `git worktree remove` (never `--force`) — Git natively blocks removal of dirty worktrees.
+**Stale worktree**: A branch with no open PR, no uncommitted changes, and either a merged PR
+whose `headRefOid` matches local `HEAD`, or a deleted remote (`[gone]`) with no commits ahead
+of the default branch (`git log origin/<default>..HEAD --oneline` is empty). Branches with open
+PRs, local-only branches without merged PRs, local commits beyond the merged PR head, and
+worktrees with uncommitted changes are NEVER stale. Use `git worktree remove` (never `--force`)
+— Git natively blocks removal of dirty worktrees.
 
 ## Branch Hygiene
 
