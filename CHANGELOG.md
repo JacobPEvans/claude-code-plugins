@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.8](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.7...v3.0.8) (2026-04-21)
+
+
+### Bug Fixes
+
+* **git-workflows:** make refresh tag cleanup safe ([#238](https://github.com/JacobPEvans/claude-code-plugins/issues/238)) ([9a60f38](https://github.com/JacobPEvans/claude-code-plugins/commit/9a60f380fb41fbe560ad568b069b93e97a6f0707))
+
 ## [3.0.7](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.6...v3.0.7) (2026-04-21)
 
 
