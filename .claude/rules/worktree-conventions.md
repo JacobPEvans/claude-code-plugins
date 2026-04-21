@@ -27,11 +27,11 @@ Examples:
 ## Before Creating
 
 1. Switch to main and sync: `cd ~/git/{repo-name}/main && git switch main && git pull`
-2. Clean stale worktrees (merged PRs or `[gone]` remote branches):
-   - `gh pr list --state merged --head {branch}` to confirm PR was merged
-   - `git branch -vv | grep '\[gone\]'` to find deleted remote branches
+2. Clean stale worktrees — a worktree is stale when it has no open PR, no uncommitted changes, and either:
+   - A merged PR whose `headRefOid` matches local `HEAD` (`gh pr list --state merged --head {branch} --json number,headRefOid,mergedAt`)
+   - A deleted remote (`[gone]` in `git branch -vv`) with no commits ahead of default
    - `git worktree remove {path}` (never `--force`) + `git branch -d {branch}`
-   - If `git branch -d` fails (branch not merged locally, e.g. squash-merge), investigate before using `git branch -D`
+   - If `git branch -d` fails on a squash-merged branch, use `git branch -D` only when the merged PR `headRefOid` matched local `HEAD`
    - `git worktree prune` to clean up
 
 ## After Creating
