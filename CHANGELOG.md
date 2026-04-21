@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.7](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.6...v3.0.7) (2026-04-21)
+
+
+### Bug Fixes
+
+* **ci:** add gh-aw-pin-refresh workflow and recompile lock files ([1348be9](https://github.com/JacobPEvans/claude-code-plugins/commit/1348be9bedd444f7199dee3781c13ffb9adfc109))
+
 ## [3.0.6](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.5...v3.0.6) (2026-04-17)
 
 
