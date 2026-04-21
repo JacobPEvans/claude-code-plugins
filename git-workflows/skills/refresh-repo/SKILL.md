@@ -3,6 +3,8 @@ name: refresh-repo
 description: Check PR merge readiness, sync local repo, and cleanup stale worktrees
 ---
 
+<!-- cspell:words refspec oneline headRefOid mergedAt -->
+
 # Git Refresh
 
 Check open PR merge-readiness status, sync the local repository, and cleanup stale worktrees.
@@ -80,7 +82,7 @@ Only remove a worktree if it is confirmed stale.
 
 **Stale definition**: No open PR, no uncommitted changes, and either:
 
-- The branch has a merged PR whose `headRefOid` matches the local branch `HEAD`
+- The branch has a merged PR (most recently merged by `mergedAt`) whose `headRefOid` matches the local branch `HEAD`
   (`gh pr list --state merged --head <branch> --json number,headRefOid,mergedAt`)
 - Its remote tracking branch was deleted (`[gone]` in `git branch -vv`) and it has no commits
   ahead of the default branch (`git log origin/<default>..HEAD --oneline` is empty)
@@ -90,7 +92,7 @@ changes are **NEVER** stale.
 
 For each worktree from `git worktree list`:
 
-1. Skip the default branch (main/master), the current branch, and bare repo entries
+1. Skip the default branch worktree, the current branch, and bare repo entries
 2. If the branch has an open PR, skip — it is **never** stale
 3. Check if stale using the definition above
 4. If not stale, skip
