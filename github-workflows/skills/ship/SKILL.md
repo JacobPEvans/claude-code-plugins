@@ -169,24 +169,29 @@ that Step 2 reported as ready, run both gates now:
 ```bash
 # Gate 1: mergeStateStatus MUST be CLEAN or HAS_HOOKS
 # (any other value = BLOCKED by branch protection, review, failing check, or CodeQL)
+# String params use -f (quoted strings); Int! `pr` uses -F (raw, parsed as number).
 gh api graphql -f query='
   query($owner:String!,$repo:String!,$pr:Int!){
     repository(owner:$owner,name:$repo){
       pullRequest(number:$pr){
-        mergeStateStatus reviewDecision isDraft
+        state mergeable mergeStateStatus reviewDecision isDraft
         commits(last:1){nodes{commit{statusCheckRollup{state}}}}
-        reviewThreads(first:50){nodes{isResolved}}
+        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
-  }' -F owner="{owner}" -F repo="{repo}" -F pr={PR_NUMBER}
+  }' -f owner="{owner}" -f repo="{repo}" -F pr={PR_NUMBER}
 
 # Gate 2: CodeQL alerts (NOT in statusCheckRollup — always check separately)
+# `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
 gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length'
+  --jq '[.[] | select(.state == "open")] | length' || echo "0"
 ```
 
-Abort conditions: `mergeStateStatus` ≠ `CLEAN`/`HAS_HOOKS`, any `reviewThreads.isResolved`
-= `false`, `reviewDecision` = `CHANGES_REQUESTED`/`REVIEW_REQUIRED`,
+Abort conditions: `state` ≠ `OPEN`, `mergeable` ≠ `MERGEABLE`,
+`mergeStateStatus` ≠ `CLEAN`/`HAS_HOOKS`, `isDraft` = `true`,
+any `reviewThreads.isResolved` = `false`,
+`reviewThreads.pageInfo.hasNextPage` = `true` (>100 threads — paginate manually),
+`reviewDecision` = `CHANGES_REQUESTED`/`REVIEW_REQUIRED`,
 `statusCheckRollup.state` ≠ `SUCCESS`, or CodeQL count > 0.
 
 If any abort condition hits: re-invoke `/finalize-pr {number}`, wait for completion,

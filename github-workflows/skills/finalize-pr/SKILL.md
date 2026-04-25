@@ -165,8 +165,9 @@ query {
       commits(last: 1) {
         nodes { commit { statusCheckRollup { state } } }
       }
-      reviewThreads(first: 50) {
+      reviewThreads(first: 100) {
         nodes { isResolved }
+        pageInfo { hasNextPage }
       }
     }
   }
@@ -184,6 +185,7 @@ query {
 | `reviewDecision` | `APPROVED` or `null` | "Review decision is `{value}` — changes requested or required" |
 | `statusCheckRollup.state` | `SUCCESS` | "CI rollup is `{state}` — fix failures in Phase 2" |
 | All `reviewThreads.isResolved` | `true` | "Unresolved threads — run `/resolve-pr-threads`" |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | "More than 100 threads — paginate manually and re-verify" |
 
 > **`mergeStateStatus` values that are NOT ready:** `BEHIND` (needs rebase),
 > `BLOCKED` (branch protection — could be required review, CodeQL, or required
@@ -195,8 +197,9 @@ query {
 `statusCheckRollup` does NOT include CodeQL alert state. Query independently:
 
 ```bash
+# `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
 gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length'
+  --jq '[.[] | select(.state == "open")] | length' || echo "0"
 ```
 
 **Required**: Result must be `0`. Any open CodeQL alerts → return to Phase 2,

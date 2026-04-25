@@ -37,7 +37,10 @@ gh pr view NUMBER --json state,mergeable,mergeStateStatus,statusCheckRollup,revi
 
 **Merge-ready criteria**: `state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN` or
 `HAS_HOOKS` (any other value: `BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT` = not
-ready), all CI checks `SUCCESS`, review `APPROVED` or not required.
+ready), all CI checks `SUCCESS`, review `APPROVED` or not required, **all review threads
+resolved** (verify via
+`gh pr view NUMBER --json reviewThreads --jq '[.reviewThreads[] | select(.isResolved == false)] | length'`
+returns `0`).
 
 ### 3. Sync Workflow
 
