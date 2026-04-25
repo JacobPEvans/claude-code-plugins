@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.11](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.10...v3.0.11) (2026-04-25)
+
+
+### Bug Fixes
+
+* distinguish mergeable from merge-ready in PR checks ([f6d419e](https://github.com/JacobPEvans/claude-code-plugins/commit/f6d419e440a14392b23275f203bb05048dbced03))
+
 ## [3.0.10](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.9...v3.0.10) (2026-04-25)
 
 
