@@ -58,11 +58,19 @@ if command -v markdownlint-cli2 &>/dev/null; then
   # Check for project-level markdownlint config (walk up from file's directory)
   search_dir="$(dirname -- "$file_path")"
   while true; do
+    # $HOME and / are user/system scope, not project scope — check before scanning
+    if [[ "$search_dir" == "$HOME" || "$search_dir" == "/" ]]; then
+      break
+    fi
     shopt -s nullglob
     config_files=("$search_dir"/.markdownlint*)
     shopt -u nullglob
     if ((${#config_files[@]} > 0)); then
       has_project_config=true
+      break
+    fi
+    # Stop at project root after checking for config there
+    if [[ -d "$search_dir/.git" ]]; then
       break
     fi
     parent_dir="$(dirname -- "$search_dir")"
@@ -78,7 +86,7 @@ if command -v markdownlint-cli2 &>/dev/null; then
     config_flag=(--config "$HOME/.markdownlint-cli2.yaml")
   else
     # Use plugin default config if available, otherwise create temporary fallback
-    plugin_config="${CLAUDE_PLUGIN_ROOT}/config/.markdownlint-cli2.yaml"
+    plugin_config="${CLAUDE_PLUGIN_ROOT:-}/config/.markdownlint-cli2.yaml"
 
     if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -f "$plugin_config" ]]; then
       # Plugin config exists and is readable

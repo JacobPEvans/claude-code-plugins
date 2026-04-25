@@ -6,6 +6,7 @@
 # - Config resolution (project vs fallback)
 # - Cross-repo editing scenarios
 # - Unbound variable regression (PR #39, #40)
+# - HOME boundary walk regression (TC9)
 #
 # Run with: bats tests/content-guards/markdown-validator/validate-markdown.bats
 
@@ -78,4 +79,35 @@ setup() {
   run bash -c 'echo "{}" | /bin/bash "$1"' _ "$SCRIPT"
   [ "$status" -eq 0 ]
   [ -z "$output" ]
+}
+
+@test "TC9: parent walk stops before HOME — does not pick up ~/.markdownlint* and OOM" {
+  # Regression for: walk climbs past project root into $HOME, finds
+  # ~/.markdownlint-cli2.jsonc (Nix home-manager symlink), cd $HOME, OOM.
+  # Fix: $HOME and / are checked before config scan so user-level configs
+  # are never treated as project configs.
+  #
+  # Strategy: put intentionally-broken JSON in fake $HOME/.markdownlint-cli2.jsonc.
+  # If the walk incorrectly picks it up (old bug), markdownlint-cli2 fails to
+  # parse it → script exits 2. If the fix is correct, the walk stops at $HOME,
+  # falls back to the inline temp config, and the valid doc.md lints cleanly → exit 0.
+
+  fake_home=$(mktemp -d)
+  # Broken config that markdownlint-cli2 cannot parse — if picked up, causes failure
+  printf 'NOT_VALID_JSON_OR_YAML -- TC9 HOME boundary sentinel' \
+    > "$fake_home/.markdownlint-cli2.jsonc"
+
+  # Project dir inside fake HOME: no .git, no .markdownlint*
+  project_dir="$fake_home/myproject"
+  mkdir -p "$project_dir"
+  printf '# Hello\n' > "$project_dir/doc.md"
+
+  run env HOME="$fake_home" bash -c \
+    'echo "{\"tool_input\":{\"file_path\":\"'"$project_dir/doc.md"'\"}}" | /bin/bash "$1"' \
+    _ "$SCRIPT"
+
+  # Correct: walk stopped at $HOME, used inline config, lint passed
+  [ "$status" -eq 0 ]
+
+  rm -rf "$fake_home"
 }
