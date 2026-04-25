@@ -1,9 +1,0 @@
-{
-  "name": "skill-guards",
-  "version": "2.3.2",
-  "description": "Ensures fresh execution of skills on every invocation via UserPromptSubmit hook",
-  "author": {"name": "JacobPEvans"},
-  "homepage": "https://github.com/JacobPEvans/claude-code-plugins",
-  "keywords": ["skills", "execution", "guards", "hooks"],
-  "license": "Apache-2.0"
-}
