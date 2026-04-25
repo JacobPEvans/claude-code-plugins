@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.10](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.9...v3.0.10) (2026-04-25)
+
+
+### Bug Fixes
+
+* **content-guards:** bound validate-markdown parent-walk at repo / $HOME ([#247](https://github.com/JacobPEvans/claude-code-plugins/issues/247)) ([8e5df03](https://github.com/JacobPEvans/claude-code-plugins/commit/8e5df03e64c0fe8825e5296c2a9a3123d6db358e))
+
 ## [3.0.9](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.8...v3.0.9) (2026-04-24)
 
 
