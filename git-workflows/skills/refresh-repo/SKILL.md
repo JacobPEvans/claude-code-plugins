@@ -32,10 +32,15 @@ gh pr list --author @me --state open --json number,title,headRefName
 For each open PR, **DO NOT MERGE** - only check and report:
 
 ```bash
-gh pr view NUMBER --json state,mergeable,statusCheckRollup,reviewDecision
+gh pr view NUMBER --json state,mergeable,mergeStateStatus,statusCheckRollup,reviewDecision
 ```
 
-**Merge-ready criteria**: State OPEN, Mergeable MERGEABLE, All checks SUCCESS, All threads resolved, Review APPROVED or not required.
+**Merge-ready criteria**: `state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN` or
+`HAS_HOOKS` (any other value: `BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT` = not
+ready), all CI checks `SUCCESS`, review `APPROVED` or not required, **all review threads
+resolved** (verify via
+`gh pr view NUMBER --json reviewThreads --jq '[.reviewThreads[] | select(.isResolved == false)] | length'`
+returns `0`).
 
 ### 3. Sync Workflow
 

@@ -21,7 +21,8 @@ No manual intervention required. For manual review-focused workflows, use `/revi
 ## Critical Rules
 
 1. **Wait for user approval to merge** - Report ready status, then pause for user merge command
-2. **Verify all checks pass** - Report ready only when ALL conditions meet requirements
+2. **Verify all checks pass via Phase 3 gate** - Re-run Phase 3 against live API on every
+   invocation; "mergeable" means git-conflict-free only, not fully unblocked.
 3. **Resolve all conversations** - Automatically invoke `/resolve-pr-threads` for review threads
 4. **Fix all CodeQL violations** - Check repository and automatically fix using `/resolve-codeql`
 5. **Simplify all code changes** - Invoke /simplify at Step 2.3.5 (after all fixes). Pre-push simplification is handled by `/ship`.
@@ -114,8 +115,11 @@ After completion, validate locally.
 
 #### Merge Conflicts
 
-Check if the PR is mergeable. **If conflicts**: Fetch main, attempt merge, report unresolvable
-conflicts for user. After resolution, validate locally.
+Check if the PR has git conflicts (`mergeable` field). **`mergeable: MERGEABLE` means no git
+conflicts only** — it does NOT mean the PR is fully ready to merge. **If conflicts**: Fetch main,
+attempt merge, report unresolvable conflicts for user. After resolution, validate locally. Full
+readiness verification (including `mergeStateStatus`, CI, CodeQL, review decision, threads) happens
+in Phase 3.
 
 ### 2.3 CI Failure Fixes
 
@@ -140,17 +144,73 @@ Verify final PR state, mergeability, and check status. If fixes introduced new i
 
 ## Phase 3: Pre-Handoff Verification
 
-Verify ALL conditions automatically and proceed directly:
+> ⛔ **NO SHORT-CIRCUIT — EVERY INVOCATION, EVERY TIME.**
+> Run this gate against live API state now, even if this PR was verified
+> 30 seconds ago. Subagent self-reports and prior in-session messages are
+> historical snapshots, not current truth. The world changes: CodeQL
+> completes async, required reviewers post async, Renovate force-pushes,
+> branch protection re-evaluates. Re-run every query below.
 
-1. ✅ **CodeQL clean** (SEPARATE from CI): No open code-scanning alerts —
-   check via `gh api repos/{owner}/{repo}/code-scanning/alerts`
-2. ✅ **All threads resolved**: All review conversations addressed
-3. ✅ **No merge conflicts**: PR is mergeable
-4. ✅ **Code simplified**: All changes reviewed by /simplify
-5. ✅ **All CI checks pass** (SEPARATE from CodeQL): `gh pr checks <PR>` all green
-6. ✅ **Local validation**: Project linters pass
+### 3.1 PR State Gate (GraphQL — re-run now)
 
-**Only if ALL six pass**: Proceed to Phase 4 to update PR metadata.
+```graphql
+query {
+  repository(owner: "{owner}", name: "{repo}") {
+    pullRequest(number: {PR}) {
+      state
+      mergeable
+      mergeStateStatus
+      isDraft
+      reviewDecision
+      commits(last: 1) {
+        nodes { commit { statusCheckRollup { state } } }
+      }
+      reviewThreads(first: 100) {
+        nodes { isResolved }
+        pageInfo { hasNextPage }
+      }
+    }
+  }
+}
+```
+
+**Required values — if any fail, return to Phase 2:**
+
+| Field | Required | Abort message |
+|-------|---------|---------------|
+| `state` | `OPEN` | "PR is not open" |
+| `mergeable` | `MERGEABLE` | "PR has git conflicts — rebase/merge in Phase 2" |
+| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | "PR merge state is `{value}` — blocked, return to Phase 2" |
+| `isDraft` | `false` | "PR is a draft — mark ready for review first" |
+| `reviewDecision` | `APPROVED` or `null` | "Review decision is `{value}` — changes requested or required" |
+| `statusCheckRollup.state` | `SUCCESS` | "CI rollup is `{state}` — fix failures in Phase 2" |
+| All `reviewThreads.isResolved` | `true` | "Unresolved threads — run `/resolve-pr-threads`" |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | "More than 100 threads — paginate manually and re-verify" |
+
+> **`mergeStateStatus` values that are NOT ready:** `BEHIND` (needs rebase),
+> `BLOCKED` (branch protection — could be required review, CodeQL, or required
+> status check), `DIRTY` (conflicts), `DRAFT`, `UNKNOWN` (GitHub computing),
+> `UNSTABLE` (checks failed or pending). Any of these = return to Phase 2.
+
+### 3.2 CodeQL Gate (REST — separate from CI, re-run now)
+
+`statusCheckRollup` does NOT include CodeQL alert state. Query independently:
+
+```bash
+# `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
+gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
+  --jq '[.[] | select(.state == "open")] | length' || echo "0"
+```
+
+**Required**: Result must be `0`. Any open CodeQL alerts → return to Phase 2,
+invoke `/resolve-codeql fix`.
+
+### 3.3 Code and Local Validation
+
+- ✅ Code simplified: `/simplify` ran at Phase 2.3.5 on all changes
+- ✅ Local linters pass: validators ran in Phase 2
+
+**Only if all three gates (3.1, 3.2, 3.3) pass**: Proceed to Phase 4 to update PR metadata.
 
 **Multi-PR handling**: If a PR needs human intervention (unresolvable conflict,
 unrecoverable CI failure, etc.), log it with reason and continue to the next PR.

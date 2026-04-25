@@ -11,9 +11,12 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(pre-commit *), Bash(npm run lint*),
 **Single command to commit, push, create PR(s), and auto-finalize everything.**
 Handles commit, push, PR creation, and `/finalize-pr` in one pipeline. Never merges.
 
-> **State warning**: Automated reviewers (CodeQL, Copilot, AI reviews) post
-> asynchronously. CI may have re-run. Merge conflicts may have appeared.
-> Re-fetch live PR state from Step 1.
+> ⛔ **NOT RESUMABLE — run from Step 0 on every `/ship` invocation.**
+> Do not refer to "the PR I just finalized" or "already verified" from
+> any earlier message in this session — those are stale snapshots.
+> The world changes between invocations: CodeQL completes async, required
+> reviewers post async, Renovate force-pushes, branch protection
+> re-evaluates. Re-run everything from Step 0.
 
 ## Rate Limit Awareness
 
@@ -156,7 +159,45 @@ internally. Running both causes race conditions on GraphQL mutations and git pus
 
 ## Step 3: Aggregate Results
 
-Wait for all `/finalize-pr` agents to complete. Collect their results and report:
+Wait for all `/finalize-pr` agents to complete.
+
+**Before printing any PR as "Ready to merge": re-verify live state.**
+
+Subagent self-reports from Step 2 are snapshots — not current truth. For each PR
+that Step 2 reported as ready, run both gates now:
+
+```bash
+# Gate 1: mergeStateStatus MUST be CLEAN or HAS_HOOKS
+# (any other value = BLOCKED by branch protection, review, failing check, or CodeQL)
+# String params use -f (quoted strings); Int! `pr` uses -F (raw, parsed as number).
+gh api graphql -f query='
+  query($owner:String!,$repo:String!,$pr:Int!){
+    repository(owner:$owner,name:$repo){
+      pullRequest(number:$pr){
+        state mergeable mergeStateStatus reviewDecision isDraft
+        commits(last:1){nodes{commit{statusCheckRollup{state}}}}
+        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
+      }
+    }
+  }' -f owner="{owner}" -f repo="{repo}" -F pr={PR_NUMBER}
+
+# Gate 2: CodeQL alerts (NOT in statusCheckRollup — always check separately)
+# `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
+gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
+  --jq '[.[] | select(.state == "open")] | length' || echo "0"
+```
+
+Abort conditions: `state` ≠ `OPEN`, `mergeable` ≠ `MERGEABLE`,
+`mergeStateStatus` ≠ `CLEAN`/`HAS_HOOKS`, `isDraft` = `true`,
+any `reviewThreads.isResolved` = `false`,
+`reviewThreads.pageInfo.hasNextPage` = `true` (>100 threads — paginate manually),
+`reviewDecision` = `CHANGES_REQUESTED`/`REVIEW_REQUIRED`,
+`statusCheckRollup.state` ≠ `SUCCESS`, or CodeQL count > 0.
+
+If any abort condition hits: re-invoke `/finalize-pr {number}`, wait for completion,
+then re-run both gates. Only list a PR as "Ready to merge" after both gates pass.
+
+Then report:
 
 ```text
 Ship Summary
