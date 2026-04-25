@@ -109,8 +109,8 @@ jobs:
             jq empty "$json_file"
           done
 
-      - name: Install bats-core
-        run: sudo npm install -g bats
+      - name: Install bats-core and markdownlint-cli2
+        run: sudo npm install -g bats markdownlint-cli2
 
       - name: Run tests
         run: |
