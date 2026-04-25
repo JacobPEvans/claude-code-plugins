@@ -92,13 +92,17 @@ setup() {
   # parse it → script exits 2. If the fix is correct, the walk stops at $HOME,
   # falls back to the inline temp config, and the valid doc.md lints cleanly → exit 0.
 
+  local fake_home
   fake_home=$(mktemp -d)
+  # Ensure cleanup even on assertion failure
+  trap 'rm -rf "$fake_home"' EXIT
+
   # Broken config that markdownlint-cli2 cannot parse — if picked up, causes failure
   printf 'NOT_VALID_JSON_OR_YAML -- TC9 HOME boundary sentinel' \
     > "$fake_home/.markdownlint-cli2.jsonc"
 
   # Project dir inside fake HOME: no .git, no .markdownlint*
-  project_dir="$fake_home/myproject"
+  local project_dir="$fake_home/myproject"
   mkdir -p "$project_dir"
   printf '# Hello\n' > "$project_dir/doc.md"
 
@@ -108,6 +112,4 @@ setup() {
 
   # Correct: walk stopped at $HOME, used inline config, lint passed
   [ "$status" -eq 0 ]
-
-  rm -rf "$fake_home"
 }

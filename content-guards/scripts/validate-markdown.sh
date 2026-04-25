@@ -59,7 +59,7 @@ if command -v markdownlint-cli2 &>/dev/null; then
   search_dir="$(dirname -- "$file_path")"
   while true; do
     # $HOME and / are user/system scope, not project scope — check before scanning
-    if [[ "$search_dir" == "$HOME" || "$search_dir" == "/" ]]; then
+    if [[ "$search_dir" == "${HOME:-}" || "$search_dir" == "/" ]]; then
       break
     fi
     shopt -s nullglob
@@ -70,7 +70,7 @@ if command -v markdownlint-cli2 &>/dev/null; then
       break
     fi
     # Stop at project root after checking for config there
-    if [[ -d "$search_dir/.git" ]]; then
+    if [[ -e "$search_dir/.git" ]]; then
       break
     fi
     parent_dir="$(dirname -- "$search_dir")"
