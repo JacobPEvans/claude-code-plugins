@@ -15,11 +15,11 @@ This is a **Claude Code plugins repository** containing production-ready hooks f
 | **config-management** | Skill | `/sync-permissions`, `/quick-add-permission` | Manage Claude and Gemini permission configs across repositories |
 | **content-guards** | Pre/PostToolUse | Bash, Write, Edit | Token limits, markdown/README validation, webfetch guard, issue/PR rate limiting, branch limits |
 | **git-guards** | PreToolUse | Bash, Edit, Write, NotebookEdit | Blocks dangerous git/gh commands and file edits on main branch |
-| **git-workflows** | Command/Skill | `/rebase-pr`, `/sync-main`, `/refresh-repo`, `/wrap-up`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree` | Git sync, refresh, and PR merge workflows |
-| **github-workflows** | Command/Skill | `/ship`, `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews` | GitHub PR/issue management workflows |
+| **git-workflows** | Command/Skill | `/rebase-pr`, `/sync-main`, `/refresh-repo`, `/wrap-up`, `/troubleshoot-rebase`, `/troubleshoot-precommit`, `/troubleshoot-worktree`, `/gh-cli-patterns` | Git sync, refresh, and PR merge workflows |
+| **github-workflows** | Command/Skill | `/ship`, `/finalize-pr`, `/squash-merge-pr`, `/resolve-pr-threads`, `/shape-issues`, `/trigger-ai-reviews`, `/gh-cli-patterns` | GitHub PR/issue management workflows |
 | **infra-orchestration** | Skill | `/orchestrate-infra`, `/sync-inventory`, `/test-e2e` | Cross-repo infrastructure orchestration for Terraform and Ansible |
 | **code-standards** | Skill | `/code-quality-standards`, `/review-standards` | Code quality standards, documentation formatting, testing philosophy, and review guidelines |
-| **git-standards** | Skill | `/git-workflow-standards`, `/pr-standards`, `/gh-cli-patterns` | Git workflow standards, branch hygiene, PR creation guards, issue linking, and canonical gh CLI patterns |
+| **git-standards** | Skill | `/git-workflow-standards`, `/pr-standards` | Git workflow standards, branch hygiene, PR creation guards, and issue linking |
 | **infra-standards** | Skill | `/infrastructure-standards` | Infrastructure standards for Proxmox, Terraform, Ansible including deployment pipeline and secrets management |
 | **pal-health** | SessionStart | — | Warns on session start if PAL MCP had a recent Doppler auth failure |
 | **pr-lifecycle** | PostToolUse | Bash | Automatically triggers `/finalize-pr` after `gh pr create` succeeds |

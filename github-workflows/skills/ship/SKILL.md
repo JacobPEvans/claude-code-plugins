@@ -113,7 +113,7 @@ The context brief must include:
 Format as a concise block (aim for 10-20 lines):
 
 ```text
-## Context for PR #{number}
+## Context for PR #<PR_NUMBER>
 **Purpose**: [1-2 sentence summary of what and why]
 **Key decisions**:
 - [decision 1 and rationale]
@@ -129,7 +129,7 @@ This brief is passed verbatim to each `/finalize-pr` subagent in Step 2.
 
 ### Single PR (1 PR in list)
 
-Invoke `/finalize-pr {number}` directly via the Skill tool — no subagent needed.
+Invoke `/finalize-pr <PR_NUMBER>` directly via the Skill tool — no subagent needed.
 The context brief from Step 1.5 is already in session context and will be available
 when `/finalize-pr` invokes `/resolve-pr-threads`.
 
@@ -141,7 +141,7 @@ prevents API rate limit errors from overlapping finalization cascades.
 
 For each PR in the list:
 
-1. Invoke `/finalize-pr {number}` via the Skill tool
+1. Invoke `/finalize-pr <PR_NUMBER>` via the Skill tool
 2. Record the result (ready / blocked / needs-human)
 3. Proceed to the next PR
 
@@ -164,27 +164,11 @@ Wait for all `/finalize-pr` agents to complete.
 **Before printing any PR as "Ready to merge": re-verify live state.**
 
 Subagent self-reports from Step 2 are snapshots — not current truth. For each PR
-that Step 2 reported as ready, run both gates now:
+that Step 2 reported as ready, run both gates from `gh-cli-patterns` (this plugin)
+against `<PR_NUMBER>`:
 
-```bash
-# Gate 1: mergeStateStatus MUST be CLEAN or HAS_HOOKS
-# (any other value = BLOCKED by branch protection, review, failing check, or CodeQL)
-gh api graphql -f query='
-  query($owner:String!,$repo:String!,$number:Int!){
-    repository(owner:$owner,name:$repo){
-      pullRequest(number:$number){
-        state mergeable mergeStateStatus reviewDecision isDraft
-        commits(last:1){nodes{commit{statusCheckRollup{state}}}}
-        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
-      }
-    }
-  }' -f owner="{owner}" -f repo="{repo}" -F number={number}
-
-# Gate 2: CodeQL alerts (NOT in statusCheckRollup — always check separately)
-# `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
-gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
-  --jq 'length' || echo "0"
-```
+- **Gate 1**: Canonical PR-readiness gate (`mergeStateStatus` MUST be `CLEAN` or `HAS_HOOKS`)
+- **Gate 2**: Canonical code-scanning alert count (must be `0` — NOT included in `statusCheckRollup`)
 
 Abort conditions: `state` ≠ `OPEN`, `mergeable` ≠ `MERGEABLE`,
 `mergeStateStatus` ≠ `CLEAN`/`HAS_HOOKS`, `isDraft` = `true`,
@@ -193,7 +177,7 @@ any `reviewThreads.isResolved` = `false`,
 `reviewDecision` = `CHANGES_REQUESTED`/`REVIEW_REQUIRED`,
 `statusCheckRollup.state` ≠ `SUCCESS`, or CodeQL count > 0.
 
-If any abort condition hits: re-invoke `/finalize-pr {number}`, wait for completion,
+If any abort condition hits: re-invoke `/finalize-pr <PR_NUMBER>`, wait for completion,
 then re-run both gates. Only list a PR as "Ready to merge" after both gates pass.
 
 Then report:
@@ -239,4 +223,4 @@ Blocked — needs human (1):
 - finalize-pr (github-workflows) — invoked by ship to drive each PR to mergeable state
 - squash-merge-pr (github-workflows) — merge a PR after ship reports it ready
 - resolve-pr-threads (github-workflows) — invoked internally via finalize-pr to resolve review threads
-- gh-cli-patterns (git-standards) — canonical gh CLI command shapes (GraphQL vs REST, flag semantics)
+- gh-cli-patterns (github-workflows) — canonical gh CLI command shapes, placeholder convention, PR gate, code-scanning query

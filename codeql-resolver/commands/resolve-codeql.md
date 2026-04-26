@@ -32,8 +32,10 @@ Fix CodeQL alerts in **current repository only** by analyzing, classifying, and 
 
 ### Phase 1: Alert Discovery & Classification
 
+Replace `<OWNER>` and `<REPO>` before running:
+
 ```bash
-gh api 'repos/{OWNER}/{REPO}/code-scanning/alerts?state=open&per_page=100' --paginate \
+gh api 'repos/<OWNER>/<REPO>/code-scanning/alerts?state=open&per_page=100' --paginate \
   --jq '.[] | {
     number,
     rule: .rule.id,
@@ -94,7 +96,7 @@ After all agents complete:
    ```text
    CodeQL Resolution Report
    ======================
-   Repository: {OWNER}/{REPO}
+   Repository: <OWNER>/<REPO>
 
    FIXED:
    - 8 alerts in .github/workflows/ci-gate.yml

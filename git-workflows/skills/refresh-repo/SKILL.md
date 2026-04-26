@@ -29,34 +29,23 @@ gh pr list --author @me --state open --json number,title,headRefName
 
 ### 2. Report Merge-Readiness Status
 
-For each open PR, **DO NOT MERGE** - only check and report:
+For each open PR, **DO NOT MERGE** - only check and report.
 
-```bash
-gh pr view NUMBER --json state,mergeable,mergeStateStatus,statusCheckRollup,reviewDecision
-```
+Run the **canonical PR-readiness gate** from `gh-cli-patterns` (this plugin).
+Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder legend in that skill.
 
-**Merge-ready criteria**: `state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN` or
-`HAS_HOOKS` (any other value: `BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT` = not
-ready), all CI checks `SUCCESS`, review `APPROVED` or not required, **all review threads
-resolved** (verify via the GraphQL gate below — `reviewThreads` is not a `--json` REST field).
+**Merge-ready criteria** — all of the following must hold:
 
-To check thread resolution status, use the canonical GraphQL gate from **gh-cli-patterns** (git-standards):
-
-```bash
-gh api graphql -f query='
-  query($owner:String!,$repo:String!,$number:Int!){
-    repository(owner:$owner,name:$repo){
-      pullRequest(number:$number){
-        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
-      }
-    }
-  }' -f owner="$(gh repo view --json owner --jq '.owner.login')" \
-     -f repo="$(gh repo view --json name --jq '.name')" \
-     -F number="$(gh pr view --json number --jq '.number')" \
-  --jq '{unresolved: ([.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false)] | length), overflow: .data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage}'
-```
-
-Must return `{"unresolved": 0, "overflow": false}`. Non-zero `unresolved` or `overflow: true` means threads remain.
+| Field | Required | Status |
+|---|---|---|
+| `state` | `OPEN` | Not ready |
+| `mergeable` | `MERGEABLE` | Not ready |
+| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | Not ready (`BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT`) |
+| `isDraft` | `false` | Not ready |
+| `reviewDecision` | `APPROVED` or `null` | Not ready |
+| `statusCheckRollup.state` | `SUCCESS` | Not ready |
+| All `reviewThreads.isResolved` | `true` | Not ready — unresolved threads |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | Not ready — >100 threads, paginate |
 
 ### 3. Sync Workflow
 
@@ -145,4 +134,4 @@ explicit refspec prune and can delete local-only tags that are not release artif
 - **sync-main** (git-workflows) — Syncs main and merges into current or all PR branches
 - **rebase-pr** (git-workflows) — Rebase-merge workflow for merging individual PRs
 - **git-workflow-standards** (git-standards) — Worktree structure and branch hygiene conventions
-- **gh-cli-patterns** (git-standards) — Canonical gh CLI command shapes (GraphQL vs REST, flag semantics)
+- **gh-cli-patterns** (git-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate
