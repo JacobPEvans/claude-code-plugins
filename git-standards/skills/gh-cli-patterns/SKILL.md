@@ -59,7 +59,7 @@ gh api graphql -f query='
         reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
-  }' -f owner="{owner}" -f repo="{repo}" -F pr={PR_NUMBER}
+  }' -f owner="{owner}" -f repo="{repo}" -F pr={number}
 ```
 
 **Abort if any fail:**

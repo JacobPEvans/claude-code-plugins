@@ -53,11 +53,10 @@ gh api graphql -f query='
   }' -f owner="$(gh repo view --json owner --jq '.owner.login')" \
      -f repo="$(gh repo view --json name --jq '.name')" \
      -F pr=NUMBER \
-  --jq '[.data.repository.pullRequest.reviewThreads.nodes[]
-    | select(.isResolved==false)] | length'
+  --jq '{unresolved: ([.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false)] | length), overflow: .data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage}'
 ```
 
-Must return `0`. Any non-zero value or `hasNextPage: true` means threads remain.
+Must return `{"unresolved": 0, "overflow": false}`. Non-zero `unresolved` or `overflow: true` means threads remain.
 
 ### 3. Sync Workflow
 
