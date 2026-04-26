@@ -28,16 +28,13 @@ DENY_GIT_ONLY = [
     (r"cherry-pick\s+.*--no-verify", "bypasses commit hooks"),
     (r"rebase\s+.*--no-verify", "bypasses commit hooks"),
     (r"config\s+.*core\.hooksPath", "changes hook directory"),
-    (r"push\s+(--force|--force-with-lease|-f)\s+\S+\s+main\b", "force-pushes to the main branch"),
+    (r"push\s+(--force|--force-with-lease|-f)\b", "force-pushes overwrite remote history"),
 ]
 
 # Commands requiring explicit user confirmation
 # Ordered from most specific to least specific to avoid false matches
 ASK_GIT = [
     ("commit --amend", "Rewrites the last commit"),
-    ("push --force-with-lease", "Overwrites remote history"),
-    ("push --force", "Overwrites remote history"),
-    ("push -f", "Overwrites remote history"),
     ("worktree remove --force", "Removes worktree directory, discarding uncommitted changes"),
     ("worktree remove -f", "Removes worktree directory, discarding uncommitted changes"),
     ("cherry-pick", "Rewrites commit history"),
