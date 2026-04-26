@@ -341,7 +341,8 @@ def main():
             subcmd_tokens = []
         for i, tok in enumerate(subcmd_tokens):
             if tok == "-c" and i + 1 < len(subcmd_tokens):
-                if re.match(r"core\.hooksPath\s*(?:=|$)", subcmd_tokens[i + 1], re.IGNORECASE):
+                config_key = subcmd_tokens[i + 1].split("=")[0]
+                if re.match(r"core\.hooksPath$", config_key, re.IGNORECASE):
                     deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
         if sub_tokens and sub_tokens[0] in BLOCKED_ON_MAIN and _is_on_main_branch():
