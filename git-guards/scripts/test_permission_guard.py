@@ -72,8 +72,8 @@ all_pass &= check("git reset", "git reset --hard HEAD", "ask")
 # git push --force origin main - must DENY (DENY_GIT_ONLY: force-push to protected branch)
 all_pass &= check("git push --force origin main", "git push --force origin main", "deny")
 
-# git push --force to a feature branch - must ask (non-main target)
-all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "ask")
+# git push --force to a feature branch - BLOCKED_ON_MAIN denies push on main (tightened 2026-03-22)
+all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "deny")
 
 # DENY: commit --no-verify
 all_pass &= check("git commit --no-verify", "git commit -m msg --no-verify", "deny")
@@ -91,15 +91,16 @@ all_pass &= check("git -C reset --hard", "git -C /some/path reset --hard HEAD", 
 all_pass &= check("git -C -c core.hooksPath deny", "git -C /some/path -c core.hooksPath=/dev/null commit -m test", "deny")
 all_pass &= check("git -C restore ask", "git -C /some/path restore file.txt", "ask")
 
-# core.hooksPath precision: value containing the string should not trigger deny
-all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath commit -m test", "silent_allow")
+# core.hooksPath precision: BLOCKED_ON_MAIN denies commit on main regardless of value content
+all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath commit -m test", "deny")
 
 # Fallback bypass detection: unrecognised global option before -c breaks loop early
 all_pass &= check("--no-pager before -c hooksPath", "git --no-pager -c core.hooksPath=/dev/null commit -m msg", "deny")
 # Fallback also fires when loop parsed a prior -c but broke before a second -c hooksPath
 all_pass &= check("valid -c then --bare then -c hooksPath", "git -c user.name=test --bare -c core.hooksPath=/dev/null commit -m msg", "deny")
-# False positive guard: commit message containing the bypass pattern as a substring must not deny
-all_pass &= check("hooksPath in commit message", 'git -c user.name=test commit -m "allow -c core.hooksPath bypass example"', "silent_allow")
+# False positive guard: tag message containing the bypass pattern as a substring must not deny
+# Uses 'git tag' (not in BLOCKED_ON_MAIN) to test the tokenizer false-positive scenario on any branch
+all_pass &= check("hooksPath in tag message", 'git -c user.name=test tag v99-test -m "allow -c core.hooksPath bypass example"', "silent_allow")
 
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
