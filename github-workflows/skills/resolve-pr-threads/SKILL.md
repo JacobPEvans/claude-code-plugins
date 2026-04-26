@@ -32,7 +32,7 @@ fixes or provide explanations, then resolving threads via GitHub's GraphQL API.
 
 ## Rules
 
-- See `gh-cli-patterns` (this plugin) for canonical query shapes, mutation names, and placeholder convention
+- See /gh-cli-patterns for canonical query shapes, mutation names, and placeholder convention
 - **Run gh/git/jq commands directly** via Bash — no scripts, no temp files
 - **Diagnose and fix errors** when a reply fails — the reply must land in the thread
 - **When a reply fails**: re-fetch thread IDs, verify the databaseId is numeric, check `gh auth status` — then retry
@@ -55,7 +55,7 @@ number=$(gh pr view --json number --jq '.number')
 
 #### Step 1a: Fetch Unresolved Threads
 
-Run the **canonical fetch-threads query** from `gh-cli-patterns` (this plugin).
+Run the **canonical fetch-threads query** from /gh-cli-patterns.
 Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` before running.
 
 Filter to `isResolved == false`. Extract: `id` (PRRT_* node ID), `path`, `line`,
@@ -114,7 +114,7 @@ For each thread group:
 2. Apply the receiving-code-review pattern: evaluate the feedback and decide —
    implement fix, push back with rationale, or flag as needs-human
 3. If implementing a fix, make the change and commit (do NOT push yet)
-4. Reply to each thread using the **REST reply pattern** from `gh-cli-patterns` (this plugin).
+4. Reply to each thread using the **REST reply pattern** from /gh-cli-patterns.
    Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>`, `<DATABASE_ID>` before running:
 
 ```bash
@@ -151,14 +151,14 @@ Track results per comment:
 ### Step 4: Resolve Threads Sequentially
 
 After all groups are processed, resolve each `handled` thread **one at a time** (not in parallel)
-to avoid cascade failures. Use the **canonical resolve mutation** from `gh-cli-patterns` (this plugin).
+to avoid cascade failures. Use the **canonical resolve mutation** from /gh-cli-patterns.
 Replace `<THREAD_ID>` (PRRT_* node ID) before running.
 
 Skip `needs-human` threads; flag for manual attention.
 
 ### Step 5: Verify, Push, and Report
 
-Run the **canonical count-unresolved query** from `gh-cli-patterns` (this plugin).
+Run the **canonical count-unresolved query** from /gh-cli-patterns.
 Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` before running.
 
 Must return `{"unresolved": 0, "overflow": false}`. Then push: `git push`.

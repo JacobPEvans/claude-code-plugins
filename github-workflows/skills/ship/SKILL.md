@@ -164,7 +164,7 @@ Wait for all `/finalize-pr` agents to complete.
 **Before printing any PR as "Ready to merge": re-verify live state.**
 
 Subagent self-reports from Step 2 are snapshots — not current truth. For each PR
-that Step 2 reported as ready, run both gates from `gh-cli-patterns` (this plugin)
+that Step 2 reported as ready, run both gates from /gh-cli-patterns
 against `<PR_NUMBER>`:
 
 - **Gate 1**: Canonical PR-readiness gate (`mergeStateStatus` MUST be `CLEAN` or `HAS_HOOKS`)

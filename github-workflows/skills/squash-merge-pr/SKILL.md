@@ -25,7 +25,7 @@ issues — only merges.
 
 ## Step 1: Validate PR Ready
 
-Run the **canonical PR-readiness gate** from `gh-cli-patterns` (this plugin) against
+Run the **canonical PR-readiness gate** from /gh-cli-patterns against
 `<PR_NUMBER>`. Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder convention.
 
 If any check fails, abort immediately with the field's failure message and
@@ -75,7 +75,7 @@ BRANCH=$(gh pr view <PR_NUMBER> --json headRefName --jq '.headRefName')
 ```
 
 Merge without `--delete-branch` (avoids `git switch` failure in bare+worktree repos).
-Use the heredoc body pattern from `gh-cli-patterns` (this plugin):
+Use the heredoc body pattern from /gh-cli-patterns:
 
 ```bash
 gh pr merge <PR_NUMBER> --squash --subject "$SQUASH_TITLE" --body "$(cat <<'EOF'

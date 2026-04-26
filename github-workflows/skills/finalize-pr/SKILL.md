@@ -99,7 +99,7 @@ Task agents when they touch different files. Invoke `superpowers:dispatching-par
 
 #### CodeQL Violations
 
-Run the **canonical code-scanning alert count** from `gh-cli-patterns` (this plugin).
+Run the **canonical code-scanning alert count** from /gh-cli-patterns.
 Replace `<OWNER>` and `<REPO>` per the placeholder convention in that skill.
 
 **If violations found**: Invoke `/resolve-codeql fix`, validate locally.
@@ -149,7 +149,7 @@ Verify final PR state, mergeability, and check status. If fixes introduced new i
 
 ### 3.1 PR State Gate (GraphQL — re-run now)
 
-Run the **canonical PR-readiness gate** from `gh-cli-patterns` (this plugin) against
+Run the **canonical PR-readiness gate** from /gh-cli-patterns against
 `<PR_NUMBER>`. Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder convention in
 that skill.
 
@@ -174,7 +174,7 @@ that skill.
 ### 3.2 CodeQL Gate (REST — separate from CI, re-run now)
 
 `statusCheckRollup` does NOT include CodeQL alert state. Run the **canonical code-scanning
-alert count** from `gh-cli-patterns` (this plugin). Replace `<OWNER>` and `<REPO>` per the
+alert count** from /gh-cli-patterns. Replace `<OWNER>` and `<REPO>` per the
 placeholder convention.
 
 **Required**: Result must be `0`. Any open CodeQL alerts → return to Phase 2,
@@ -211,7 +211,7 @@ Steps 4.1 and 4.2 run sequentially within the agent. Step 4.3 runs after both.
 ### 4.3 Apply Updates
 
 After 4.1 and 4.2 complete, apply title and body together — no temp files.
-Use the heredoc body pattern from `gh-cli-patterns` (this plugin):
+Use the heredoc body pattern from /gh-cli-patterns:
 
 ```bash
 gh pr edit <PR_NUMBER> --title "generated title" --body "$(cat <<'EOF'

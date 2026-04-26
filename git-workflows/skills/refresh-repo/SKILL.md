@@ -31,7 +31,7 @@ gh pr list --author @me --state open --json number,title,headRefName
 
 For each open PR, **DO NOT MERGE** - only check and report.
 
-Run the **canonical PR-readiness gate** from `gh-cli-patterns` (this plugin).
+Run the **canonical PR-readiness gate** from /gh-cli-patterns.
 Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder legend in that skill.
 
 **Merge-ready criteria** — all of the following must hold:

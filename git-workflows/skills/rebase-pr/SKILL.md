@@ -54,7 +54,7 @@ Only `required_signatures` belongs on all-branches.
 
 ## Step 1: Validate PR Ready
 
-Run the **canonical PR-readiness gate** from `gh-cli-patterns` (this plugin) against
+Run the **canonical PR-readiness gate** from /gh-cli-patterns against
 `<PR_NUMBER>`. Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder convention in
 that skill.
 
