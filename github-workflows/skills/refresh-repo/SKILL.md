@@ -132,6 +132,6 @@ explicit refspec prune and can delete local-only tags that are not release artif
 ## Related Skills
 
 - **sync-main** (git-workflows) — Syncs main and merges into current or all PR branches
-- **rebase-pr** (git-workflows) — Rebase-merge workflow for merging individual PRs
+- **rebase-pr** (github-workflows) — Rebase-merge workflow for merging individual PRs
 - **git-workflow-standards** (git-standards) — Worktree structure and branch hygiene conventions
-- **gh-cli-patterns** (git-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate
+- **gh-cli-patterns** (github-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate

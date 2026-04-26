@@ -264,7 +264,7 @@ For `all`/`org` modes: Phases 2-5 loop per PR, Phase 6 aggregates results.
 
 - squash-merge-pr (github-workflows) — squash merge a PR after finalize-pr reports ready
 - resolve-pr-threads (github-workflows) — invoked internally to resolve review threads
-- rebase-pr (git-workflows) — alternative merge strategy after finalize-pr reports ready
+- rebase-pr (github-workflows) — alternative merge strategy after finalize-pr reports ready
 - pr-standards (git-standards) — PR authoring and review standards
 - code-quality-standards (code-standards) — code quality guidelines applied during fixes
 - gh-cli-patterns (github-workflows) — canonical gh CLI command shapes, placeholder convention, PR gate, code-scanning query

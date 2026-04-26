@@ -65,6 +65,6 @@ Read files, understand both versions, combine intelligently, stage resolved file
 
 ## Related Skills
 
-- **refresh-repo** (git-workflows) — Full repo sync including PR status and worktree cleanup
-- **rebase-pr** (git-workflows) — Rebase-merge workflow that builds on a synced main
+- **refresh-repo** (github-workflows) — Full repo sync including PR status and worktree cleanup
+- **rebase-pr** (github-workflows) — Rebase-merge workflow that builds on a synced main
 - **git-workflow-standards** (git-standards) — Branch hygiene and sync conventions

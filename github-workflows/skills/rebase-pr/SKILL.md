@@ -206,4 +206,4 @@ This commonly occurs with release-please CHANGELOG.md entries that don't conform
 - **finalize-pr** (github-workflows) — Full PR finalization pipeline that may invoke rebase-pr
 - **sync-main** (git-workflows) — Syncs main branch, often needed before rebasing
 - **pr-standards** (git-standards) — PR creation and review standards
-- **gh-cli-patterns** (git-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate
+- **gh-cli-patterns** (github-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate

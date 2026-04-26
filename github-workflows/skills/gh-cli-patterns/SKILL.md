@@ -194,5 +194,4 @@ Same pattern for `gh pr create`, `gh pr comment`, `gh issue comment`. Never use 
 
 ## Related Skills
 
-- **gh-cli-patterns** (git-workflows) — subset of this skill (no code-scanning or mutations)
 - **pr-standards** (git-standards) — PR creation guards, issue linking

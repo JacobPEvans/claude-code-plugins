@@ -24,7 +24,10 @@ graph LR
 
 ## 1. Skill Dependency Map
 
-All six skills and their cross-plugin dependencies.
+All skills and their cross-plugin dependencies. `/refresh-repo`, `/rebase-pr`,
+`/squash-merge-pr`, and `/gh-cli-patterns` are local to this plugin (no cross-plugin
+hop) — `/squash-merge-pr` and `/rebase-pr` both consume the canonical PR-readiness
+gate from `/gh-cli-patterns` directly.
 
 ```mermaid
 flowchart TD
@@ -32,13 +35,15 @@ flowchart TD
     FPR["/finalize-pr"]:::ai
     RPT["/resolve-pr-threads"]:::ai
     SMP["/squash-merge-pr"]:::ai
+    RBP["/rebase-pr"]:::ai
+    RFR["/refresh-repo"]:::ai
+    GCP["/gh-cli-patterns"]:::ai
     TAR["/trigger-ai-reviews"]:::ai
     SI["/shape-issues"]:::ai
 
     CPR["Commit + /simplify + validate\n+ push + PR create (inline)"]:::ai
     RCQ["/resolve-codeql\n(codeql-resolver)"]:::external
     SIMP["/simplify\n(external)"]:::external
-    RBP["/rebase-pr Step 1\n(git-workflows)"]:::external
     RCR["superpowers:receiving-code-review\n(superpowers, external)"]:::external
     CLAUDE["Claude bot review"]:::external
     GEMINI["Gemini bot review"]:::external
@@ -54,7 +59,12 @@ flowchart TD
 
     RPT -->|"Step 3"| RCR
 
-    SMP -->|"reads validation query"| RBP
+    FPR -.->|"reference"| GCP
+    SHIP -.->|"reference"| GCP
+    SMP -.->|"reference"| GCP
+    RBP -.->|"reference"| GCP
+    RFR -.->|"reference"| GCP
+    RPT -.->|"reference"| GCP
 
     TAR -->|"triggers"| CLAUDE
     TAR -->|"triggers"| GEMINI
@@ -120,7 +130,7 @@ flowchart TD
 
     subgraph MERGE ["AI — On Human Command (/squash-merge-pr)"]
         direction TB
-        M1["Validate readiness\n(/rebase-pr Step 1 query)"]:::external
+        M1["Validate readiness\n(/gh-cli-patterns PR-readiness gate)"]:::ai
         M2["Generate squash commit"]:::ai
         M3["gh pr merge --squash\n--delete-branch"]:::ai
         M4["git switch main && git pull"]:::ai
@@ -128,9 +138,9 @@ flowchart TD
         M1 --> M2 --> M3 --> M4
     end
 
-    subgraph CLEANUP ["AI — On Human Command (/wrap-up)"]
+    subgraph CLEANUP ["AI — On Human Command (/wrap-up from git-workflows)"]
         direction TB
-        W1["/refresh-repo\n(git-workflows)"]:::external
+        W1["/refresh-repo\n(this plugin)"]:::ai
         W2["/retrospecting quick\n(claude-retrospective, external)"]:::external
         W3["/clean_gone\n(commit-commands, external)"]:::external
         W4["Summary report"]:::ai
@@ -166,8 +176,8 @@ See [git-guards/ARCHITECTURE.md](../git-guards/ARCHITECTURE.md) and
 
 - [codeql-resolver/ARCHITECTURE.md](../codeql-resolver/ARCHITECTURE.md) — 3-tier
   architecture (invoked by `/finalize-pr` Phase 2.2)
-- [git-workflows/ARCHITECTURE.md](../git-workflows/ARCHITECTURE.md) — `/rebase-pr`,
-  `/sync-main`, `/refresh-repo`, `/wrap-up`
+- [git-workflows/ARCHITECTURE.md](../git-workflows/ARCHITECTURE.md) — `/sync-main`,
+  `/wrap-up`, `/troubleshoot-*`
 - [pr-lifecycle/ARCHITECTURE.md](../pr-lifecycle/ARCHITECTURE.md) — PostToolUse hook
   bridging `gh pr create` to `/finalize-pr`
 - [git-guards/ARCHITECTURE.md](../git-guards/ARCHITECTURE.md) — PreToolUse hooks

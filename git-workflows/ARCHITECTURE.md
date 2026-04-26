@@ -1,7 +1,7 @@
 # git-workflows — Architecture
 
-Local git operations: branch sync, repo maintenance, PR merging, troubleshooting, and
-post-merge cleanup. For GitHub API operations, see
+Local git operations: branch sync, troubleshooting, and post-merge cleanup.
+For PR-related operations (refresh, rebase-merge, finalize, squash-merge), see
 [github-workflows/ARCHITECTURE.md](../github-workflows/ARCHITECTURE.md).
 
 ## Skill Map
@@ -13,11 +13,6 @@ flowchart TD
 
     subgraph maintenance["Maintenance"]
         sync_main["/sync-main"]
-        refresh_repo["/refresh-repo"]
-    end
-
-    subgraph merge["Merge"]
-        rebase_pr["/rebase-pr"]
     end
 
     subgraph troubleshooting["Troubleshooting"]
@@ -34,22 +29,17 @@ flowchart TD
         superpowers["superpowers:\nusing-git-worktrees"]:::external
         clean_gone["/clean_gone\n(commit-commands)"]:::external
         retrospecting["/retrospecting quick\n(claude-retrospective)"]:::external
-        squash_merge["/squash-merge-pr\n(github-workflows)"]:::external
+        refresh_repo["/refresh-repo\n(github-workflows)"]:::external
     end
-
-    refresh_repo -->|"composes"| sync_main
 
     wrap_up -->|"Step 1"| refresh_repo
     wrap_up -->|"Step 2"| retrospecting
     wrap_up -->|"Step 3"| clean_gone
     wrap_up -->|"Step 4"| follow_up["Follow-up prompt\n(built-in)"]:::ai
 
-    rebase_pr -->|"Step 1 GraphQL\nshared source of truth"| squash_merge
-
-    refresh_repo -.->|"worktree creation"| superpowers
     ts_worktree -.->|"worktree guidance"| superpowers
 
-    class sync_main,refresh_repo,rebase_pr,ts_rebase,ts_precommit,ts_worktree,wrap_up ai
+    class sync_main,ts_rebase,ts_precommit,ts_worktree,wrap_up ai
 ```
 
 ## /wrap-up Composition
@@ -61,8 +51,8 @@ flowchart LR
 
     wrap_up["/wrap-up\ngit-workflows"]:::ai
 
-    subgraph local["git-workflows (this plugin)"]
-        refresh_repo["/refresh-repo"]:::ai
+    subgraph github_wf["github-workflows plugin"]
+        refresh_repo["/refresh-repo"]:::external
     end
 
     subgraph retro["claude-retrospective plugin"]
@@ -83,30 +73,6 @@ flowchart LR
     wrap_up -->|"4. follow-up prompt"| follow_up
 ```
 
-## Shared Validation Pattern
-
-`/rebase-pr` Step 1 defines the GraphQL query for PR merge-readiness validation.
-`/squash-merge-pr` (github-workflows) reads this same query — single source of truth.
-
-```mermaid
-flowchart TD
-    classDef ai fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
-    classDef external fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
-
-    graphql["Step 1 GraphQL Query\nPR merge-readiness validation\n(status, reviews, checks)"]
-
-    subgraph git_wf["git-workflows"]
-        rebase_pr["/rebase-pr"]:::ai
-    end
-
-    subgraph github_wf["github-workflows"]
-        squash_merge["/squash-merge-pr"]:::external
-    end
-
-    graphql -->|"source of truth"| rebase_pr
-    graphql -->|"consumed by"| squash_merge
-```
-
 ## Plugin Boundary: Local vs GitHub
 
 ```mermaid
@@ -117,14 +83,14 @@ flowchart LR
     subgraph local["git-workflows — LOCAL git operations"]
         direction TB
         sync_main["/sync-main\ngit pull, branch sync"]:::ai
-        refresh_repo["/refresh-repo\nPR check + sync + cleanup"]:::ai
-        rebase_pr["/rebase-pr\nrebase onto main, push"]:::ai
         ts["/troubleshoot-*\nrebase, precommit, worktree"]:::ai
         wrap_up["/wrap-up\nend-of-session cleanup"]:::ai
     end
 
     subgraph remote["github-workflows — GITHUB API operations"]
         direction TB
+        refresh_repo["/refresh-repo"]:::external
+        rebase_pr["/rebase-pr"]:::external
         finalize_pr["/finalize-pr"]:::external
         squash_merge_pr["/squash-merge-pr"]:::external
         resolve_threads["/resolve-pr-threads"]:::external

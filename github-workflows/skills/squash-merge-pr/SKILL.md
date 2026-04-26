@@ -125,6 +125,6 @@ Invoke after `/finalize-pr` reports ready:
 ## Related Skills
 
 - finalize-pr (github-workflows) — drives PR to mergeable state before squash-merge-pr is invoked
-- rebase-pr (git-workflows) — alternative merge strategy that preserves commit history
+- rebase-pr (github-workflows) — alternative merge strategy that preserves commit history
 - pr-standards (git-standards) — PR authoring and review standards
 - gh-cli-patterns (github-workflows) — canonical gh CLI command shapes, placeholder convention, PR-readiness gate
