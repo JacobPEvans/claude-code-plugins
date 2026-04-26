@@ -184,7 +184,7 @@ gh api graphql -f query='
 # Gate 2: CodeQL alerts (NOT in statusCheckRollup — always check separately)
 # `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
 gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
-  --paginate --jq 'length' || echo "0"
+  --jq 'length' || echo "0"
 ```
 
 Abort conditions: `state` ≠ `OPEN`, `mergeable` ≠ `MERGEABLE`,

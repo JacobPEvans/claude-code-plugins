@@ -81,10 +81,11 @@ gh api graphql -f query='
 
 ```bash
 gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
-  --paginate --jq 'length' || echo "0"
+  --jq 'length' || echo "0"
 ```
 
-`|| echo "0"` handles disabled code-scanning (404). Must return `0`; otherwise invoke `/resolve-codeql fix`.
+`per_page=100` covers realistic alert counts. `|| echo "0"` handles disabled code-scanning (404).
+Must return `0`; otherwise invoke `/resolve-codeql fix`.
 
 ## Canonical Review Thread Queries
 
@@ -121,6 +122,9 @@ gh api graphql --raw-field 'query=query {
 }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[]
   | select(.isResolved == false)] | length'
 ```
+
+> If a PR may have >100 threads, use the PR-readiness gate above — it includes
+> `pageInfo{hasNextPage}` and aborts if overflow is detected.
 
 ## Review-Thread Mutations
 

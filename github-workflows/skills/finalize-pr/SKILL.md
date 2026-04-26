@@ -103,7 +103,7 @@ Check for open code-scanning alerts:
 
 ```bash
 gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
-  --paginate --jq 'length' || echo "0"
+  --jq 'length' || echo "0"
 ```
 
 **If violations found**: Invoke `/resolve-codeql fix`, validate locally.
@@ -191,7 +191,7 @@ gh api graphql -f query='
 ```bash
 # `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
 gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
-  --paginate --jq 'length' || echo "0"
+  --jq 'length' || echo "0"
 ```
 
 **Required**: Result must be `0`. Any open CodeQL alerts → return to Phase 2,
