@@ -51,15 +51,15 @@ Use `first: 100` everywhere (not `25`, not `last: 100`). Always include `pageInf
 
 ```bash
 gh api graphql -f query='
-  query($owner:String!,$repo:String!,$pr:Int!){
+  query($owner:String!,$repo:String!,$number:Int!){
     repository(owner:$owner,name:$repo){
-      pullRequest(number:$pr){
+      pullRequest(number:$number){
         state mergeable mergeStateStatus isDraft reviewDecision
         commits(last:1){nodes{commit{statusCheckRollup{state}}}}
         reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
-  }' -f owner="{owner}" -f repo="{repo}" -F pr={number}
+  }' -f owner="{owner}" -f repo="{repo}" -F number={number}
 ```
 
 **Abort if any fail:**

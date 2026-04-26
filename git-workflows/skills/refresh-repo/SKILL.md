@@ -44,15 +44,15 @@ To check thread resolution status, use the canonical GraphQL gate from **gh-cli-
 
 ```bash
 gh api graphql -f query='
-  query($owner:String!,$repo:String!,$pr:Int!){
+  query($owner:String!,$repo:String!,$number:Int!){
     repository(owner:$owner,name:$repo){
-      pullRequest(number:$pr){
+      pullRequest(number:$number){
         reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
   }' -f owner="$(gh repo view --json owner --jq '.owner.login')" \
      -f repo="$(gh repo view --json name --jq '.name')" \
-     -F pr=NUMBER \
+     -F number="$(gh pr view --json number --jq '.number')" \
   --jq '{unresolved: ([.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false)] | length), overflow: .data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage}'
 ```
 

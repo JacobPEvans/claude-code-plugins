@@ -169,17 +169,16 @@ that Step 2 reported as ready, run both gates now:
 ```bash
 # Gate 1: mergeStateStatus MUST be CLEAN or HAS_HOOKS
 # (any other value = BLOCKED by branch protection, review, failing check, or CodeQL)
-# String params use -f (quoted strings); Int! `pr` uses -F (raw, parsed as number).
 gh api graphql -f query='
-  query($owner:String!,$repo:String!,$pr:Int!){
+  query($owner:String!,$repo:String!,$number:Int!){
     repository(owner:$owner,name:$repo){
-      pullRequest(number:$pr){
+      pullRequest(number:$number){
         state mergeable mergeStateStatus reviewDecision isDraft
         commits(last:1){nodes{commit{statusCheckRollup{state}}}}
         reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
-  }' -f owner="{owner}" -f repo="{repo}" -F pr={PR_NUMBER}
+  }' -f owner="{owner}" -f repo="{repo}" -F number={number}
 
 # Gate 2: CodeQL alerts (NOT in statusCheckRollup — always check separately)
 # `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
