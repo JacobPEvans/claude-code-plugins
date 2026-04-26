@@ -72,7 +72,7 @@ all_pass &= check("git reset", "git reset --hard HEAD", "ask")
 # git push --force origin main - must DENY (DENY_GIT_ONLY: force-push to protected branch)
 all_pass &= check("git push --force origin main", "git push --force origin main", "deny")
 
-# git push --force to a feature branch - BLOCKED_ON_MAIN denies push on main (tightened 2026-03-22)
+# git push --force to any branch is now denied (DENY_GIT_ONLY, tightened policy)
 all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "deny")
 
 # DENY: commit --no-verify
@@ -91,8 +91,8 @@ all_pass &= check("git -C reset --hard", "git -C /some/path reset --hard HEAD", 
 all_pass &= check("git -C -c core.hooksPath deny", "git -C /some/path -c core.hooksPath=/dev/null commit -m test", "deny")
 all_pass &= check("git -C restore ask", "git -C /some/path restore file.txt", "ask")
 
-# core.hooksPath precision: BLOCKED_ON_MAIN denies commit on main regardless of value content
-all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath commit -m test", "deny")
+# core.hooksPath precision: value containing the substring must not trigger deny (uses fetch, not commit)
+all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath fetch origin", "silent_allow")
 
 # Fallback bypass detection: unrecognised global option before -c breaks loop early
 all_pass &= check("--no-pager before -c hooksPath", "git --no-pager -c core.hooksPath=/dev/null commit -m msg", "deny")
