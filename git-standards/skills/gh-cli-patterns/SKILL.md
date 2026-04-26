@@ -4,7 +4,7 @@ description: >-
   Canonical reference for all gh CLI command shapes. Use when authoring or
   invoking gh commands — defines allowed --json fields, GraphQL fallback rules,
   -f/-F/--raw-field flag semantics, the PR-readiness gate, code-scanning alert
-  query, review-thread mutations, heredoc bodies, and owner/repo extraction.
+  query, review-thread mutations, and heredoc bodies.
   Prevents Unknown JSON field errors and divergent query shapes across skills.
 ---
 
@@ -12,71 +12,42 @@ description: >-
 
 Single source of truth for every `gh` command shape used across skills.
 
-## `gh pr view --json` — REST-only fields
+## `gh pr view --json` — REST-only
 
-`gh pr view --json` exposes **REST fields only**. The full allowed list:
+Run `gh pr view --json` (with no value) to list all valid fields. Key exception:
+**`reviewThreads` is NOT a valid `--json` field** — it is GraphQL-only. Any
+`gh pr view --json reviewThreads` call fails with `Unknown JSON field: "reviewThreads"`.
 
-```text
-additions, assignees, author, autoMergeRequest, baseRefName, baseRefOid,
-body, changedFiles, closed, closedAt, closingIssuesReferences, comments,
-commits, createdAt, deletions, files, fullDatabaseId, headRefName,
-headRefOid, headRepository, headRepositoryOwner, id, isCrossRepository,
-isDraft, labels, latestReviews, maintainerCanModify, mergeCommit,
-mergeStateStatus, mergeable, mergedAt, mergedBy, milestone, number,
-potentialMergeCommit, projectCards, projectItems, reactionGroups,
-reviewDecision, reviewRequests, reviews, state, statusCheckRollup,
-title, updatedAt, url
-```
+Other GraphQL-only data: inline thread structure, resolution status, `mergeStateStatus` details.
 
-**`reviewThreads` is NOT in this list.** It is a GraphQL-only concept. Any
-`gh pr view --json reviewThreads` call will fail with `Unknown JSON field: "reviewThreads"`.
+Rule: if the field isn't in the REST allowlist, use `gh api graphql`.
 
-Other data that requires GraphQL (not available via `--json`):
-
-- Inline review thread structure and resolution status
-- Full `mergeStateStatus` reason details beyond the enum value
-
-Rule: if the field isn't in the allowlist above, use `gh api graphql`.
-
-## REST vs GraphQL Decision Table
+## REST vs GraphQL
 
 | Operation | Use |
 |---|---|
-| Fetch review threads + resolution status | GraphQL — see below |
-| Reply to a thread | REST `…/pulls/{n}/comments/{databaseId}/replies -f body=` |
-| Reply to a thread with markdown/newlines | REST — special chars safer than GraphQL mutations |
+| Fetch or verify review thread resolution | GraphQL — see below |
 | Resolve a thread | GraphQL — `resolveReviewThread` mutation |
-| Verify zero unresolved threads | GraphQL — see below |
-| Code-scanning alert count | REST — `gh api` with `?state=open` |
-| PR field (state, mergeable, etc.) | `gh pr view --json` if in allowlist, else GraphQL |
-| Issue/top-level PR comments | REST — `…/issues/{n}/comments` |
+| PR state fields (`state`, `mergeable`, `mergeStateStatus`, etc.) | `gh pr view --json` if listed, else GraphQL |
 
 ## Flag Semantics
 
-| Flag | Use | Notes |
-|---|---|---|
-| `-f key=value` | String parameter | Passes value as string; also used for `-f query='...'` |
-| `-F key=value` | Auto-typed parameter | Converts integers, booleans — use for `Int!` GraphQL variables |
-| `--raw-field 'key=value'` | Literal string, no template expansion | Preferred for the query body with `{placeholder}` substitution — prevents `$var` from being treated as shell variables |
+| Flag | Use |
+|---|---|
+| `-f key=value` | String; use for `-f query='...'` GraphQL body |
+| `-F key=value` | Auto-typed — use for `Int!` GraphQL variables |
+| `--raw-field 'key=value'` | Literal string, no `$var` expansion — for queries with `{placeholder}` substitution |
 
-**Never interpolate shell `$VARS` inside a GraphQL query body.** Use either
-literal `{placeholder}` substitution before running, or GraphQL variables
-with `-f`/`-F` flags.
+**Never interpolate shell `$VARS` inside a GraphQL query body.** Use literal `{placeholder}`
+substitution before running, or declare variables with `-f`/`-F`.
 
-## Owner / Repo / Number Extraction
+> **Placeholder extraction**: `{owner}` → `gh repo view --json owner --jq '.owner.login'`,
+> `{repo}` → `gh repo view --json name --jq '.name'`,
+> `{number}` → `gh pr view --json number --jq '.number'`
 
-```bash
-owner=$(gh repo view --json owner --jq '.owner.login')
-repo=$(gh repo view --json name --jq '.name')
-number=$(gh pr view --json number --jq '.number')
-```
+## Canonical PR-Readiness Gate
 
-Replace `{owner}`, `{repo}`, `{number}` in all command placeholders with these values.
-
-## Canonical PR-Readiness Gate (GraphQL)
-
-Single authoritative shape. Use `first: 100` (not `25`, not `last: 100`).
-Always include `pageInfo { hasNextPage }` — signal if threads exceed 100.
+Use `first: 100` everywhere (not `25`, not `last: 100`). Always include `pageInfo`.
 
 ```bash
 gh api graphql -f query='
@@ -91,39 +62,35 @@ gh api graphql -f query='
   }' -f owner="{owner}" -f repo="{repo}" -F pr={PR_NUMBER}
 ```
 
-**Abort conditions** — if any hit, fix and re-run the gate:
+**Abort if any fail:**
 
 | Field | Required | Abort message |
 |---|---|---|
 | `state` | `OPEN` | "PR is not open" |
-| `mergeable` | `MERGEABLE` | "PR has git conflicts — rebase/merge required" |
-| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | "PR merge state is `{value}` — blocked" |
-| `isDraft` | `false` | "PR is a draft — mark ready for review first" |
-| `reviewDecision` | `APPROVED` or `null` | "Review decision is `{value}`" |
-| `statusCheckRollup.state` | `SUCCESS` | "CI rollup is `{state}`" |
-| All `reviewThreads.isResolved` | `true` | "Unresolved review threads" |
-| `reviewThreads.pageInfo.hasNextPage` | `false` | ">100 threads — paginate and re-verify" |
+| `mergeable` | `MERGEABLE` | "PR has git conflicts" |
+| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | "PR blocked: `{value}`" |
+| `isDraft` | `false` | "PR is a draft" |
+| `reviewDecision` | `APPROVED` or `null` | "Review decision: `{value}`" |
+| `statusCheckRollup.state` | `SUCCESS` | "CI: `{state}`" |
+| All `reviewThreads.isResolved` | `true` | "Unresolved threads" |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | ">100 threads — paginate" |
 
-> `mergeStateStatus` values that are **NOT ready:** `BEHIND` (needs rebase),
-> `BLOCKED` (branch protection), `DIRTY` (conflicts), `DRAFT`, `UNKNOWN`
-> (GitHub computing), `UNSTABLE` (checks failed or pending).
+> NOT-ready `mergeStateStatus` values: `BEHIND`, `BLOCKED`, `DIRTY`, `DRAFT`, `UNKNOWN`, `UNSTABLE`.
 
 ## Canonical Code-Scanning Alert Count
-
-Use the `?state=open` server-side filter — faster than client-side `select(.state=="open")`.
-`|| echo "0"` handles repos with code-scanning disabled (404).
 
 ```bash
 gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
   --paginate --jq 'length' || echo "0"
 ```
 
-**Required**: result must be `0`. Any open alerts → invoke `/resolve-codeql fix`.
+`|| echo "0"` handles disabled code-scanning (404). Must return `0`; otherwise invoke `/resolve-codeql fix`.
 
-## Canonical Fetch Unresolved Threads
+## Canonical Review Thread Queries
 
-Use `--raw-field` (prevents shell variable expansion in query body).
-Use `first: 100` consistently. Substitute `{owner}`, `{repo}`, `{number}` before running.
+Substitute `{owner}`, `{repo}`, `{number}` before running.
+
+**Fetch unresolved threads** (`id` = `PRRT_*` node ID, used for mutations):
 
 ```bash
 gh api graphql --raw-field 'query=query {
@@ -142,10 +109,7 @@ gh api graphql --raw-field 'query=query {
 }'
 ```
 
-Fields returned: `id` (`PRRT_*` node ID), `isResolved`, `path`, `line`/`startLine`,
-`comments.nodes[].body`, `comments.nodes[].author.login`, `comments.nodes[].databaseId`.
-
-## Canonical Verify Zero Unresolved
+**Count unresolved** (must equal `0` before merging):
 
 ```bash
 gh api graphql --raw-field 'query=query {
@@ -158,61 +122,46 @@ gh api graphql --raw-field 'query=query {
   | select(.isResolved == false)] | length'
 ```
 
-Must return `0`. Any non-zero value means threads remain unresolved.
+## Review-Thread Mutations
 
-## Review-Thread Mutation Reference
-
-| Operation | Correct | WRONG (do not use) |
+| Operation | Correct | WRONG — do not use |
 |---|---|---|
-| Reply to thread | `addPullRequestReviewThreadReply` | `addPullRequestReviewComment` (creates new comment, not reply) |
-| Resolve thread | `resolveReviewThread` | `resolvePullRequestReviewThread` (does not exist) |
-
-Reply mutation:
+| Reply | `addPullRequestReviewThreadReply` | `addPullRequestReviewComment` (creates new comment) |
+| Resolve | `resolveReviewThread` | `resolvePullRequestReviewThread` (does not exist) |
 
 ```bash
+# Reply
 gh api graphql --raw-field 'query=mutation {
   addPullRequestReviewThreadReply(
     input: {pullRequestReviewThreadId: "{threadId}", body: "reply text"}
   ) { comment { id body } }
 }'
+
+# Resolve
+gh api graphql --raw-field 'query=mutation {
+  resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } }
+}'
 ```
 
-Resolve mutation:
+For replies with special characters or markdown, use REST:
 
 ```bash
-gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="reply text"
 ```
 
-`{threadId}` is the `PRRT_*` node ID from the fetch query.
-
-For replies with special characters or complex markdown, use REST instead:
-
-```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies \
-  -f body="reply text here"
-```
-
-### When a mutation fails
-
-1. `doesn't accept argument` — argument name wrong; use `addPullRequestReviewThreadReply` with `input: {pullRequestReviewThreadId: "...", body: "..."}`
-2. `Could not resolve to a node` — thread ID stale; re-fetch threads
-3. `Resource not accessible` — token permissions; run `gh auth status`
-4. `Cannot query field "X" on type "Mutation"` — wrong mutation name; check table above
+Failure guide: stale `{threadId}` → re-fetch threads; permission error → `gh auth status`;
+wrong mutation name → check table above.
 
 ## Heredoc Body Pattern
 
-Never use `--body-file` with temp files. Always inline with a heredoc:
-
 ```bash
 gh pr edit {number} --body "$(cat <<'EOF'
-PR body content here.
-
-Multi-line is fine.
+body content here
 EOF
 )"
 ```
 
-Same pattern for `gh pr create`, `gh pr comment`, `gh issue comment`.
+Same pattern for `gh pr create`, `gh pr comment`, `gh issue comment`. Never use `--body-file`.
 
 ## Related Skills
 
