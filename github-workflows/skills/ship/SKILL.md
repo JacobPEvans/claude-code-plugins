@@ -183,8 +183,8 @@ gh api graphql -f query='
 
 # Gate 2: CodeQL alerts (NOT in statusCheckRollup — always check separately)
 # `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
-gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length' || echo "0"
+gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
+  --paginate --jq 'length' || echo "0"
 ```
 
 Abort conditions: `state` ≠ `OPEN`, `mergeable` ≠ `MERGEABLE`,
@@ -240,3 +240,4 @@ Blocked — needs human (1):
 - finalize-pr (github-workflows) — invoked by ship to drive each PR to mergeable state
 - squash-merge-pr (github-workflows) — merge a PR after ship reports it ready
 - resolve-pr-threads (github-workflows) — invoked internally via finalize-pr to resolve review threads
+- gh-cli-patterns (git-standards) — canonical gh CLI command shapes (GraphQL vs REST, flag semantics)

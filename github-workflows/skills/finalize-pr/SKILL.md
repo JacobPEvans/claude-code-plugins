@@ -102,8 +102,8 @@ Task agents when they touch different files. Invoke `superpowers:dispatching-par
 Check for open code-scanning alerts:
 
 ```bash
-gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length'
+gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
+  --paginate --jq 'length' || echo "0"
 ```
 
 **If violations found**: Invoke `/resolve-codeql fix`, validate locally.
@@ -153,25 +153,17 @@ Verify final PR state, mergeability, and check status. If fixes introduced new i
 
 ### 3.1 PR State Gate (GraphQL — re-run now)
 
-```graphql
-query {
-  repository(owner: "{owner}", name: "{repo}") {
-    pullRequest(number: {PR}) {
-      state
-      mergeable
-      mergeStateStatus
-      isDraft
-      reviewDecision
-      commits(last: 1) {
-        nodes { commit { statusCheckRollup { state } } }
-      }
-      reviewThreads(first: 100) {
-        nodes { isResolved }
-        pageInfo { hasNextPage }
+```bash
+gh api graphql -f query='
+  query($owner:String!,$repo:String!,$pr:Int!){
+    repository(owner:$owner,name:$repo){
+      pullRequest(number:$pr){
+        state mergeable mergeStateStatus isDraft reviewDecision
+        commits(last:1){nodes{commit{statusCheckRollup{state}}}}
+        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
-  }
-}
+  }' -f owner="{owner}" -f repo="{repo}" -F pr={PR}
 ```
 
 **Required values — if any fail, return to Phase 2:**
@@ -198,8 +190,8 @@ query {
 
 ```bash
 # `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
-gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length' || echo "0"
+gh api 'repos/{owner}/{repo}/code-scanning/alerts?state=open&per_page=100' \
+  --paginate --jq 'length' || echo "0"
 ```
 
 **Required**: Result must be `0`. Any open CodeQL alerts → return to Phase 2,
@@ -291,3 +283,4 @@ For `all`/`org` modes: Phases 2-5 loop per PR, Phase 6 aggregates results.
 - rebase-pr (git-workflows) — alternative merge strategy after finalize-pr reports ready
 - pr-standards (git-standards) — PR authoring and review standards
 - code-quality-standards (code-standards) — code quality guidelines applied during fixes
+- gh-cli-patterns (git-standards) — canonical gh CLI command shapes (GraphQL vs REST, flag semantics)

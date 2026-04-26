@@ -38,9 +38,26 @@ gh pr view NUMBER --json state,mergeable,mergeStateStatus,statusCheckRollup,revi
 **Merge-ready criteria**: `state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN` or
 `HAS_HOOKS` (any other value: `BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT` = not
 ready), all CI checks `SUCCESS`, review `APPROVED` or not required, **all review threads
-resolved** (verify via
-`gh pr view NUMBER --json reviewThreads --jq '[.reviewThreads[] | select(.isResolved == false)] | length'`
-returns `0`).
+resolved** (verify via the GraphQL gate below — `reviewThreads` is not a `--json` REST field).
+
+To check thread resolution status, use the canonical GraphQL gate from **gh-cli-patterns** (git-standards):
+
+```bash
+gh api graphql -f query='
+  query($owner:String!,$repo:String!,$pr:Int!){
+    repository(owner:$owner,name:$repo){
+      pullRequest(number:$pr){
+        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
+      }
+    }
+  }' -f owner="$(gh repo view --json owner --jq '.owner.login')" \
+     -f repo="$(gh repo view --json name --jq '.name')" \
+     -F pr=NUMBER \
+  --jq '[.data.repository.pullRequest.reviewThreads.nodes[]
+    | select(.isResolved==false)] | length'
+```
+
+Must return `0`. Any non-zero value or `hasNextPage: true` means threads remain.
 
 ### 3. Sync Workflow
 
@@ -129,3 +146,4 @@ explicit refspec prune and can delete local-only tags that are not release artif
 - **sync-main** (git-workflows) — Syncs main and merges into current or all PR branches
 - **rebase-pr** (git-workflows) — Rebase-merge workflow for merging individual PRs
 - **git-workflow-standards** (git-standards) — Worktree structure and branch hygiene conventions
+- **gh-cli-patterns** (git-standards) — Canonical gh CLI command shapes (GraphQL vs REST, flag semantics)

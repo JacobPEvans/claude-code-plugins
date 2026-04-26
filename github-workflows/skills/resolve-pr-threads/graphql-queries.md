@@ -30,7 +30,7 @@ Replace placeholders with actual values before running any command.
 ## Fetch Unresolved Threads
 
 ```bash
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(first: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
 ```
 
 Fields returned: `id` (`PRRT_*` node ID), `isResolved`, `path`, `line`/`startLine`,
@@ -57,7 +57,7 @@ gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadI
 ## Verify Zero Unresolved
 
 ```bash
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(first: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
 ```
 
 Must return `0`. Any non-zero value means threads remain unresolved.

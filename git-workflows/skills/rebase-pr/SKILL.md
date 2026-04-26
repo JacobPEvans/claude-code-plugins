@@ -54,24 +54,17 @@ Only `required_signatures` belongs on all-branches.
 
 ## Step 1: Validate PR Ready
 
-```graphql
-query {
-  repository(owner: "{owner}", name: "{repo}") {
-    pullRequest(number: {PR}) {
-      state
-      mergeable
-      mergeStateStatus
-      isDraft
-      reviewDecision
-      commits(last: 1) {
-        nodes { commit { statusCheckRollup { state } } }
-      }
-      reviewThreads(first: 25) {
-        nodes { isResolved }
+```bash
+gh api graphql -f query='
+  query($owner:String!,$repo:String!,$pr:Int!){
+    repository(owner:$owner,name:$repo){
+      pullRequest(number:$pr){
+        state mergeable mergeStateStatus isDraft reviewDecision
+        commits(last:1){nodes{commit{statusCheckRollup{state}}}}
+        reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}
       }
     }
-  }
-}
+  }' -f owner="{owner}" -f repo="{repo}" -F pr={PR}
 ```
 
 **Required values — abort if any fail:**
@@ -85,6 +78,7 @@ query {
 | `reviewDecision` | `APPROVED` or `null` | "PR needs approval — run `/finalize-pr` to fix" |
 | `statusCheckRollup.state` | `SUCCESS` | "CI is not passing: {state} — run `/finalize-pr` to fix" |
 | All `reviewThreads.isResolved` | `true` | "Unresolved review threads — run `/finalize-pr` to fix" |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | ">100 threads — paginate and re-verify" |
 
 ## Step 2: Sync Main
 
@@ -219,3 +213,4 @@ This commonly occurs with release-please CHANGELOG.md entries that don't conform
 - **finalize-pr** (github-workflows) — Full PR finalization pipeline that may invoke rebase-pr
 - **sync-main** (git-workflows) — Syncs main branch, often needed before rebasing
 - **pr-standards** (git-standards) — PR creation and review standards
+- **gh-cli-patterns** (git-standards) — Canonical gh CLI command shapes (GraphQL vs REST, flag semantics)

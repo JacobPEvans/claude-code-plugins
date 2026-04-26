@@ -59,7 +59,7 @@ number=$(gh pr view --json number --jq '.number')
 #### Step 1a: Fetch Unresolved Threads
 
 ```bash
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(first: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
 ```
 
 Filter to `isResolved == false`. Extract: `id` (PRRT_* node ID), `path`, `line`, `comments.nodes[].databaseId`, `comments.nodes[].body`, `comments.nodes[].author.login`.
@@ -156,7 +156,7 @@ Skip `needs-human` threads; flag for manual attention.
 ### Step 5: Verify, Push, and Report
 
 ```bash
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(first: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
 ```
 
 Must return `0`. Then push: `git push`.
@@ -204,3 +204,4 @@ Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
 - finalize-pr (github-workflows) — orchestrator that invokes resolve-pr-threads as part of PR finalization
 - trigger-ai-reviews (github-workflows) — triggers AI reviewers whose feedback is resolved by this skill
 - pr-standards (git-standards) — PR authoring and review standards
+- gh-cli-patterns (git-standards) — canonical gh CLI command shapes (GraphQL vs REST, mutation names)

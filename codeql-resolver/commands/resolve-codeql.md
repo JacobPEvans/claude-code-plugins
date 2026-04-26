@@ -33,8 +33,8 @@ Fix CodeQL alerts in **current repository only** by analyzing, classifying, and 
 ### Phase 1: Alert Discovery & Classification
 
 ```bash
-gh api repos/{OWNER}/{REPO}/code-scanning/alerts \
-  --jq '.[] | select(.state == "open") | {
+gh api 'repos/{OWNER}/{REPO}/code-scanning/alerts?state=open&per_page=100' --paginate \
+  --jq '.[] | {
     number,
     rule: .rule.id,
     severity: .rule.severity,
