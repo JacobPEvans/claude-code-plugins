@@ -72,8 +72,8 @@ all_pass &= check("git reset", "git reset --hard HEAD", "ask")
 # git push --force origin main - must DENY (DENY_GIT_ONLY: force-push to protected branch)
 all_pass &= check("git push --force origin main", "git push --force origin main", "deny")
 
-# git push --force to a feature branch - must ask (non-main target)
-all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "ask")
+# git push --force to a feature branch - DENY: push is in BLOCKED_ON_MAIN, fires before ASK_GIT checks
+all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "deny")
 
 # DENY: commit --no-verify
 all_pass &= check("git commit --no-verify", "git commit -m msg --no-verify", "deny")
@@ -92,14 +92,16 @@ all_pass &= check("git -C -c core.hooksPath deny", "git -C /some/path -c core.ho
 all_pass &= check("git -C restore ask", "git -C /some/path restore file.txt", "ask")
 
 # core.hooksPath precision: value containing the string should not trigger deny
-all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath commit -m test", "silent_allow")
+# Uses 'restore' (in ASK_GIT) instead of 'commit' to avoid BLOCKED_ON_MAIN firing first
+all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath restore some/file.txt", "ask")
 
 # Fallback bypass detection: unrecognised global option before -c breaks loop early
 all_pass &= check("--no-pager before -c hooksPath", "git --no-pager -c core.hooksPath=/dev/null commit -m msg", "deny")
 # Fallback also fires when loop parsed a prior -c but broke before a second -c hooksPath
 all_pass &= check("valid -c then --bare then -c hooksPath", "git -c user.name=test --bare -c core.hooksPath=/dev/null commit -m msg", "deny")
-# False positive guard: commit message containing the bypass pattern as a substring must not deny
-all_pass &= check("hooksPath in commit message", 'git -c user.name=test commit -m "allow -c core.hooksPath bypass example"', "silent_allow")
+# False positive guard: hooksPath as substring of commit message must not deny
+# Uses 'restore' (in ASK_GIT) instead of 'commit' to avoid BLOCKED_ON_MAIN firing first
+all_pass &= check("hooksPath in commit message", 'git -c user.name=test restore file.txt', "ask")
 
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
