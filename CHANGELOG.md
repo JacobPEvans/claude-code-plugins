@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.11...v3.1.0) (2026-04-27)
+
+
+### Features
+
+* consolidate gh-CLI patterns and relocate PR skills ([#258](https://github.com/JacobPEvans/claude-code-plugins/issues/258)) ([a448053](https://github.com/JacobPEvans/claude-code-plugins/commit/a44805367523d3091e3ed22db7ee89542ddf6ffa))
+
 ## [3.0.11](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.0.10...v3.0.11) (2026-04-25)
 
 
