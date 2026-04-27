@@ -100,4 +100,4 @@ git worktree add "<new-path>" "<branch>"
 
 - **troubleshoot-rebase** (git-workflows) — Diagnose and recover from git rebase failures
 - **troubleshoot-precommit** (git-workflows) — Troubleshoot pre-commit hook failures
-- **refresh-repo** (git-workflows) — Full repo sync including worktree cleanup
+- **refresh-repo** (github-workflows) — Full repo sync including worktree cleanup

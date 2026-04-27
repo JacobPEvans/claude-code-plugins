@@ -32,17 +32,14 @@ fixes or provide explanations, then resolving threads via GitHub's GraphQL API.
 
 ## Rules
 
-- **Reply to threads** using `gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies` (REST) or `addPullRequestReviewThreadReply` (GraphQL)
-- **Resolve threads** using `resolveReviewThread` (GraphQL)
-- **Use single-line `--raw-field` queries** with literal value substitution (see graphql-queries.md)
+- See /gh-cli-patterns for canonical query shapes, mutation names, and placeholder convention
 - **Run gh/git/jq commands directly** via Bash — no scripts, no temp files
 - **Diagnose and fix errors** when a reply fails — the reply must land in the thread
 - **When a reply fails**: re-fetch thread IDs, verify the databaseId is numeric, check `gh auth status` — then retry
-- Do not reply to review threads by posting top-level PR comments (e.g., via `gh pr comment` or the Issues comments API) as a fallback; top-level comments are fine for general PR feedback but cannot be used to resolve specific review threads and are blocked by git-guards for that purpose.
-- Wrong mutation names: `addPullRequestReviewComment` (creates new comments, not replies) and `resolvePullRequestReviewThread` (does not exist)
+- Do not reply to review threads by posting top-level PR comments as a fallback; top-level comments are fine for general PR feedback but cannot be used to resolve specific review threads
 
 **Context inference**: Infer owner/repo/PR from current git context, then substitute
-these values for `{owner}`, `{repo}`, and `{number}` placeholders in all commands below:
+these values for `<OWNER>`, `<REPO>`, `<PR_NUMBER>` placeholders per `gh-cli-patterns`:
 
 ```bash
 owner=$(gh repo view --json owner --jq '.owner.login')
@@ -58,30 +55,37 @@ number=$(gh pr view --json number --jq '.number')
 
 #### Step 1a: Fetch Unresolved Threads
 
-```bash
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { id isResolved path line startLine comments(last: 100) { nodes { id databaseId body author { login } createdAt } } } } } } }'
-```
+Run the **canonical fetch-threads query** from /gh-cli-patterns.
+Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` before running.
 
-Filter to `isResolved == false`. Extract: `id` (PRRT_* node ID), `path`, `line`, `comments.nodes[].databaseId`, `comments.nodes[].body`, `comments.nodes[].author.login`.
+Filter to `isResolved == false`. Extract: `id` (PRRT_* node ID), `path`, `line`,
+`comments.nodes[].databaseId` (numeric — for REST replies), `comments.nodes[].body`,
+`comments.nodes[].author.login`.
 
 #### Step 1b: Get Last Commit Date
 
 ```bash
-gh pr view {number} --json commits --jq '.commits[-1].committedDate'
+gh pr view <PR_NUMBER> --json commits --jq '.commits[-1].committedDate'
 ```
 
 **Then run 1c and 1d in parallel.**
 
 #### Step 1c: Fetch Top-Level PR Comments Since Last Commit
 
+Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>`, `<LAST_COMMIT_DATE>` (ISO 8601) before running:
+
 ```bash
-gh api "repos/{owner}/{repo}/issues/{number}/comments?since={lastCommitDate}"
+gh api "repos/<OWNER>/<REPO>/issues/<PR_NUMBER>/comments?since=<LAST_COMMIT_DATE>"
 ```
 
 #### Step 1d: Fetch Review Body Comments Since Last Commit
 
+Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>`, `<LAST_COMMIT_DATE>` (ISO 8601) before running:
+
 ```bash
-gh api "repos/{owner}/{repo}/pulls/{number}/reviews" --jq '[.[] | select(.submitted_at > "{lastCommitDate}" and (.body | length > 0)) | {id, body, author: .user.login, submitted_at}]'
+gh api "repos/<OWNER>/<REPO>/pulls/<PR_NUMBER>/reviews" \
+  --jq '[.[] | select(.submitted_at > "<LAST_COMMIT_DATE>" and (.body | length > 0))
+         | {id, body, author: .user.login, submitted_at}]'
 ```
 
 ### Step 2a: Group Related Threads
@@ -110,13 +114,14 @@ For each thread group:
 2. Apply the receiving-code-review pattern: evaluate the feedback and decide —
    implement fix, push back with rationale, or flag as needs-human
 3. If implementing a fix, make the change and commit (do NOT push yet)
-4. Reply to each thread:
+4. Reply to each thread using the **REST reply pattern** from /gh-cli-patterns.
+   Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>`, `<DATABASE_ID>` before running:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments/{databaseId}/replies -f body="your reply"
+gh api repos/<OWNER>/<REPO>/pulls/<PR_NUMBER>/comments/<DATABASE_ID>/replies -f body="your reply"
 ```
 
-`{databaseId}` is the NUMERIC value from the fetch response, NOT the PRRT_ node ID.
+`<DATABASE_ID>` is the NUMERIC value from the fetch response, NOT the PRRT_ node ID.
 
 Track results per thread:
 
@@ -132,7 +137,7 @@ For each comment group:
 1. Apply the receiving-code-review pattern: determine if each comment is
    actionable feedback, a question needing response, or general acknowledgment
 2. For actionable comments: implement fixes and commit (do NOT push yet)
-3. Reply via `gh api repos/{owner}/{repo}/issues/{number}/comments -f body="..."`
+3. Reply via `gh api repos/<OWNER>/<REPO>/issues/<PR_NUMBER>/comments -f body="..."`
 
 Do **not** use the Issues comments endpoint as a fallback for review-thread replies;
 threaded review comments must be handled only via the dedicated thread-resolution flow.
@@ -145,21 +150,18 @@ Track results per comment:
 
 ### Step 4: Resolve Threads Sequentially
 
-After all groups are processed, resolve each `handled` thread **one at a time** (not in parallel) to avoid cascade failures:
-
-```bash
-gh api graphql --raw-field 'query=mutation { resolveReviewThread(input: {threadId: "{threadId}"}) { thread { id isResolved } } }'
-```
+After all groups are processed, resolve each `handled` thread **one at a time** (not in parallel)
+to avoid cascade failures. Use the **canonical resolve mutation** from /gh-cli-patterns.
+Replace `<THREAD_ID>` (PRRT_* node ID) before running.
 
 Skip `needs-human` threads; flag for manual attention.
 
 ### Step 5: Verify, Push, and Report
 
-```bash
-gh api graphql --raw-field 'query=query { repository(owner: "{owner}", name: "{repo}") { pullRequest(number: {number}) { reviewThreads(last: 100) { nodes { isResolved } } } } }' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
-```
+Run the **canonical count-unresolved query** from /gh-cli-patterns.
+Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` before running.
 
-Must return `0`. Then push: `git push`.
+Must return `{"unresolved": 0, "overflow": false}`. Then push: `git push`.
 
 ## Batch Mode ("all")
 
@@ -176,7 +178,7 @@ it is responsible for re-invoking this skill.
 ## Output Format
 
 ```text
-PR #{number} - Review Feedback Summary
+PR #<PR_NUMBER> - Review Feedback Summary
 Threads: {groupCount} groups ({threadCount} total) | Handled: {n} | Needs human: {n}
   Resolved via GraphQL: {n} | Verification: {0 unresolved}/{total}
 Comments: {n} since last commit | Actionable: {n} | Acknowledged: {n} | Needs human: {n}
@@ -194,7 +196,7 @@ Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
 | Verification shows >0 | Thread not resolved | Re-run mutation for remaining threads |
 | Empty reviewThreads | No reviews yet | Exit cleanly |
 | Exactly 100 threads returned | Pagination cap hit | Resolve visible threads first, then re-run |
-| REST reply fails | Invalid `databaseId` or permissions | Verify numeric databaseId (not node ID) and ensure token has required repo permissions (403 = permission issue) |
+| REST reply fails | Invalid `<DATABASE_ID>` or permissions | Verify numeric databaseId (not node ID) and ensure token has required repo permissions (403 = permission issue) |
 | `since` filter returns all comments | Invalid date format | Verify ISO 8601 format |
 | Reviews endpoint returns empty | No reviews submitted | Proceed with threads only |
 | `\!` in jq expression | Claude Code Bash escapes `!` | Use `(.x == y &#124; not)` or `.x &#124; length > 0` instead of `!=` |
@@ -204,3 +206,4 @@ Omit "Threads:" when zero threads; omit "Comments:" when zero comments.
 - finalize-pr (github-workflows) — orchestrator that invokes resolve-pr-threads as part of PR finalization
 - trigger-ai-reviews (github-workflows) — triggers AI reviewers whose feedback is resolved by this skill
 - pr-standards (git-standards) — PR authoring and review standards
+- gh-cli-patterns (github-workflows) — canonical gh CLI command shapes, fetch/resolve/reply patterns, placeholder convention

@@ -29,18 +29,23 @@ gh pr list --author @me --state open --json number,title,headRefName
 
 ### 2. Report Merge-Readiness Status
 
-For each open PR, **DO NOT MERGE** - only check and report:
+For each open PR, **DO NOT MERGE** - only check and report.
 
-```bash
-gh pr view NUMBER --json state,mergeable,mergeStateStatus,statusCheckRollup,reviewDecision
-```
+Run the **canonical PR-readiness gate** from /gh-cli-patterns.
+Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder legend in that skill.
 
-**Merge-ready criteria**: `state: OPEN`, `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN` or
-`HAS_HOOKS` (any other value: `BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT` = not
-ready), all CI checks `SUCCESS`, review `APPROVED` or not required, **all review threads
-resolved** (verify via
-`gh pr view NUMBER --json reviewThreads --jq '[.reviewThreads[] | select(.isResolved == false)] | length'`
-returns `0`).
+**Merge-ready criteria** — all of the following must hold:
+
+| Field | Required | Status |
+|---|---|---|
+| `state` | `OPEN` | Not ready |
+| `mergeable` | `MERGEABLE` | Not ready |
+| `mergeStateStatus` | `CLEAN` or `HAS_HOOKS` | Not ready (`BEHIND`, `BLOCKED`, `DIRTY`, `UNSTABLE`, `UNKNOWN`, `DRAFT`) |
+| `isDraft` | `false` | Not ready |
+| `reviewDecision` | `APPROVED` or `null` | Not ready |
+| `statusCheckRollup.state` | `SUCCESS` | Not ready |
+| All `reviewThreads.isResolved` | `true` | Not ready — unresolved threads |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | Not ready — >100 threads, paginate |
 
 ### 3. Sync Workflow
 
@@ -127,5 +132,6 @@ explicit refspec prune and can delete local-only tags that are not release artif
 ## Related Skills
 
 - **sync-main** (git-workflows) — Syncs main and merges into current or all PR branches
-- **rebase-pr** (git-workflows) — Rebase-merge workflow for merging individual PRs
+- **rebase-pr** (github-workflows) — Rebase-merge workflow for merging individual PRs
 - **git-workflow-standards** (git-standards) — Worktree structure and branch hygiene conventions
+- **gh-cli-patterns** (github-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate

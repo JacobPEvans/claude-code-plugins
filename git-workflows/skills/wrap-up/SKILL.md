@@ -110,6 +110,7 @@ If no follow-up items are found, state that explicitly — do not fabricate work
 
 ## Related Skills
 
+- **refresh-repo** (github-workflows) — PR readiness check + repo sync + worktree cleanup (Step 1 dependency)
 - **shape-issues** (github-workflows) — Shape and create well-structured GitHub issues
 
 ## Summary

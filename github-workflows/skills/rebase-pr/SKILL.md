@@ -33,10 +33,10 @@ this document together step-by-step.
 
 ## Prerequisite: Validate Rulesets
 
-Before anything else, check the all-branches ruleset:
+Before anything else, check the all-branches ruleset. Replace `<OWNER>` and `<REPO>` before running:
 
 ```bash
-gh api repos/{owner}/{repo}/rulesets \
+gh api repos/<OWNER>/<REPO>/rulesets \
   --jq '.[] | select(.conditions.ref_name.include[] == "~ALL") | .rules[].type'
 ```
 
@@ -54,27 +54,11 @@ Only `required_signatures` belongs on all-branches.
 
 ## Step 1: Validate PR Ready
 
-```graphql
-query {
-  repository(owner: "{owner}", name: "{repo}") {
-    pullRequest(number: {PR}) {
-      state
-      mergeable
-      mergeStateStatus
-      isDraft
-      reviewDecision
-      commits(last: 1) {
-        nodes { commit { statusCheckRollup { state } } }
-      }
-      reviewThreads(first: 25) {
-        nodes { isResolved }
-      }
-    }
-  }
-}
-```
+Run the **canonical PR-readiness gate** from /gh-cli-patterns against
+`<PR_NUMBER>`. Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder convention in
+that skill.
 
-**Required values — abort if any fail:**
+**Abort if any fail:**
 
 | Field | Must be | Abort message |
 |-------|---------|---------------|
@@ -85,6 +69,7 @@ query {
 | `reviewDecision` | `APPROVED` or `null` | "PR needs approval — run `/finalize-pr` to fix" |
 | `statusCheckRollup.state` | `SUCCESS` | "CI is not passing: {state} — run `/finalize-pr` to fix" |
 | All `reviewThreads.isResolved` | `true` | "Unresolved review threads — run `/finalize-pr` to fix" |
+| `reviewThreads.pageInfo.hasNextPage` | `false` | ">100 threads — paginate and re-verify" |
 
 ## Step 2: Sync Main
 
@@ -115,9 +100,11 @@ git log --oneline origin/main..HEAD   # verify commits are ahead
 
 ## Step 4: Force-Push and Wait for CI
 
+Replace `<PR_NUMBER>` before running:
+
 ```bash
 git push --force-with-lease origin {branch}
-gh pr checks {PR} --watch --interval 15
+gh pr checks <PR_NUMBER> --watch --interval 15
 ```
 
 **Do NOT proceed until all checks pass.**
@@ -145,17 +132,17 @@ If `merge-base --is-ancestor` exits non-zero, main moved since rebase — go bac
 git push origin main
 ```
 
-If rejected with "Code scanning waiting":
+If rejected with "Code scanning waiting". Replace `<PR_NUMBER>` before running:
 
 ```bash
-gh pr checks {PR} --watch --interval 15
+gh pr checks <PR_NUMBER> --watch --interval 15
 git push origin main   # retry after checks pass
 ```
 
-Verify merged:
+Verify merged. Replace `<PR_NUMBER>` before running:
 
 ```bash
-gh pr view {PR} --json state --jq '.state'   # expect: MERGED
+gh pr view <PR_NUMBER> --json state --jq '.state'   # expect: MERGED
 ```
 
 ## Step 7: Cleanup
@@ -190,7 +177,7 @@ git rebase --continue
 ```
 
 **Push to main rejected (code scanning):**
-Wait for CI with `gh pr checks {PR} --watch --interval 15`, then retry push.
+Wait for CI with `gh pr checks <PR_NUMBER> --watch --interval 15`, then retry push.
 
 **PR already merged:**
 Skip Steps 1–6. Go directly to Step 7 cleanup.
@@ -219,3 +206,4 @@ This commonly occurs with release-please CHANGELOG.md entries that don't conform
 - **finalize-pr** (github-workflows) — Full PR finalization pipeline that may invoke rebase-pr
 - **sync-main** (git-workflows) — Syncs main branch, often needed before rebasing
 - **pr-standards** (git-standards) — PR creation and review standards
+- **gh-cli-patterns** (github-workflows) — Canonical gh CLI command shapes, placeholder convention, PR-readiness gate

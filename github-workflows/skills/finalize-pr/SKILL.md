@@ -66,8 +66,8 @@ If invoked via `/ship`, a context brief is already in session context — skip t
 
 If invoked standalone, build a lightweight brief from:
 
-1. PR description: `gh pr view {number} --json body --jq '.body'`
-2. Commit log relative to PR base: `BASE=$(gh pr view {number} --json baseRefName --jq '.baseRefName') && git log --oneline origin/$BASE..HEAD`
+1. PR description: `gh pr view <PR_NUMBER> --json body --jq '.body'`
+2. Commit log relative to PR base: `BASE=$(gh pr view <PR_NUMBER> --json baseRefName --jq '.baseRefName') && git log --oneline origin/$BASE..HEAD`
 
 Synthesize purpose, key changes, and intentional patterns into a 5-10 line block.
 This informs `/resolve-pr-threads` (Phase 2.2) when evaluating reviewer feedback.
@@ -99,12 +99,8 @@ Task agents when they touch different files. Invoke `superpowers:dispatching-par
 
 #### CodeQL Violations
 
-Check for open code-scanning alerts:
-
-```bash
-gh api repos/${OWNER}/${REPO}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length'
-```
+Run the **canonical code-scanning alert count** from /gh-cli-patterns.
+Replace `<OWNER>` and `<REPO>` per the placeholder convention in that skill.
 
 **If violations found**: Invoke `/resolve-codeql fix`, validate locally.
 
@@ -153,26 +149,9 @@ Verify final PR state, mergeability, and check status. If fixes introduced new i
 
 ### 3.1 PR State Gate (GraphQL — re-run now)
 
-```graphql
-query {
-  repository(owner: "{owner}", name: "{repo}") {
-    pullRequest(number: {PR}) {
-      state
-      mergeable
-      mergeStateStatus
-      isDraft
-      reviewDecision
-      commits(last: 1) {
-        nodes { commit { statusCheckRollup { state } } }
-      }
-      reviewThreads(first: 100) {
-        nodes { isResolved }
-        pageInfo { hasNextPage }
-      }
-    }
-  }
-}
-```
+Run the **canonical PR-readiness gate** from /gh-cli-patterns against
+`<PR_NUMBER>`. Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` per the placeholder convention in
+that skill.
 
 **Required values — if any fail, return to Phase 2:**
 
@@ -194,13 +173,9 @@ query {
 
 ### 3.2 CodeQL Gate (REST — separate from CI, re-run now)
 
-`statusCheckRollup` does NOT include CodeQL alert state. Query independently:
-
-```bash
-# `|| echo "0"` keeps the gate working when code-scanning is disabled (404).
-gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open")] | length' || echo "0"
-```
+`statusCheckRollup` does NOT include CodeQL alert state. Run the **canonical code-scanning
+alert count** from /gh-cli-patterns. Replace `<OWNER>` and `<REPO>` per the
+placeholder convention.
 
 **Required**: Result must be `0`. Any open CodeQL alerts → return to Phase 2,
 invoke `/resolve-codeql fix`.
@@ -235,10 +210,11 @@ Steps 4.1 and 4.2 run sequentially within the agent. Step 4.3 runs after both.
 
 ### 4.3 Apply Updates
 
-After 4.1 and 4.2 complete, apply title and body together — no temp files:
+After 4.1 and 4.2 complete, apply title and body together — no temp files.
+Use the heredoc body pattern from /gh-cli-patterns:
 
 ```bash
-gh pr edit {number} --title "generated title" --body "$(cat <<'EOF'
+gh pr edit <PR_NUMBER> --title "generated title" --body "$(cat <<'EOF'
 ... generated body ...
 EOF
 )"
@@ -253,7 +229,7 @@ Proceed to Phase 5.
 **Single/current-branch mode**: Report ready status and wait for user:
 
 ```text
-✅ PR #{NUMBER} ready for final review!
+✅ PR #<PR_NUMBER> ready for final review!
 
 All checks passed and PR metadata is up to date.
 IMPORTANT: Do NOT merge this PR. Wait for the human to review and invoke
@@ -288,6 +264,7 @@ For `all`/`org` modes: Phases 2-5 loop per PR, Phase 6 aggregates results.
 
 - squash-merge-pr (github-workflows) — squash merge a PR after finalize-pr reports ready
 - resolve-pr-threads (github-workflows) — invoked internally to resolve review threads
-- rebase-pr (git-workflows) — alternative merge strategy after finalize-pr reports ready
+- rebase-pr (github-workflows) — alternative merge strategy after finalize-pr reports ready
 - pr-standards (git-standards) — PR authoring and review standards
 - code-quality-standards (code-standards) — code quality guidelines applied during fixes
+- gh-cli-patterns (github-workflows) — canonical gh CLI command shapes, placeholder convention, PR gate, code-scanning query

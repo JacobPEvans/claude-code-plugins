@@ -1,14 +1,16 @@
 # git-workflows
 
-Claude Code plugin for main branch synchronization, repository refresh, and PR merging. For worktree creation, use `superpowers:using-git-worktrees` guided by `.claude/rules/worktree-conventions.md`.
+Claude Code plugin for main branch synchronization, troubleshooting, and post-merge cleanup.
+
+For worktree creation, use `superpowers:using-git-worktrees` guided by
+`.claude/rules/worktree-conventions.md`. For PR refresh and rebase-merge workflows, see the
+`github-workflows` plugin (`/refresh-repo`, `/rebase-pr`).
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for integration diagrams.
 
 ## Skills
 
 - **`/sync-main`** - Update main from remote and merge into current branch (or all open PR branches with `all`)
-- **`/refresh-repo`** - Check PR merge-readiness, sync local repo, and cleanup stale worktrees
-- **`/rebase-pr`** - Merge a PR using local git rebase + signed commits + push to main
 - **`/wrap-up`** - Post-merge cleanup: refresh repo, quick retrospective, clean gone branches
 - **`/troubleshoot-rebase`** - Diagnose and recover from git rebase failures
 - **`/troubleshoot-precommit`** - Troubleshoot pre-commit hook failures and auto-fixes
@@ -25,9 +27,6 @@ claude plugins add jacobpevans-cc-plugins/git-workflows
 ```text
 /sync-main
 /sync-main all
-/refresh-repo
-/rebase-pr
-/rebase-pr 42
 /wrap-up                  # Post-merge cleanup + retrospective
 ```
 
@@ -35,6 +34,7 @@ claude plugins add jacobpevans-cc-plugins/git-workflows
 
 | Skill | Requires | Why |
 |-------|----------|-----|
+| `/wrap-up` | `github-workflows` plugin | Invokes `/refresh-repo` for repo sync after merge |
 | `/wrap-up` | `claude-retrospective` plugin | Invokes `/retrospecting quick` for session retrospective |
 | `/wrap-up` | `commit-commands` plugin | Invokes `/clean_gone` for branch cleanup |
 

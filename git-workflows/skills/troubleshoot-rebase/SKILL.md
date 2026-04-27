@@ -74,6 +74,6 @@ If unresolved: check `git reflog`, review `git log -10 --oneline`, ask user.
 
 ## Related Skills
 
-- **rebase-pr** (git-workflows) — Standard rebase-merge PR workflow this skill troubleshoots
+- **rebase-pr** (github-workflows) — Standard rebase-merge PR workflow this skill troubleshoots
 - **troubleshoot-precommit** (git-workflows) — Troubleshoot pre-commit hook failures during rebase
 - **troubleshoot-worktree** (git-workflows) — Troubleshoot git worktree, branch, and refname issues
