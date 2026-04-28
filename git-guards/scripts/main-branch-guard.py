@@ -25,7 +25,7 @@ def deny(reason: str) -> None:
     sys.exit(0)
 
 
-def is_in_git_repo(file_path: str) -> bool:
+def is_in_git_worktree(file_path: str) -> bool:
     """Check if the file's directory is inside a git work tree.
 
     `git rev-parse --is-inside-work-tree` exits 0 even for directories
@@ -98,7 +98,7 @@ def main() -> None:
     if not file_path:
         sys.exit(0)
 
-    if not is_in_git_repo(file_path):
+    if not is_in_git_worktree(file_path):
         sys.exit(0)
 
     worktree_root = get_worktree_root(file_path)

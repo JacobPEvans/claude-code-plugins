@@ -70,10 +70,8 @@ def test_deny_in_main_worktree():
         output = run_hook("Edit", {"file_path": str(test_file)})
         actual = output["hookSpecificOutput"]["permissionDecision"] if output else None
 
-        if actual == "deny":
-            print("✅ Deny in main worktree: deny")
-        else:
-            print(f"❌ Deny in main worktree: {actual}")
+        assert actual == "deny", f"Expected deny in main worktree, got {actual!r}"
+        print("✅ Deny in main worktree: deny")
 
 
 def test_deny_on_main_branch():
@@ -91,10 +89,8 @@ def test_deny_on_main_branch():
         output = run_hook("Write", {"file_path": str(test_file)})
         actual = output["hookSpecificOutput"]["permissionDecision"] if output else None
 
-        if actual == "deny":
-            print("✅ Deny when branch is main: deny")
-        else:
-            print(f"❌ Deny when branch is main: {actual}")
+        assert actual == "deny", f"Expected deny when branch is main, got {actual!r}"
+        print("✅ Deny when branch is main: deny")
 
 
 def test_allow_for_non_main():
@@ -143,10 +139,8 @@ def test_allow_for_non_main():
         output = run_hook("Edit", {"file_path": str(test_file)})
         actual = output["hookSpecificOutput"]["permissionDecision"] if output else None
 
-        if actual is None:
-            print("✅ Allow for non-main: None")
-        else:
-            print(f"❌ Allow for non-main: {actual}")
+        assert actual is None, f"Expected allow for non-main, got {actual!r}"
+        print("✅ Allow for non-main: None")
 
 
 def test_allow_non_edit_tools():
@@ -154,10 +148,8 @@ def test_allow_non_edit_tools():
     output = run_hook("Read", {"file_path": "/tmp/test.txt"})
     actual = output["hookSpecificOutput"]["permissionDecision"] if output else None
 
-    if actual is None:
-        print("✅ Ignore other tools: None")
-    else:
-        print(f"❌ Ignore other tools: {actual}")
+    assert actual is None, f"Expected allow for non-edit tools, got {actual!r}"
+    print("✅ Ignore other tools: None")
 
 
 def test_allow_bare_repo_sibling():
@@ -186,18 +178,46 @@ def test_allow_bare_repo_sibling():
         # First seed a commit so worktree creation has a HEAD
         seed = repo_root / "_seed"
         seed.mkdir()
-        subprocess.run(["git", "init", "--initial-branch=main", str(seed)], capture_output=True, check=True)
-        subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=seed, capture_output=True, check=True)
-        subprocess.run(["git", "config", "user.name", "T"], cwd=seed, capture_output=True, check=True)
-        (seed / "x").write_text("x")
-        subprocess.run(["git", "add", "x"], cwd=seed, capture_output=True, check=True)
-        subprocess.run(["git", "commit", "-m", "seed"], cwd=seed, capture_output=True, check=True)
         subprocess.run(
-            ["git", "push", str(bare), "main"], cwd=seed, capture_output=True, check=True
+            ["git", "init", "--initial-branch=main", str(seed)],
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "t@e.com"],
+            cwd=seed,
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "T"],
+            cwd=seed,
+            capture_output=True,
+            check=True,
+        )
+        (seed / "x").write_text("x")
+        subprocess.run(
+            ["git", "add", "x"],
+            cwd=seed,
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "seed"],
+            cwd=seed,
+            capture_output=True,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "push", str(bare), "main"],
+            cwd=seed,
+            capture_output=True,
+            check=True,
         )
         subprocess.run(
             ["git", "--git-dir", str(bare), "worktree", "add", str(main_worktree), "main"],
-            capture_output=True, check=True,
+            capture_output=True,
+            check=True,
         )
 
         # Scratch dir at repo_root/scratch (sibling of main/, NOT a worktree)
@@ -208,10 +228,8 @@ def test_allow_bare_repo_sibling():
         output = run_hook("Write", {"file_path": str(scratch_file)})
         actual = output["hookSpecificOutput"]["permissionDecision"] if output else None
 
-        if actual is None:
-            print("✅ Allow bare-repo sibling: None")
-        else:
-            print(f"❌ Allow bare-repo sibling: {actual}")
+        assert actual is None, f"Allow bare-repo sibling regression: expected None, got {actual!r}"
+        print("✅ Allow bare-repo sibling: None")
 
 
 def test_notebook_edit():
@@ -223,10 +241,8 @@ def test_notebook_edit():
         output = run_hook("NotebookEdit", {"notebook_path": str(notebook)})
         actual = output["hookSpecificOutput"]["permissionDecision"] if output else None
 
-        if actual == "deny":
-            print("✅ Deny NotebookEdit in main: deny")
-        else:
-            print(f"❌ Deny NotebookEdit in main: {actual}")
+        assert actual == "deny", f"Expected deny for NotebookEdit in main, got {actual!r}"
+        print("✅ Deny NotebookEdit in main: deny")
 
 
 def main():
