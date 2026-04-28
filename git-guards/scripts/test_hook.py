@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 HOOK = Path(__file__).parent / "main-branch-guard.py"
@@ -21,6 +22,7 @@ def run_hook(tool_name: str, tool_input: dict) -> dict | None:
     return json.loads(result.stdout) if result.stdout.strip() else None
 
 
+@contextmanager
 def setup_test_repo():
     """Create a temporary git repo with main worktree structure."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -63,7 +65,7 @@ def setup_test_repo():
 
 def test_deny_in_main_worktree():
     """Test that editing files in main worktree is denied."""
-    for main_worktree in setup_test_repo():
+    with setup_test_repo() as main_worktree:
         test_file = main_worktree / "README.md"
         test_file.write_text("# Test")
 
@@ -76,7 +78,7 @@ def test_deny_in_main_worktree():
 
 def test_deny_on_main_branch():
     """Test that editing files on main branch is denied."""
-    for main_worktree in setup_test_repo():
+    with setup_test_repo() as main_worktree:
         # Ensure we're on main branch
         subprocess.run(
             ["git", "checkout", "-b", "main"],
@@ -234,7 +236,7 @@ def test_allow_bare_repo_sibling():
 
 def test_notebook_edit():
     """Test that NotebookEdit is also guarded."""
-    for main_worktree in setup_test_repo():
+    with setup_test_repo() as main_worktree:
         notebook = main_worktree / "test.ipynb"
         notebook.write_text('{"cells": []}')
 
