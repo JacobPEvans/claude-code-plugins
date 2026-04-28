@@ -124,6 +124,9 @@ def _is_on_main_branch() -> bool:
 
     Returns False (fail-open) on any error.
     """
+    override = os.environ.get("GIT_GUARD_BRANCH_OVERRIDE")
+    if override is not None:
+        return override == "main"
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
