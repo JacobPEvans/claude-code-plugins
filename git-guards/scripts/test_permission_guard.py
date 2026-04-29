@@ -69,7 +69,7 @@ all_pass &= check("git clean", "git clean -fd", "ask")
 # git reset - must ask: can lose uncommitted work
 all_pass &= check("git reset", "git reset --hard HEAD", "ask")
 
-# git push --force origin main - must DENY (DENY_GIT_ONLY: force-push to protected branch)
+# git push --force origin main - must DENY (DENY_GIT_ONLY: any force-push is denied)
 all_pass &= check("git push --force origin main", "git push --force origin main", "deny")
 
 # git push --force to any branch is now denied (DENY_GIT_ONLY, tightened policy)
