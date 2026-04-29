@@ -123,6 +123,10 @@ def _is_on_main_branch() -> bool:
     2. Current branch name == "main" (fallback, git-based)
 
     Returns False (fail-open) on any error.
+
+    GIT_GUARD_BRANCH_OVERRIDE: when set, returns (value == "main") without
+    touching git. Intended for CI/test use only — setting this in production
+    bypasses the branch guard entirely.
     """
     override = os.environ.get("GIT_GUARD_BRANCH_OVERRIDE")
     if override is not None:
