@@ -75,6 +75,9 @@ all_pass &= check("git push --force origin main", "git push --force origin main"
 # git push --force to any branch is now denied (DENY_GIT_ONLY, tightened policy)
 all_pass &= check("git push --force feature branch", "git push --force origin feature/my-branch", "deny")
 
+# git global option before push must still deny (--no-pager is stripped by extraction loop)
+all_pass &= check("git --no-pager push --force feature branch", "git --no-pager push --force origin feature/my-branch", "deny")
+
 # DENY: commit --no-verify
 all_pass &= check("git commit --no-verify", "git commit -m msg --no-verify", "deny")
 

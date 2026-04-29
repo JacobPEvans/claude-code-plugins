@@ -302,6 +302,11 @@ def main():
                 git_config_opts.append(m.group(1).strip("'\""))
                 rest = m.group(2).strip()
                 continue
+            # Boolean global options (no argument) such as --no-pager, --bare
+            m = re.match(r'^(-p|-P|--paginate|--no-pager|--no-replace-objects|--bare)\s*(.*)', rest)
+            if m:
+                rest = m.group(2).strip()
+                continue
             break
         subcommand = rest
     else:
