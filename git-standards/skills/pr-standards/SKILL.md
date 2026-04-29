@@ -64,6 +64,13 @@ for feedback. Just resolve the thread.
 Exception: explicit requests like
 `@gemini-code-assist review the security implications of this change`.
 
+## Commit & PR Title Style
+
+No emoji or gitmoji in commit messages, PR titles, or PR descriptions.
+Use conventional-commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`, etc.).
+Applies to all PRs — human, AI-assisted, and bot-authored automated fixes.
+No `🤖`, no `✨`, no `🐛`. The `type(scope):` prefix carries the signal.
+
 ## GitHub Issue Standards
 
 ### Title Prefixes

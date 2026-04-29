@@ -48,6 +48,7 @@ worktrees with uncommitted changes are NEVER stale. Use `git worktree remove` (n
 - Long-running branches: rebase from main weekly
 - Before PRs: ensure branch is on latest main
 - Never branch from feature branches — always from main
+- Commit messages: conventional-commit prefixes only, no emoji (see `pr-standards`)
 
 | Method | When |
 | --- | --- |
