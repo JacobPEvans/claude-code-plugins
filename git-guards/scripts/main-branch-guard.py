@@ -25,18 +25,24 @@ def deny(reason: str) -> None:
     sys.exit(0)
 
 
-def is_in_git_repo(file_path: str) -> bool:
-    """Check if the file's directory is inside a git repository."""
+def is_in_git_worktree(file_path: str) -> bool:
+    """Check if the file's directory is inside a git work tree.
+
+    `git rev-parse --is-inside-work-tree` exits 0 even for directories
+    adjacent to a bare repo — it prints "false" but the exit status is still
+    0 — so we must inspect the output, not just the exit code. Returns False
+    for bare-repo siblings, scratch dirs, and any path outside a work tree.
+    """
     path = Path(file_path)
     file_dir = str(path.parent)
     try:
         result = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
+            ["git", "rev-parse", "--is-inside-work-tree"],
             cwd=file_dir,
             capture_output=True,
             text=True,
         )
-        return result.returncode == 0
+        return result.returncode == 0 and result.stdout.strip() == "true"
     except (OSError, subprocess.SubprocessError):
         return False
 
@@ -92,7 +98,7 @@ def main() -> None:
     if not file_path:
         sys.exit(0)
 
-    if not is_in_git_repo(file_path):
+    if not is_in_git_worktree(file_path):
         sys.exit(0)
 
     worktree_root = get_worktree_root(file_path)

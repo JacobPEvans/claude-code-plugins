@@ -116,3 +116,41 @@ run_hook() {
   run_hook '{"tool_name":"NotebookEdit","tool_input":{"notebook_path":"'"$tmpfile"'"}}'
   [ "$status" -eq 0 ]
 }
+
+# ---------------------------------------------------------------------------
+# TC7: file in bare-repo sibling (scratch dir, not a worktree) -> allow (exit 0)
+# Regression: before the fix, git branch --show-current walked up to the bare
+# repo and returned "main", falsely triggering the deny path.
+# ---------------------------------------------------------------------------
+
+@test "TC7: file in bare-repo sibling (not a worktree) is allowed" {
+  local bare_dir seed_dir main_worktree scratch_dir scratch_file
+  bare_dir="$TMPDIR_BASE/.git"
+  seed_dir="$TMPDIR_BASE/_seed"
+  main_worktree="$TMPDIR_BASE/main"
+  scratch_dir="$TMPDIR_BASE/scratch"
+
+  # Create bare repo
+  git init --bare -q "$bare_dir"
+
+  # Seed a commit via a temporary clone
+  mkdir -p "$seed_dir"
+  git -C "$seed_dir" init -q
+  git -C "$seed_dir" config user.email "test@example.com"
+  git -C "$seed_dir" config user.name "Test"
+  echo "x" > "$seed_dir/x"
+  git -C "$seed_dir" add x
+  git -C "$seed_dir" commit -q -m "seed"
+  git -C "$seed_dir" branch -M main
+  git -C "$seed_dir" push -q "$bare_dir" main
+
+  # Add main worktree from the bare repo
+  git --git-dir="$bare_dir" worktree add -q "$main_worktree" main
+
+  # Create scratch sibling dir (NOT a worktree)
+  mkdir -p "$scratch_dir"
+  scratch_file="$scratch_dir/snapshot.md"
+
+  run_hook '{"tool_name":"Write","tool_input":{"file_path":"'"$scratch_file"'"}}'
+  [ "$status" -eq 0 ]
+}

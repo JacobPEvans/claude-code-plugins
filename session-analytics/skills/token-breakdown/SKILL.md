@@ -1,9 +1,6 @@
 ---
 name: token-breakdown
 description: Analyze current Claude Code session token usage via Splunk. Shows per-model, per-tool, and subagent token breakdown with cache efficiency metrics.
-metadata:
-  version: "1.0.0"
-  author: JacobPEvans
 ---
 
 # Token Breakdown

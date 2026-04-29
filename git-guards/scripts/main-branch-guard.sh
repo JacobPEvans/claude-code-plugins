@@ -19,9 +19,14 @@ fi
 # Get the directory containing the file
 file_dir=$(dirname "$file_path")
 
-# Check if the file is inside a git repository (tracked or not).
-# Files outside git repos (e.g., ~/.claude/plans/) are always allowed.
-if ! (cd "$file_dir" 2>/dev/null && git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+# Check if the file is inside a git work tree (not a bare repo, not outside git).
+# `git rev-parse --is-inside-work-tree` exits 0 even for directories adjacent
+# to a bare repo — it prints "false" but the exit status is still 0 — so we
+# must inspect the output, not just the exit code. Files outside git work
+# trees (e.g. ~/.claude/plans/, or scratch dirs that sit next to a bare repo)
+# are always allowed.
+inside=$(cd "$file_dir" 2>/dev/null && git rev-parse --is-inside-work-tree 2>/dev/null || echo "false")
+if [[ "$inside" != "true" ]]; then
     exit 0
 fi
 

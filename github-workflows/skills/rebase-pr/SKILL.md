@@ -1,8 +1,6 @@
 ---
 name: rebase-pr
 description: Local rebase-merge workflow for pull requests with signed commits
-metadata:
-  version: 2.0.0
 ---
 
 # rebase-pr

@@ -1,9 +1,6 @@
 ---
 name: codeql-permission-classification
 description: Permission requirements for GitHub Actions
-metadata:
-  version: "1.0.0"
-  author: JacobPEvans
 ---
 
 # CodeQL Permission Classification
