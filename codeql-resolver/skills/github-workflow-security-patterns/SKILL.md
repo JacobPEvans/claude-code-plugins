@@ -1,9 +1,6 @@
 ---
 name: github-workflow-security-patterns
 description: Canonical security patterns for GitHub Actions workflows
-metadata:
-  version: "1.0.0"
-  author: JacobPEvans
 ---
 
 # GitHub Workflow Security Patterns
