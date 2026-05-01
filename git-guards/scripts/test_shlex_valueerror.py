@@ -50,7 +50,7 @@ all_pass = True
 # direct git_config_opts path even though the trailing commit message is
 # malformed (unclosed quote). The shlex ValueError path is irrelevant here.
 all_pass &= check(
-    "ValueError: unclosed double-quote with hooksPath in fallback subcommand",
+    "--no-pager stripped; -c core.hooksPath extracted directly → deny (shlex path irrelevant)",
     'git --no-pager -c core.hooksPath=/dev/null commit -m "unclosed',
     "deny",
 )

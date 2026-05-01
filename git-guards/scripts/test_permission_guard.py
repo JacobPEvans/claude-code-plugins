@@ -97,9 +97,9 @@ all_pass &= check("git -C restore ask", "git -C /some/path restore file.txt", "a
 # core.hooksPath precision: value containing the substring must not trigger deny (uses fetch, not commit)
 all_pass &= check("hooksPath in value only", "git -c some.key=echo-core.hooksPath fetch origin", "silent_allow")
 
-# Fallback bypass detection: unrecognised global option before -c breaks loop early
+# Loop strips --no-pager, then extracts -c core.hooksPath directly → deny via git_config_opts path
 all_pass &= check("--no-pager before -c hooksPath", "git --no-pager -c core.hooksPath=/dev/null commit -m msg", "deny")
-# Fallback also fires when loop parsed a prior -c but broke before a second -c hooksPath
+# Loop strips --bare, extracts both -c options → second -c core.hooksPath triggers deny via git_config_opts path
 all_pass &= check("valid -c then --bare then -c hooksPath", "git -c user.name=test --bare -c core.hooksPath=/dev/null commit -m msg", "deny")
 # False positive guard: tag message containing the bypass pattern as a substring must not deny
 # Uses 'git tag' (not in BLOCKED_ON_MAIN) to test the tokenizer false-positive scenario on any branch
