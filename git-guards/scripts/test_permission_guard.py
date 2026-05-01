@@ -2,11 +2,17 @@
 """Tests for git-permission-guard.py ASK/DENY decisions."""
 
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SCRIPT = Path(__file__).parent / "git-permission-guard.py"
+
+# Run tests from a non-git temp dir so _is_on_main_branch() fails open (returns False),
+# preventing BLOCKED_ON_MAIN from intercepting tests that expect ask/silent_allow.
+_TMPDIR = tempfile.mkdtemp(prefix="test_guard_")
 
 
 def run(cmd: str) -> dict:
@@ -16,6 +22,7 @@ def run(cmd: str) -> dict:
         input=inp,
         capture_output=True,
         text=True,
+        cwd=_TMPDIR,
     )
     if result.stdout.strip():
         return json.loads(result.stdout.strip())
@@ -103,4 +110,5 @@ all_pass &= check("hooksPath in commit message", 'git -c user.name=test commit -
 
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
+shutil.rmtree(_TMPDIR, ignore_errors=True)
 sys.exit(0 if all_pass else 1)
