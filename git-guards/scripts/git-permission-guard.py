@@ -23,7 +23,7 @@ DENY_ALWAYS = [
 # Patterns checked ONLY when command starts with 'git ' to avoid false
 # positives from matching substrings in gh api body text or other commands
 DENY_GIT_ONLY = [
-    (r"commit\s+.*(-n|--no-verify)", "bypasses pre-commit hooks"),
+    (r"commit\s+.*(?<!\w)(-n(?!\w)|--no-verify)", "bypasses pre-commit hooks"),
     (r"merge\s+.*--no-verify", "bypasses merge hooks"),
     (r"cherry-pick\s+.*--no-verify", "bypasses commit hooks"),
     (r"rebase\s+.*--no-verify", "bypasses commit hooks"),
