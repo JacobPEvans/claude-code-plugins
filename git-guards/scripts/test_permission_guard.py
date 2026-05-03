@@ -78,6 +78,15 @@ all_pass &= check("git push --force feature branch", "git push --force origin fe
 # DENY: commit --no-verify
 all_pass &= check("git commit --no-verify", "git commit -m msg --no-verify", "deny")
 
+# DENY: commit -n (short form of --no-verify)
+all_pass &= check("git commit -n deny", "git commit -n -m msg", "deny")
+
+# DENY: commit -an (combined short flags including -n)
+all_pass &= check("git commit -an deny", "git commit -an -m msg", "deny")
+
+# ALLOW (ask): commit --amend --no-edit must not be blocked (regression: issue #180)
+all_pass &= check("git commit --amend --no-edit allow", "git commit --amend --no-edit", "ask")
+
 # DENY: remove hooks
 all_pass &= check("rm .git/hooks", "rm .git/hooks/pre-commit", "deny")
 
