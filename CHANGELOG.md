@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.6](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.5...v3.1.6) (2026-05-03)
+
+
+### Bug Fixes
+
+* **git-guards:** support GIT_GUARD_BRANCH_OVERRIDE for testing ([#263](https://github.com/JacobPEvans/claude-code-plugins/issues/263)) ([adb05c7](https://github.com/JacobPEvans/claude-code-plugins/commit/adb05c7812012824eca6186a3e1927cd528c54d3))
+
 ## [3.1.5](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.4...v3.1.5) (2026-05-03)
 
 
