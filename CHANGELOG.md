@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.2...v3.1.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **ai-delegation:** replace stale /auto-claude with /auto-maintain in README ([#274](https://github.com/JacobPEvans/claude-code-plugins/issues/274)) ([0c47a86](https://github.com/JacobPEvans/claude-code-plugins/commit/0c47a8633b7c5db58a7875a33516f9ee4667f35d))
+* **git-guards:** test fixtures and boolean option handling ([#257](https://github.com/JacobPEvans/claude-code-plugins/issues/257)) ([6ceebdf](https://github.com/JacobPEvans/claude-code-plugins/commit/6ceebdff7e2617fdc404a4f45a40535a9c96b1e1))
+
 ## [3.1.2](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.1...v3.1.2) (2026-05-03)
 
 
