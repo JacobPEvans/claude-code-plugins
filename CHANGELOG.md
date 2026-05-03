@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.4](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.3...v3.1.4) (2026-05-03)
+
+
+### Bug Fixes
+
+* **git-guards:** handle combined short flags and add regression tests ([#270](https://github.com/JacobPEvans/claude-code-plugins/issues/270)) ([910d77c](https://github.com/JacobPEvans/claude-code-plugins/commit/910d77cc38afdd10131edab1361049a5d6d8cedc))
+* **test:** permission guard main branch check in isolation ([#269](https://github.com/JacobPEvans/claude-code-plugins/issues/269)) ([2192d71](https://github.com/JacobPEvans/claude-code-plugins/commit/2192d71d4354c54466a969377b9b35e067c65c3b))
+
 ## [3.1.3](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.2...v3.1.3) (2026-05-03)
 
 
