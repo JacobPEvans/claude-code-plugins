@@ -45,15 +45,14 @@ def check(label: str, cmd: str, expected_decision: str) -> bool:
 
 all_pass = True
 
-# ValueError path: loop breaks on unrecognised global option (--no-pager);
-# remaining subcommand has an unclosed double quote → shlex.split() raises
-# ValueError → subcmd_tokens = [] → no bypass detected → silent_allow.
-# Without the fix, the old str.split() fallback would have tokenised on
-# whitespace and incorrectly fired a deny for the -c core.hooksPath token.
+# --no-pager is now stripped by the extraction loop before -c is processed.
+# The loop extracts -c core.hooksPath=/dev/null directly → deny fires via the
+# direct git_config_opts path even though the trailing commit message is
+# malformed (unclosed quote). The shlex ValueError path is irrelevant here.
 all_pass &= check(
-    "ValueError: unclosed double-quote with hooksPath in fallback subcommand",
+    "--no-pager stripped; -c core.hooksPath extracted directly → deny (shlex path irrelevant)",
     'git --no-pager -c core.hooksPath=/dev/null commit -m "unclosed',
-    "silent_allow",
+    "deny",
 )
 
 # ValueError path: unclosed single quote with bypass pattern in subcommand text.

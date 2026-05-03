@@ -28,16 +28,13 @@ DENY_GIT_ONLY = [
     (r"cherry-pick\s+.*--no-verify", "bypasses commit hooks"),
     (r"rebase\s+.*--no-verify", "bypasses commit hooks"),
     (r"config\s+.*core\.hooksPath", "changes hook directory"),
-    (r"push\s+(--force|--force-with-lease|-f)\s+\S+\s+main\b", "force-pushes to the main branch"),
+    (r"^push\s+.*(--force|--force-with-lease|-f)\b", "force-pushes overwrite remote history"),
 ]
 
 # Commands requiring explicit user confirmation
 # Ordered from most specific to least specific to avoid false matches
 ASK_GIT = [
     ("commit --amend", "Rewrites the last commit"),
-    ("push --force-with-lease", "Overwrites remote history"),
-    ("push --force", "Overwrites remote history"),
-    ("push -f", "Overwrites remote history"),
     ("worktree remove --force", "Removes worktree directory, discarding uncommitted changes"),
     ("worktree remove -f", "Removes worktree directory, discarding uncommitted changes"),
     ("cherry-pick", "Rewrites commit history"),
@@ -305,6 +302,11 @@ def main():
                 git_config_opts.append(m.group(1).strip("'\""))
                 rest = m.group(2).strip()
                 continue
+            # Boolean global options take no argument (different parse from -C/-c)
+            m = re.match(r'^(-p|-P|--paginate|--no-pager|--no-replace-objects|--bare)\s*(.*)', rest)
+            if m:
+                rest = m.group(2).strip()
+                continue
             break
         subcommand = rest
     else:
@@ -341,7 +343,8 @@ def main():
             subcmd_tokens = []
         for i, tok in enumerate(subcmd_tokens):
             if tok == "-c" and i + 1 < len(subcmd_tokens):
-                if re.match(r"core\.hooksPath\s*(?:=|$)", subcmd_tokens[i + 1], re.IGNORECASE):
+                config_token = subcmd_tokens[i + 1]
+                if re.match(r"^core\.hooksPath(=|$)", config_token, re.IGNORECASE):
                     deny("This command bypasses configured hooks. Fix the underlying issue instead.")
 
         if sub_tokens and sub_tokens[0] in BLOCKED_ON_MAIN and _is_on_main_branch():
