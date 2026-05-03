@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.5](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.4...v3.1.5) (2026-05-03)
+
+
+### Bug Fixes
+
+* **ci:** remove deprecated app-id secret passthrough ([5121f76](https://github.com/JacobPEvans/claude-code-plugins/commit/5121f76b5eccac92628d4d9d0683b8f7c7d6f185))
+
 ## [3.1.4](https://github.com/JacobPEvans/claude-code-plugins/compare/v3.1.3...v3.1.4) (2026-05-03)
 
 
