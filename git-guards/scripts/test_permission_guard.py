@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """Tests for git-permission-guard.py ASK/DENY decisions."""
 
+import atexit
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SCRIPT = Path(__file__).parent / "git-permission-guard.py"
+
+# Run tests from a non-git temp dir so _is_on_main_branch() fails open (returns False),
+# preventing BLOCKED_ON_MAIN from intercepting tests that expect ask/silent_allow.
+_TMPDIR = tempfile.mkdtemp(prefix="test_guard_")
+atexit.register(shutil.rmtree, _TMPDIR, ignore_errors=True)
 
 
 def run(cmd: str) -> dict:
@@ -16,6 +24,7 @@ def run(cmd: str) -> dict:
         input=inp,
         capture_output=True,
         text=True,
+        cwd=_TMPDIR,
     )
     if result.stdout.strip():
         return json.loads(result.stdout.strip())
