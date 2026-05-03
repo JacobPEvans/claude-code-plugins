@@ -5,7 +5,7 @@ Claude Code plugin for delegating tasks to external AI models and running autono
 ## Skills
 
 - **`/delegate-to-ai`** - Route tasks to specialized AI models via PAL MCP tools based on task type
-- **`/auto-claude`** - Autonomous maintenance orchestrator that continuously finds and dispatches work
+- **`/auto-maintain`** - Autonomous maintenance orchestrator that continuously finds and dispatches work
 
 ## Installation
 
@@ -17,7 +17,7 @@ claude plugins add jacobpevans-cc-plugins/ai-delegation
 
 ```text
 /delegate-to-ai
-/auto-claude
+/auto-maintain
 ```
 
 ## License
