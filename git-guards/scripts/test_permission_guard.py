@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for git-permission-guard.py ASK/DENY decisions."""
 
+import atexit
 import json
 import shutil
 import subprocess
@@ -13,6 +14,7 @@ SCRIPT = Path(__file__).parent / "git-permission-guard.py"
 # Run tests from a non-git temp dir so _is_on_main_branch() fails open (returns False),
 # preventing BLOCKED_ON_MAIN from intercepting tests that expect ask/silent_allow.
 _TMPDIR = tempfile.mkdtemp(prefix="test_guard_")
+atexit.register(shutil.rmtree, _TMPDIR, ignore_errors=True)
 
 
 def run(cmd: str) -> dict:
@@ -110,5 +112,4 @@ all_pass &= check("hooksPath in commit message", 'git -c user.name=test commit -
 
 print()
 print("ALL TESTS PASSED" if all_pass else "SOME TESTS FAILED")
-shutil.rmtree(_TMPDIR, ignore_errors=True)
 sys.exit(0 if all_pass else 1)
