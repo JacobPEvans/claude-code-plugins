@@ -7,12 +7,20 @@ quotes), the guard treats the subcommand as non-matching (safe fail) rather
 than falling back to str.split(), which would reintroduce false-positive denies.
 """
 
+import atexit
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SCRIPT = Path(__file__).parent / "git-permission-guard.py"
+
+# Run tests from a non-git temp dir so _is_on_main_branch() fails open (returns False),
+# preventing BLOCKED_ON_MAIN from intercepting tests that expect ask/silent_allow.
+_TMPDIR = tempfile.mkdtemp(prefix="test_guard_")
+atexit.register(shutil.rmtree, _TMPDIR, ignore_errors=True)
 
 
 def run(cmd: str) -> dict:
@@ -22,6 +30,7 @@ def run(cmd: str) -> dict:
         input=inp,
         capture_output=True,
         text=True,
+        cwd=_TMPDIR,
     )
     if result.stdout.strip():
         return json.loads(result.stdout.strip())
@@ -46,11 +55,11 @@ def check(label: str, cmd: str, expected_decision: str) -> bool:
 all_pass = True
 
 # --no-pager is now stripped by the extraction loop before -c is processed.
-# The loop extracts -c core.hooksPath=/dev/null directly → deny fires via the
+# The loop extracts -c core.hooksPath=/dev/null directly -> deny fires via the
 # direct git_config_opts path even though the trailing commit message is
 # malformed (unclosed quote). The shlex ValueError path is irrelevant here.
 all_pass &= check(
-    "--no-pager stripped; -c core.hooksPath extracted directly → deny (shlex path irrelevant)",
+    "--no-pager stripped; -c core.hooksPath extracted directly -> deny (shlex path irrelevant)",
     'git --no-pager -c core.hooksPath=/dev/null commit -m "unclosed',
     "deny",
 )
@@ -71,7 +80,7 @@ all_pass &= check(
 )
 
 # Sanity: bypass pattern appearing only inside a quoted commit message (valid
-# shell) must remain a silent allow — not denied.
+# shell) must remain a silent allow -- not denied.
 all_pass &= check(
     "hooksPath pattern inside quoted commit message stays silent_allow",
     'git --no-pager commit -m "testing -c core.hooksPath=/dev/null semantics"',
