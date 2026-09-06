@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.0](https://github.com/dryvist/claude-code-plugins/compare/v6.0.0...v6.1.0) (2026-09-06)
+
+
+### Features
+
+* **ai-delegation:** replace delegate-to-router with local-subagents ([#486](https://github.com/dryvist/claude-code-plugins/issues/486)) ([4936fea](https://github.com/dryvist/claude-code-plugins/commit/4936fea4b5454101e007c2d67209055f4a5e2754))
+
 ## [6.0.0](https://github.com/dryvist/claude-code-plugins/compare/v5.13.0...v6.0.0) (2026-09-05)
 
 
