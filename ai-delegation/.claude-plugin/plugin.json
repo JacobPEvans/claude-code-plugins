@@ -19,7 +19,7 @@
     "./skills/delegate-to-ai",
     "./skills/auto-maintain",
     "./skills/premium-agent-orchestration",
-    "./skills/delegate-to-router",
+    "./skills/local-subagents",
     "./skills/openrouter-models",
     "./skills/multi-model-review"
   ]
