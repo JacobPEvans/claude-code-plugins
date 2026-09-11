@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.1.1](https://github.com/dryvist/claude-code-plugins/compare/v6.1.0...v6.1.1) (2026-09-11)
+
+
+### Bug Fixes
+
+* **script-guards:** stop the nix guard denying Nix own syntax ([329a097](https://github.com/dryvist/claude-code-plugins/commit/329a0972a4dffa65b92c635af41cf9e82423a7f8))
+* **script-guards:** stop the nix guard denying Nix's own syntax ([1fbf39a](https://github.com/dryvist/claude-code-plugins/commit/1fbf39aec22c66a427357022f1871578c2c5095a))
+
 ## [6.1.0](https://github.com/dryvist/claude-code-plugins/compare/v6.0.0...v6.1.0) (2026-09-06)
 
 
